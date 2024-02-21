@@ -1,0 +1,258 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css?family=Poppins:400,500,600,700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fbfbfb;
+      background-image: url("{% static 'images/Background 3.jpg' %}");
+      background-size: cover;
+    }
+
+    .box {
+      position: relative;
+      max-width: 430px;
+      width: 100%;
+      background: #fff;
+      padding: 34px;
+      border-radius: 6px;
+      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .flux-logo {
+      display: flex;
+      justify-content: center;
+      padding-bottom: 5px;
+    }
+
+    .box h2 {
+      margin: 0px 0 -0.125rem;
+      padding: 0;
+      color: #fff;
+      text-align: center;
+      color: #202124;
+      font-family: 'Poppins', 'Google Sans', 'Noto Sans Myanmar UI', arial, sans-serif;
+      font-size: 24px;
+      font-weight: 400;
+    }
+
+    .box form {
+      margin-top: 30px;
+    }
+
+    .box form .inputBox {
+      height: 52px;
+      margin: 18px 0;
+    }
+
+    .box p {
+      font-size: 16px;
+      font-weight: 400;
+      letter-spacing: .1px;
+      line-height: 1.5;
+      margin-bottom: 25px;
+      text-align: center;
+    }
+
+    .box .inputBox {
+      position: relative;
+    }
+
+    .box .inputBox input {
+      height: 100%;
+      width: 100%;
+      padding: 0.625rem 10px;
+      font-size: 1rem;
+      letter-spacing: 0.062rem;
+      margin-bottom: 1.875rem;
+      border: 1px solid #ccc;
+      background: transparent;
+      border-radius: 4px;
+
+    }
+
+    .box .inputBox label {
+      position: absolute;
+      top: 0;
+      left: 10px;
+      padding: 0.625rem 0;
+      font-size: 1rem;
+      color: grey;
+      pointer-events: none;
+      transition: 0.3s;
+    }
+
+    .box .inputBox input:focus~label,
+    .box .inputBox input:valid~label,
+    .box .inputBox input:not([value=""])~label {
+      top: -1.125rem;
+      left: 10px;
+      color: #6464e6;
+      font-size: 0.75rem;
+      background-color: white;
+      height: 10px;
+      padding-left: 5px;
+      padding-right: 5px;
+    }
+
+    .box .inputBox input:focus {
+      outline: none;
+      border: 2px solid #6464e6;
+    }
+
+    .box input[type="submit"] {
+      border: none;
+      outline: none;
+      color: #fff;
+      background-color: #6464e6;
+      padding: 0.625rem 1.25rem;
+      cursor: pointer;
+      border-radius: 0.312rem;
+      font-size: 1rem;
+      float: right;
+    }
+
+    .box input[type="submit"]:hover {
+      background-color: #6464e6;
+      box-shadow: 0 1px 1px 0 rgba(66, 133, 244, 0.45), 0 1px 3px 1px rgba(66, 133, 244, 0.3);
+    }
+
+    .box .inputBox input:focus~label,
+    .box .inputBox input:valid~label,
+    .box .inputBox input:not([value=""])~label {
+      top: -1.125rem;
+      left: 10px;
+      color: #6464e6;
+      font-size: 0.75rem;
+      background-color: white;
+      height: 10px;
+      padding-left: 5px;
+      padding-right: 5px;
+    }
+
+    .box .inputBox input:focus {
+      outline: none;
+      border: 2px solid #6464e6;
+    }
+
+    .forgot {
+      margin-top: 20px;
+    }
+
+    .forgot button {
+      -webkit-border-radius: 4px;
+      border-radius: 4px;
+      color: #6464e6;
+      display: inline-block;
+      font-weight: 500;
+      letter-spacing: .25px;
+      outline: 0;
+      position: relative;
+      background-color: transparent;
+      cursor: pointer;
+      font-size: inherit;
+      padding: 0;
+      text-align: left;
+      border: 0;
+    }
+
+    form h3 {
+      color: #707070;
+      font-size: 14px;
+      font-weight: 500;
+      margin-left: 10px;
+    }
+
+    .inputBox.button input {
+      color: #fff;
+      letter-spacing: 1px;
+      border: none;
+      background: #6464e6;
+      cursor: pointer;
+    }
+
+    .inputBox.button input:hover {
+      background: #6464e6;
+    }
+
+    form .text h3 {
+      color: #333;
+      width: 100%;
+      text-align: center;
+    }
+
+    form .text h3 a {
+      color: #6464e6;
+      text-decoration: none;
+    }
+
+    form .text h3 a:hover {
+      text-decoration: underline;
+    }
+    footer {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      text-align: center;
+      padding: 10px;
+      /* background-color: #f9f9f9; */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="box">
+    <div id="logo" class="flux-logo" title="Flux">
+      <div class="rr0DNb" jsname="l4eHX">
+        <svg width="92" height="28" viewBox="0 0 92 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5.38281 26H0.337891V0.792969H17.9863V5.83789H5.38281V10.8828H12.9414V15.9277H5.38281V26ZM38.2363 26H20.5879V0.792969H25.6328V20.9551H38.2363V26ZM59.875 15.9277C59.875 17.3223 59.6113 18.6348 59.084 19.8652C58.5566 21.084 57.8359 22.1504 56.9219 23.0645C56.0078 23.9668 54.9355 24.6816 53.7051 25.209C52.4863 25.7363 51.1797 26 49.7852 26C48.3906 26 47.0781 25.7363 45.8477 25.209C44.6289 24.6816 43.5625 23.9668 42.6484 23.0645C41.7461 22.1504 41.0312 21.084 40.5039 19.8652C39.9766 18.6348 39.7129 17.3223 39.7129 15.9277V0.792969H44.7402V15.9277C44.7402 16.6191 44.8691 17.2695 45.127 17.8789C45.3965 18.4883 45.7598 19.0215 46.2168 19.4785C46.6738 19.9355 47.207 20.2988 47.8164 20.5684C48.4375 20.8262 49.0938 20.9551 49.7852 20.9551C50.4766 20.9551 51.127 20.8262 51.7363 20.5684C52.3574 20.2988 52.8965 19.9355 53.3535 19.4785C53.8105 19.0215 54.168 18.4883 54.4258 17.8789C54.6953 17.2695 54.8301 16.6191 54.8301 15.9277V0.792969H59.875V15.9277ZM83.834 26H77.7168L72.8652 17.8613L67.9961 26H61.9141L69.6484 13.3965L61.9141 0.792969H67.9961L72.8652 8.93164L77.7168 0.792969H83.834L76.0996 13.3965L83.834 26Z" fill="#FF5C00"/>
+          <path d="M91.5859 24.207C91.5859 24.6289 91.5098 25.0273 91.3574 25.4023C91.2051 25.7656 90.9941 26.082 90.7246 26.3516C90.4551 26.6211 90.1387 26.832 89.7754 26.9844C89.4121 27.1484 89.0195 27.2305 88.5977 27.2305C88.1875 27.2305 87.7949 27.1484 87.4199 26.9844C87.0566 26.832 86.7344 26.6211 86.4531 26.3516C86.1836 26.082 85.9668 25.7656 85.8027 25.4023C85.6504 25.0273 85.5742 24.6289 85.5742 24.207C85.5742 23.7969 85.6504 23.4102 85.8027 23.0469C85.9668 22.6836 86.1836 22.3672 86.4531 22.0977C86.7344 21.8281 87.0566 21.6172 87.4199 21.4648C87.7949 21.3008 88.1875 21.2188 88.5977 21.2188C89.0195 21.2188 89.4121 21.3008 89.7754 21.4648C90.1387 21.6172 90.4551 21.8281 90.7246 22.0977C90.9941 22.3672 91.2051 22.6836 91.3574 23.0469C91.5098 23.4102 91.5859 23.7969 91.5859 24.207Z" fill="black"/>
+          </svg>          
+      </div>
+    </div>
+    <form method="POST">
+      {% csrf_token %}
+      <div class="inputBox">
+        <input type="password" name="old_password" required="" onkeyup="this.setAttribute('value', this.value);" value="">
+        <label>Old Password</label>
+      </div>
+      <div class="inputBox">
+        <input type="password" name="new_password1" required="" onkeyup="this.setAttribute('value', this.value);" value="">
+        <label>New Password</label>
+      </div>
+      <div class="inputBox">
+        <input type="password" name="new_password2" required="" onkeyup="this.setAttribute('value', this.value);" value="">
+        <label>Confirm Password</label>
+      </div>
+      <div class="inputBox button">
+        <input type="Submit" name="submit">
+      </div>
+    </form>
+    {% for message in messages %}
+    <p>{{message}}</p>
+    {% endfor%}
+  </div>
+  <footer>
+    <p>&copy; 2023 Flux</p>
+  </footer>
+</body>
+
+</html>
+  

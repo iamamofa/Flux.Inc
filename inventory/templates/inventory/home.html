@@ -1,0 +1,261 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Home Page</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+
+        }
+
+        /* Navbar styles */
+        .navbar {
+            background-color: rgba(255, 255, 255, 0.084);
+            /* Transparent background with opacity */
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            position: fixed;
+            width: 100%;
+            z-index: 999;
+        }
+
+        .navbar-logo {
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .navbar-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .navbar-button {
+            padding: 10px 20px;
+            background-color: transparent;
+            border: 2px solid #fff;
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 10px;
+            /* Adjusted button roundness */
+        }
+
+        /* Carousel styles */
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            /* Set the carousel container height to full viewport height */
+            overflow: hidden;
+        }
+
+        .carousel {
+            display: flex;
+            width: 500%;
+            /* Adjust the width to accommodate all images */
+            height: 100%;
+            transition: transform 1s ease-in-out;
+            /* Increased transition duration */
+        }
+
+        .carousel-image {
+            flex: 0 0 20%;
+            /* Each image occupies 20% of the carousel width */
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: relative;
+        }
+
+        .carousel-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            /* Dark overlay color */
+            z-index: 1;
+        }
+
+        .carousel-text {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #fff;
+            z-index: 2;
+        }
+
+        .carousel-text h2 {
+            font-size: 150px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-family: 'Staatliches', Arial, sans-serif;
+
+        }
+
+        .carousel-text p {
+            background-color: rgba(255, 255, 255, 0.084);
+            /* Transparent background with opacity */
+            backdrop-filter: blur(10px);
+            font-size: 30px;
+            margin: 0;
+            padding: 15px;
+            font-family: 'Urbanist', sans-serif;
+        }
+
+        /* Adjusted styles for smaller images */
+        .carousel-image img {
+            width: 100%;
+            height: auto;
+        }
+
+        .team-section {
+            text-align: center;
+            padding: 80px 0;
+            background-color: #f7f7f7;
+        }
+
+        .team-title {
+            font-size: 24px;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .team-member {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            /* Spread items horizontally */
+            margin-bottom: 40px;
+            padding: 0 100px;
+        }
+
+        .team-member img {
+            max-width: 500px;
+            margin-left: 0;
+            /* Adjust margin as needed */
+        }
+
+        .team-member-description {
+            flex: 0.9;
+            /* Take remaining width */
+        }
+
+        .team-member p {
+            font-size: 16px;
+            line-height: 1.6;
+            text-align: justify;
+            margin: 0;
+            padding: 15px 0;
+            /* Add more padding */
+        }
+
+        footer {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            background-color: transparent;
+            color: #fff;
+            font-family: 'Urbanist', sans-serif;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Staatliches&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Urbanist&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-logo" style="margin-left: 60px;">
+            <a href="{% url 'home' %}">
+                <span>
+                    <svg width="92" height="27" viewBox="0 0 92 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M5.38281 26H0.337891V0.792969H17.9863V5.83789H5.38281V10.8828H12.9414V15.9277H5.38281V26ZM38.2363 26H20.5879V0.792969H25.6328V20.9551H38.2363V26ZM59.875 15.9277C59.875 17.3223 59.6113 18.6348 59.084 19.8652C58.5566 21.084 57.8359 22.1504 56.9219 23.0645C56.0078 23.9668 54.9355 24.6816 53.7051 25.209C52.4863 25.7363 51.1797 26 49.7852 26C48.3906 26 47.0781 25.7363 45.8477 25.209C44.6289 24.6816 43.5625 23.9668 42.6484 23.0645C41.7461 22.1504 41.0312 21.084 40.5039 19.8652C39.9766 18.6348 39.7129 17.3223 39.7129 15.9277V0.792969H44.7402V15.9277C44.7402 16.6191 44.8691 17.2695 45.127 17.8789C45.3965 18.4883 45.7598 19.0215 46.2168 19.4785C46.6738 19.9355 47.207 20.2988 47.8164 20.5684C48.4375 20.8262 49.0938 20.9551 49.7852 20.9551C50.4766 20.9551 51.127 20.8262 51.7363 20.5684C52.3574 20.2988 52.8965 19.9355 53.3535 19.4785C53.8105 19.0215 54.168 18.4883 54.4258 17.8789C54.6953 17.2695 54.8301 16.6191 54.8301 15.9277V0.792969H59.875V15.9277ZM83.834 26H77.7168L72.8652 17.8613L67.9961 26H61.9141L69.6484 13.3965L61.9141 0.792969H67.9961L72.8652 8.93164L77.7168 0.792969H83.834L76.0996 13.3965L83.834 26Z"
+                            fill="#FF5C00" />
+                        <path
+                            d="M91.7344 23.207C91.7344 23.6289 91.6582 24.0273 91.5059 24.4023C91.3535 24.7656 91.1426 25.082 90.873 25.3516C90.6035 25.6211 90.2871 25.832 89.9238 25.9844C89.5605 26.1484 89.168 26.2305 88.7461 26.2305C88.3359 26.2305 87.9434 26.1484 87.5684 25.9844C87.2051 25.832 86.8828 25.6211 86.6016 25.3516C86.332 25.082 86.1152 24.7656 85.9512 24.4023C85.7988 24.0273 85.7227 23.6289 85.7227 23.207C85.7227 22.7969 85.7988 22.4102 85.9512 22.0469C86.1152 21.6836 86.332 21.3672 86.6016 21.0977C86.8828 20.8281 87.2051 20.6172 87.5684 20.4648C87.9434 20.3008 88.3359 20.2188 88.7461 20.2188C89.168 20.2188 89.5605 20.3008 89.9238 20.4648C90.2871 20.6172 90.6035 20.8281 90.873 21.0977C91.1426 21.3672 91.3535 21.6836 91.5059 22.0469C91.6582 22.4102 91.7344 22.7969 91.7344 23.207Z"
+                            fill="white" />
+                    </svg>
+                </span>
+            </a>
+        </div>
+        <div class="navbar-buttons">
+            <a href="{% url 'registration_page' %}" class="navbar-button" style="margin-right: 10px;">Register</a>
+            <a href="{% url 'login' %}" class="navbar-button" style="margin-right: 100px;">Login</a>
+        </div>
+    </nav>
+
+    <div class="carousel-container">
+        <div class="carousel-text">
+            <h2>TRY FLUX TODAY</h2>
+            <p>Streamline Your Inventory Process with Us.</p>
+        </div>
+        <div class="carousel">
+            <div class="carousel-image active">
+                <img src="{% static '/images/Image_1.jpg' %}" alt="Image 1">
+
+            </div>
+            <div class="carousel-image">
+                <img src="{% static '/images/Image_2.jpg' %}" alt="Image 2">
+            </div>
+            <div class="carousel-image">
+                <img src="{% static '/images/Image_3.jpg' %}" alt="Image 3">
+            </div>
+            <div class="carousel-image">
+                <img src="{% static '/images/Image_4.jpg' %}" alt="Image 4">
+            </div>
+            <div class="carousel-image">
+                <img src="{% static '/images/Image_5.jpg' %}" alt="Image 5">
+            </div>
+        </div>
+    </div>
+
+
+    <footer>
+      <!--  <p>&copy; 2023 Flux</p> -->
+    </footer>
+
+    <script>
+        // JavaScript code for carousel functionality
+        const carousel = document.querySelector('.carousel');
+        const carouselImages = document.querySelectorAll('.carousel-image');
+        const slideWidth = carouselImages[0].clientWidth; // Width of each slide
+        let currentIndex = 0;
+        const slideDuration = 5000; // Slide duration in milliseconds
+
+        // Function to show the current slide
+        function showSlide() {
+            carousel.style.transform = `translateX(-${slideWidth * currentIndex}px)`;
+        }
+
+        // Function to move to the next slide
+        function nextSlide() {
+            currentIndex++;
+            if (currentIndex >= carouselImages.length) {
+                currentIndex = 0;
+            }
+            showSlide();
+        }
+
+        // Start the carousel
+        setInterval(nextSlide, slideDuration);
+
+        // Show the initial slide
+        showSlide();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,7 @@
+<!-- add_user_to_project.html -->
+<h2>Add User to Project</h2>
+<form method="POST" action="{% url 'add_user_to_project' %}">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <input type="submit" value="Add User">
+</form>

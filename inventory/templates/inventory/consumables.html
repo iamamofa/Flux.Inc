@@ -1,0 +1,1142 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{% static '/images/Icon.png' %}">
+    <link rel="stylesheet" href="{% static 'css/inventory_style.css' %}">
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <title>Flux</title>
+</head>
+
+<body
+    class="relative min-h-screen font-poppins antialiased text-sm bg-white flex text-gray-800 h-full 2xl:max-w-[1920px] 2xl:mx-auto 2xl:border-r-2"
+    x-data="{ showMenu: false }">
+
+    <aside
+        class="flex flex-col lg:flex lg:flex-col justify-between shadow-xl lg:shadow-none lg:fixed min-h-screen top-0 z-20  bg-[#151e29]  w-fit bottom-0 lg:w-60 px-3 lg:px-6 pt-6  pb-0"
+        :class="showMenu ? 'fixed' : 'hidden'" x-transition.duration.500ms>
+        <div>
+            <a href="{% url 'home' %}"><div class="flex font-semibold text-lg  items-center justify-center space-x-2">
+                <span>
+                    <svg width="92" height="27" viewBox="0 0 92 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5.38281 26H0.337891V0.792969H17.9863V5.83789H5.38281V10.8828H12.9414V15.9277H5.38281V26ZM38.2363 26H20.5879V0.792969H25.6328V20.9551H38.2363V26ZM59.875 15.9277C59.875 17.3223 59.6113 18.6348 59.084 19.8652C58.5566 21.084 57.8359 22.1504 56.9219 23.0645C56.0078 23.9668 54.9355 24.6816 53.7051 25.209C52.4863 25.7363 51.1797 26 49.7852 26C48.3906 26 47.0781 25.7363 45.8477 25.209C44.6289 24.6816 43.5625 23.9668 42.6484 23.0645C41.7461 22.1504 41.0312 21.084 40.5039 19.8652C39.9766 18.6348 39.7129 17.3223 39.7129 15.9277V0.792969H44.7402V15.9277C44.7402 16.6191 44.8691 17.2695 45.127 17.8789C45.3965 18.4883 45.7598 19.0215 46.2168 19.4785C46.6738 19.9355 47.207 20.2988 47.8164 20.5684C48.4375 20.8262 49.0938 20.9551 49.7852 20.9551C50.4766 20.9551 51.127 20.8262 51.7363 20.5684C52.3574 20.2988 52.8965 19.9355 53.3535 19.4785C53.8105 19.0215 54.168 18.4883 54.4258 17.8789C54.6953 17.2695 54.8301 16.6191 54.8301 15.9277V0.792969H59.875V15.9277ZM83.834 26H77.7168L72.8652 17.8613L67.9961 26H61.9141L69.6484 13.3965L61.9141 0.792969H67.9961L72.8652 8.93164L77.7168 0.792969H83.834L76.0996 13.3965L83.834 26Z" fill="#FF5C00"/>
+                        <path d="M91.7344 23.207C91.7344 23.6289 91.6582 24.0273 91.5059 24.4023C91.3535 24.7656 91.1426 25.082 90.873 25.3516C90.6035 25.6211 90.2871 25.832 89.9238 25.9844C89.5605 26.1484 89.168 26.2305 88.7461 26.2305C88.3359 26.2305 87.9434 26.1484 87.5684 25.9844C87.2051 25.832 86.8828 25.6211 86.6016 25.3516C86.332 25.082 86.1152 24.7656 85.9512 24.4023C85.7988 24.0273 85.7227 23.6289 85.7227 23.207C85.7227 22.7969 85.7988 22.4102 85.9512 22.0469C86.1152 21.6836 86.332 21.3672 86.6016 21.0977C86.8828 20.8281 87.2051 20.6172 87.5684 20.4648C87.9434 20.3008 88.3359 20.2188 88.7461 20.2188C89.168 20.2188 89.5605 20.3008 89.9238 20.4648C90.2871 20.6172 90.6035 20.8281 90.873 21.0977C91.1426 21.3672 91.3535 21.6836 91.5059 22.0469C91.6582 22.4102 91.7344 22.7969 91.7344 23.207Z" fill="white"/>
+                    </svg>      
+                </span>
+            </div></a>
+
+            <div class="mt-12">
+                <div class="flex flex-col space-y-2 text-base font-medium ">
+                    <a class=" rounded-md px-3 py-3 text-gray-300 flex items-center hover:bg-gray-700 hover:text-white  transition ease-in-out justify-between space-x-2"
+                        href="{% url 'dashboard_consumables' project_name=project.name %}">
+                        <span>
+                            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"
+                                xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <rect width="22" height="22" fill="url(#pattern0)" />
+                                <defs>
+                                    <pattern id="pattern0" patternContentUnits="objectBoundingBox" width="1" height="1">
+                                        <use xlink:href="#image0_218_5" transform="scale(0.0416667)" />
+                                    </pattern>
+                                    <image id="image0_218_5" width="24" height="24"
+                                        xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYEAQAAAAa7ikwAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAACYktHRAAAqo0jMgAAAAlwSFlzAAAAYAAAAGAA8GtCzwAAAAd0SU1FB+cGDAw0EkOKsFkAAAIGSURBVEjH7Za9SgNBFIXPXbIE0SgqSBTSSBCEoCBooZhXsLAQ9A3EB7CSiKLY+RpiIaSy8Q8hKGKXQkECWSEBFcH4syJ4j8VETUjIzlp7YNll97v33JmdOwyorkuur5Oex6Z6fyePj6kjI6iKmkpRDw7It7fmMaUSdWOD6rowyW1ULpPd3eYql+1i1taE9DwgkYCV5ubMfWfHjr+9jQDxuB0MAAMD9iwAxONOuIDw+jcIEBkBfB9wXTve9wEAYmvg+w54cWFbDZDLAWdn5tkmJJcDOTZGPjy0bhhVcnX11yqTMe9a6e6OHB4WAKDGYpCpKTCZhLS315dRqYCnp+Lk83XFaSoFGR8HenqASKTmg0JubsDDQ3GenqofRIDOTog0mV0S0viPjGE+Tw4OgpOTkI4OwPMgJycir681hqOj1Pv74H1le7vetr+fzGYbucdH6tJSjcHRkd3GpUpNJk3y3l6yUGjNZzLVSp6f7QxIcmHBxOztBbOfn9TpaQeIRm1XNdDXR00kgJmZYNZxIIuL4TtZ0mmzKGyUTv9hqwgz4mjUsa/mW9fX9uzVlQN8fITKz/NzoFSyg7NZkMWi/SqanQUAcn4+mC0UyLY2kFtbdsmLRWos9jMQLi+3Zk3PwBxbNjfNsaVJT+jLC7m/Tx0aapgtnZggd3dNtZUKeXlJrqxQu7q+mS9KrRs/DEoLPwAAAABJRU5ErkJggg==" />
+                                </defs>
+                            </svg>
+                        </span>
+                        <span class="flex-1 pl-2">Dashboard</span>
+                    </a>
+                    <a class="bg-gray-700 rounded-md px-3 py-3 text-white flex items-center justify-between space-x-2"
+                        href="#">
+                        <span>
+                            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"
+                                xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <rect width="22" height="22" fill="url(#pattern1)" />
+                                <defs>
+                                    <pattern id="pattern1" patternContentUnits="objectBoundingBox" width="1" height="1">
+                                        <use xlink:href="#image0_218_7" transform="scale(0.0416667)" />
+                                    </pattern>
+                                    <image id="image0_218_7" width="24" height="24"
+                                        xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYEAQAAAAa7ikwAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAACYktHRAAAqo0jMgAAAAlwSFlzAAAAYAAAAGAA8GtCzwAAAAd0SU1FB+cGDAw5AuuT3nAAAACuSURBVEjH7ZVBDoQgDEV/ZdZeQ+Nadx5Eb8PdPANG7wJ2FiYzdUEAI3Ey8S1Lf38hUAAPzOPIbC0LvmsSa5mHwVengJeqApRCEKWAuj5hcA2vlGTe+h4gymYAmqbUHWQ/osfgpw3WFXAuXMI5YFlyN3ojzMYch5fWe1zrY9yYM5oCaJq4VmRevOaOW9S2vJUl0HXxZfwakh9JCKJ9kqZo/volPwYfg3mOS5V58Zo3vZ6Rlh0FHvwAAAAASUVORK5CYII=" />
+                                </defs>
+                            </svg>
+                        </span>
+                        <span class="flex-1 pl-2 ">Inventory</span>
+                    </a>
+                    <a class=" rounded-md px-3 py-3 text-gray-300 flex items-center hover:bg-gray-700 hover:text-white  transition ease-in-out justify-between space-x-2"
+                        href="{% url 'log' project_name=project.name %}">
+                        <span>
+                            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"
+                                xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <rect width="22" height="22" fill="url(#pattern2)" />
+                                <defs>
+                                    <pattern id="pattern2" patternContentUnits="objectBoundingBox" width="1" height="1">
+                                        <use xlink:href="#image0_220_9" transform="scale(0.0416667)" />
+                                    </pattern>
+                                    <image id="image0_220_9" width="24" height="24"
+                                        xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYEAQAAAAa7ikwAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAACYktHRAAAqo0jMgAAAAlwSFlzAAAAYAAAAGAA8GtCzwAAAAd0SU1FB+cGDA0AO7vQsfUAAAJ5SURBVEjHrVXNS3pRED33+RFBEIa9QiRol0QWUf+AYWAFQVBQtGjRLspV0EZo0coWFbSRCKJNtTaCEAlcCrXog1xrtBCCsC8pvee3eKU+9aX96sCFd++dmTMzd2YeUAJSCMr1dXJoiJyYYE1ISV5ekv39qAVSCHJzU9MbHq6P4Avn50Z2lS/jwMYG4PfX9KQqursNCX5vHACEMI6AwWCl8cdHoKHh/wmLMEOcnICnp8WjTEYo8Ti5uPg3BLTb9dGqqmZ8dvYvCARJ/t7M+7sQ1VOq/IWX36GMIJUCHA6gpcVwMRD4CYFZv21vBwIBIJMx1BA+n/YhJRiPQyQSQDptKF9/t5aOh1CI0uks2JBWa50EySTpcJA2m36trmr32aw2QhSFnJkhYzHtjCTv78lQiOzs1AWsr6KPD2BnB3h60rvh8wFuNzA3BxwdAYeHwPh4dY9fXoDpaaGEwz9LkTw70+T39vTnFxek368Xfnsj+/qqEKRSlE5nITXSbqeMRLS70VHKgQHtDUqxtUVptVY6FIlUqSJVhVhZAZ6fP4vMDNHbq6UuGgXW1r4bbPpq83go29rKCKxWYGGhKPT1kUwKkc2SLld1Y7kc6PVCNDUBu7tazygKRFdXWaPd3YEdHcWmUlUwGgUslkLtV8DrBaamAJsNaG4GTKbSEq2SouVl4PVV25tMED09QGsr2dgI3NwAY2N6HZcLODhAReLyeeD29gdVNDlJ6XaT+Xx9CsfHn1GUV4URYjHtv729XVs2kym8F3l9XX8US0uUFgu5v28s9PBAejzFd5CDg+TVVX2R5HKU8/OaYyMjZDhMptPauEgkKINBSlUtfYl/PjdKHhQoBVYAAAAASUVORK5CYII=" />
+                                </defs>
+                            </svg>
+
+                        </span>
+                        <span class="flex-1 pl-2 ">Logs</span>
+                    </a>
+                    {% if user == project.project_manager or user in project.project_editors.all %}
+                    <a class=" rounded-md px-3 py-3 text-gray-300 flex items-center hover:bg-gray-700 hover:text-white  transition ease-in-out justify-between space-x-2"
+                        href="{% url 'trash_consumables' project_name=project.name %}">
+                        <span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <rect width="24" height="24" fill="url(#pattern3)" />
+                                <defs>
+                                    <pattern id="pattern3" patternContentUnits="objectBoundingBox" width="1" height="1">
+                                        <use xlink:href="#image0_218_3" transform="scale(0.0416667)" />
+                                    </pattern>
+                                    <image id="image0_218_3" width="24" height="24"
+                                        xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYEAQAAAAa7ikwAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAACYktHRAAAqo0jMgAAAAlwSFlzAAAAYAAAAGAA8GtCzwAAAAd0SU1FB+cGDAwxJ2hOgD8AAAEtSURBVEjH3ZOxrgFRFEX3MSNCoaKj8BFEISE+QDut3j/wDSo/oNfp6SWi0wsaiikwyczZr5jk5T1mYu5kFO/t7p7su9c55+YC/15ksUjOZqTr8luPB7lYUKvVd/flPWA6BUYjYD4HzuewWqkAwyGwXov0++m7106HDAJyMnkFj8fhNIOB0QTU5RLSboenUgkoFADXBYLgt9OygHIZ8Dzgdgtru51Ir/fTZb8iNxswn08383abel1pFfnI5GoF1mpmSYeDSLf7XLaj3fU6pNEw69WOzMplt4xcZFaGAMv6MID8MOD5n2QOUE0OoOcZ5/N+Tw6Q69UYIJdLcgBSAGLuxACiu8kOwOPRHHA6JbZSWy3S95lYvk9tNo36IR2H3O9J1fhg1dDjOOYT/xV9AfxAziwfv5LAAAAAAElFTkSuQmCC" />
+                                </defs>
+                            </svg>
+                        </span>
+                        <span class="flex-1 pl-2 ">Trash</span>
+                    </a>
+                    {% endif %}
+                    {% if user == project.project_manager %}
+                    <a class=" rounded-md px-3 py-3 text-gray-300 flex items-center hover:bg-gray-700 hover:text-white  transition ease-in-out justify-between space-x-2"
+                        href="{% url 'team' project_name=project.name %}">
+                        <span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <rect width="24" height="24" fill="url(#pattern4)" />
+                                <defs>
+                                    <pattern id="pattern4" patternContentUnits="objectBoundingBox" width="1" height="1">
+                                        <use xlink:href="#image0_220_11" transform="scale(0.0416667)" />
+                                    </pattern>
+                                    <image id="image0_220_11" width="24" height="24"
+                                        xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYEAQAAAAa7ikwAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAACYktHRAAAqo0jMgAAAAlwSFlzAAAAYAAAAGAA8GtCzwAAAAd0SU1FB+cGDA0DCVgqs7YAAAIkSURBVEjH7VTNSgJRGD13MMgGJstyMzsTW7jSaVlI0bZF+AhTPUPtDMRNW7eBLxDpSC36oVm4KrAHCGzVKoo2RaHc0+IiOuptjLYdGAa+n/P9nHsv8I8QiEmCSMMAXRdiawsgwUYD4vhYCPLPHZCGQTYaHIHnkYbxOzJpWZTlMnl2RpZK5PQ05e4utXBdMhqlLJcpLy7U37I0nQpB+n6QIBZTnepQr6uYQfj+IG9/RGYyQD4/JFGIRiQwvKZ8nsxkRguME4yOA3qevoDngSsro3mdjkaDm5vguJWKEnncmup1tdZKJWCWV1ekZnJKyyJLJcrz80HBFJHrkrWa+ly3RxI8GMUiaZrjNQAAkUoB8/NAJAIRj0PYtnJsbABra6BpgqYJrK4C6+sqx7Yh4nFwagpIJIDlZY1ce3tkt9uftd2mXFwkq1X9KapWKRMJ8vGxb+t2KXd2hsiXlsivr2Dy9jZ5eMhQFItkoRC0fX6SyeRAgYODYMDLC+XsLPnxEV7g/V3Fvr4G7fv7fQ2YzQZHur+HyGaBaBShmJmByOXAVivIkcsNiHx3py5NT+yHByCdDifvkaXTKqe/E+D2FgAiACCMoyPy+hooFIBkEvB90HEme2sBIJUCfB+IxYB2Gzg5EcbQRKOn6vQ0fP891Go6nh+e22YT0Fz5ADodsNnUeX9cAmnbwOYm4DjAwgIwN6c8b2/A8zPQagGXl0I8PU2s1z+G8Q0QPXjdVSATGAAAAABJRU5ErkJggg==" />
+                                </defs>
+                            </svg>
+
+                        </span>
+                        <span class="flex-1 pl-2 ">Team</span>
+                    </a>
+                    {% endif %}
+                    <a class=" rounded-md px-3 py-3 text-gray-300 flex items-center hover:bg-gray-700 hover:text-white  transition ease-in-out justify-between space-x-2"
+                        href="{% url 'change_password' %}">
+                        <span>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <rect width="24" height="24" fill="url(#pattern5)" />
+                                <defs>
+                                    <pattern id="pattern5" patternContentUnits="objectBoundingBox" width="1" height="1">
+                                        <use xlink:href="#image0_220_10" transform="scale(0.0416667)" />
+                                    </pattern>
+                                    <image id="image0_220_10" width="24" height="24"
+                                        xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYEAQAAAAa7ikwAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAACYktHRAAAqo0jMgAAAAlwSFlzAAAAYAAAAGAA8GtCzwAAAAd0SU1FB+cGDA0DJvP7ju8AAAGlSURBVEjHtVYxsgFBEG0bENlAsIqM+la0CScg2CqbsZRLELkDLiBwCI5AyBGwqiirihsoSb8fLJ+yO2ZK+S/s6dc986a7Z4gkAIpF4HxGCOcz2DRlfE3mQOQ4ROl02J5OU8xxvpDg50e8VigoJwDH4+BOB6jVAE272wilkli/chmcSARSalrA7XbB8XjYl/v9h777PTAcApsNpPC8wHe3e9gGg5eLzOeBy0UeTBXXK/hJPmA6/V7wO6bTW/Bq9fvBb2Db1ojabXkl+T5Rs0nQdYKuEzUaROu1lBZrNAhsWYDvi7dxOACpVKgokEq95/k+2LJuFWQYwGwW7ei6wirlViuaM5uBDeNlR5lMtI7JpDiBrkcnyGZDjfYZYjElt/cS1etCHlw3+tTz+Z9E8ktercSX/K7Tj0ewZREwHssL2vfBrRZY1wPdXVdtjIzHBFQqcscPwbZ9k2ky+X7wyeRJz1zuX4ddcIqoce158mAK4zpIcH9wHOfx4CQS4MVCLMNyGX5wer27Ta1HMBqJdz8ayfgKnbzdframegI2zehvy+mk8m35Bdnx4EMUbTJlAAAAAElFTkSuQmCC" />
+                                </defs>
+                            </svg>
+                        </span>
+                        <span class="flex-1 pl-2 ">Security</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div
+            class="flex items-center justify-between bg-gray-800 text-white -mx-3 lg:-mx-6 px-6 lg:px-9 py-3  border-t-gray-500">
+                <a href="{% url 'logout' %}" style="text-align: center;"
+                    class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90">Logout</a>
+        </div>
+    </aside>
+
+
+
+    <main class="bg-white min-h-screen lg:ml-60 flex w-full">
+        <!-- Screen Overlay shows on small screen showMenu -->
+        <div class="absolute lg:hidden left-0 top-0 h-full w-full bg-black/30 z-[15]" @click="showMenu = false"
+            x-show="showMenu" x-transition.opacity.duration.500ms>
+        </div>
+
+        <!-- Filters Side-->
+        <aside class="hidden sm:block w-48 md:w-60 2xl:w-80 bg-gray-50 py-5 lg:py-10 px-2 md:px-4 text-sm">
+            <!-- Logo on small screens -->
+            <a href="{% url 'home' %}"><div class="sm:flex lg:hidden font-semibold text-lg justify-center items-center space-x-1 mb-8">
+                <span>
+                    <svg width="92" height="27" viewBox="0 0 92 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M5.38281 26H0.337891V0.792969H17.9863V5.83789H5.38281V10.8828H12.9414V15.9277H5.38281V26ZM38.2363 26H20.5879V0.792969H25.6328V20.9551H38.2363V26ZM59.875 15.9277C59.875 17.3223 59.6113 18.6348 59.084 19.8652C58.5566 21.084 57.8359 22.1504 56.9219 23.0645C56.0078 23.9668 54.9355 24.6816 53.7051 25.209C52.4863 25.7363 51.1797 26 49.7852 26C48.3906 26 47.0781 25.7363 45.8477 25.209C44.6289 24.6816 43.5625 23.9668 42.6484 23.0645C41.7461 22.1504 41.0312 21.084 40.5039 19.8652C39.9766 18.6348 39.7129 17.3223 39.7129 15.9277V0.792969H44.7402V15.9277C44.7402 16.6191 44.8691 17.2695 45.127 17.8789C45.3965 18.4883 45.7598 19.0215 46.2168 19.4785C46.6738 19.9355 47.207 20.2988 47.8164 20.5684C48.4375 20.8262 49.0938 20.9551 49.7852 20.9551C50.4766 20.9551 51.127 20.8262 51.7363 20.5684C52.3574 20.2988 52.8965 19.9355 53.3535 19.4785C53.8105 19.0215 54.168 18.4883 54.4258 17.8789C54.6953 17.2695 54.8301 16.6191 54.8301 15.9277V0.792969H59.875V15.9277ZM83.834 26H77.7168L72.8652 17.8613L67.9961 26H61.9141L69.6484 13.3965L61.9141 0.792969H67.9961L72.8652 8.93164L77.7168 0.792969H83.834L76.0996 13.3965L83.834 26Z" fill="#FF5C00"/>
+                        <path d="M91.7344 23.207C91.7344 23.6289 91.6582 24.0273 91.5059 24.4023C91.3535 24.7656 91.1426 25.082 90.873 25.3516C90.6035 25.6211 90.2871 25.832 89.9238 25.9844C89.5605 26.1484 89.168 26.2305 88.7461 26.2305C88.3359 26.2305 87.9434 26.1484 87.5684 25.9844C87.2051 25.832 86.8828 25.6211 86.6016 25.3516C86.332 25.082 86.1152 24.7656 85.9512 24.4023C85.7988 24.0273 85.7227 23.6289 85.7227 23.207C85.7227 22.7969 85.7988 22.4102 85.9512 22.0469C86.1152 21.6836 86.332 21.3672 86.6016 21.0977C86.8828 20.8281 87.2051 20.6172 87.5684 20.4648C87.9434 20.3008 88.3359 20.2188 88.7461 20.2188C89.168 20.2188 89.5605 20.3008 89.9238 20.4648C90.2871 20.6172 90.6035 20.8281 90.873 21.0977C91.1426 21.3672 91.3535 21.6836 91.5059 22.0469C91.6582 22.4102 91.7344 22.7969 91.7344 23.207Z" fill="white"/>
+                    </svg> 
+                </span>
+            </div></a>
+
+            <div class="text-gray-500 tracking-wider font-medium uppercase">Filters</div>
+
+            <div class="border-b mt-5 pb-3">
+                <div class="text-gray-700 flex items-center justify-between mb-3">
+                    <span>Name</span>
+                </div>
+                <div class="mt-1  text-gray-500 text-sm ">
+                    <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" type="text"
+                        id="nameFilterInput" placeholder="Filter by name">
+                </div>
+            </div>
+
+            <div class="border-b mt-5 pb-3">
+                <div class="text-gray-700 flex items-center justify-between mb-3">
+                    <span>Product Code</span>
+                </div>
+                <div class="mt-1  text-gray-500 text-sm ">
+                    <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" type="text"
+                        id="productCodeFilterInput" placeholder="Filter by product code">
+                </div>
+            </div>
+
+            <div class="border-b mt-5 pb-3">
+                <div class="text-gray-700 flex items-center justify-between mb-3">
+                    <span>Quantity</span>
+                </div>
+
+                <div class="quantity-filter-container">
+                    <div class="mt-1  text-gray-500 text-sm ">
+                        <label for="minQuantityFilterInput">Min:</label>
+                    </div>
+                    <div><input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
+                            type="number" id="minQuantityFilterInput">
+                    </div>
+                    <div class="mt-1  text-gray-500 text-sm ">
+                        <label id="maxQuantityFilterInputLabel" for="maxQuantityFilterInput">Max:</label>
+                    </div>
+                    <div><input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
+                            type="number" id="maxQuantityFilterInput">
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-b mt-5 pb-3">
+                <div class="text-gray-700 flex items-center justify-between mb-3">
+                    <span>Date Created</span>
+                </div>
+
+                <div class="quantity-filter-container">
+                    <div class="mt-1  text-gray-500 text-sm ">
+                        <label id="minDateCreatedFilterInputLabel" for="minDateCreatedFilterInput">Min:</label>
+                    </div>
+                    <div><input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
+                            type="date" id="minDateCreatedFilterInput">
+                    </div>
+                </div>
+                <div class="quantity-filter-container">
+                    <div class="mt-1  text-gray-500 text-sm ">
+                        <label id="maxDateCreatedFilterInputLabel" for="maxDateCreatedFilterInput">Max:</label>
+                    </div>
+                    <div><input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
+                            type="date" id="maxDateCreatedFilterInput">
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-b mt-5 pb-3">
+                <div class="text-gray-700 flex items-center justify-between mb-3">
+                    <span>Expiry Date</span>
+                </div>
+
+                <div class="quantity-filter-container">
+                    <div class="mt-1  text-gray-500 text-sm ">
+                        <label id="minDateExpiredFilterInputLabel" for="minDateExpiredFilterInput">Min:</label>
+                    </div>
+                    <div><input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
+                            type="date" id="minDateExpiredFilterInput">
+                    </div>
+                </div>
+                <div class="quantity-filter-container">
+                    <div class="mt-1  text-gray-500 text-sm ">
+                        <label id="maxDateExpiredFilterInputLabel" for="maxDateExpiredFilterInput">Max:</label>
+                    </div>
+                    <div><input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
+                            type="date" id="maxDateExpiredFilterInput">
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-b mt-5 pb-3">
+                <div class="text-gray-700 flex items-center justify-between mb-3">
+                    <span>Storage Location</span>
+                </div>
+                <div class="mt-1  text-gray-500 text-sm ">
+                    <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" type="text"
+                        id="storageLocationFilterInput" placeholder="Filter by storage location">
+                </div>
+            </div>
+
+            <div class="border-b mt-5 pb-3">
+                <div class="text-gray-700 flex items-center justify-between mb-3">
+                    <span>Sort By</span>
+                </div>
+                <div class="mt-1  text-gray-500 text-sm ">
+                    <select id="sortColumnDropdown" onchange="sortTableByColumn()"
+                        class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
+                        <option value="0">None</option>
+                        <option value="1">Name</option>
+                        <option value="2">Product Code</option>
+                        <option value="4">Quantity</option>
+                        <option value="5">Date Created</option>
+                        <option value="6">Expiry Date</option>
+                        <option value="7">Storage Location</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Apply Button Section -->
+            <div class="mt-8 flex items-start justify-between space-x-3">
+                <button id="resetButton"
+                    class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90">Reset</button>
+            </div>
+
+        </aside>
+
+        <!-- Clients Main-->
+        <section class="flex-1 py-6 px-4 md:px-4 lg:px-8">
+
+            <!-- Header -->
+            <div class="flex items-center justify-between">
+            <div>
+                <div class="text-gray-700 flex items-center justify-between mb-3">
+                    <span>PROJECT</span>
+                </div>
+                <div class="dropdown">
+                    <div class="project-name-container">
+                        <span class="project-name-text text-gray-900 text-xl font-semibold">{{ project.name }}</span>
+                        <svg class="dropdown-arrow" width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                          <rect width="8" height="8" fill="url(#pattern7)"/>
+                          <defs>
+                            <pattern id="pattern7" patternContentUnits="objectBoundingBox" width="1" height="1">
+                              <use xlink:href="#image0_240_2" transform="scale(0.0625)"/>
+                            </pattern>
+                            <image id="image0_240_2" width="16" height="16" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAwgAAAMIBT4kc1wAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAACASURBVDiN1dOxDcIwEEDRf2QtOqgYIx0gyIgRsyCxA00+zVEgMIodGiy5839XWBcqS85qUf0LIIAtsG7sLwA3wMZ77YA7sGuYLjCQvzBUTp6AXgX1iZxr4xcgkVNN/AYkcpwbfwQSOcyJi0Ai+wyLsUp824WI2ACTOhbf/P8yPQAoP83ZkoVsJgAAAABJRU5ErkJggg=="/>
+                          </defs>
+                        </svg>
+                    </div> 
+                    <div class="dropdown-content">
+                      {% for project in projects %}
+                      <a href="{% url 'consumables' project_name=project.name %}">{{ project.name }}</a>
+                      {% endfor %}   
+                  </div>
+                </div>
+            </div>
+                <div class="flex items-center space-x-4 ">
+                    {% if user == project.project_manager or user in project.project_editors.all %}
+                    <div class="dropdown">
+                        <button class="bg-gray-200 p-2 text-gray-600 rounded hover:bg-gray-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M9 3.75H6.912a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H15M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859M12 3v8.25m0 0l-3-3m3 3l3-3" />
+                            </svg>
+                        </button>
+                        <div class="dropdown-content">
+                            <a href="{% url 'export_consumable_csv' project_name=project.name %}">CSV</a>
+                            <a href="{% url 'export_consumable_excel' project_name=project.name %}">XLS</a>
+                            <a href="{% url 'export_consumable_txt' project_name=project.name %}">TXT</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <!--Add Item Button -->
+                    <button id="addItemBtn" onclick="showAddPopup()"
+                        class="bg-primary hover:bg-primary/90 py-1.5 px-4 rounded flex items-center text-white space-x-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+                            <path fill-rule="evenodd"
+                                d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        <span>Add Consumable</span>
+                    </button>
+                    <!-- Menu button on small screen -->
+                    <button
+                        class="lg:hidden bg-gray-50 p-2 text-gray-600 rounded hover:bg-gray-300 focus:text-primary outline-none focus:drop-shadow"
+                        @click="showMenu = !showMenu">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                            <path fill-rule="evenodd"
+                                d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm7 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navigation View -->
+            <nav class="flex items-center mt-8 border-b space-x-10 text-gray-400 font-medium">
+                <a href="{% url 'consumables' project_name=project.name %}"
+                    class="flex items-center space-x-1 text-gray-600 border-b-2 border-b-primary pb-3">
+                    <span>Consumables</span>
+                </a>
+                <a href="{% url 'reagents' project_name=project.name %}"
+                    class="flex items-center space-x-1 pb-3 border-b-2 border-transparent hover:border-b-primary hover:text-gray-600">
+                    <span>Reagents</span>
+                </a>
+                <a href="{% url 'equipment_' project_name=project.name %}"
+                    class="flex items-center space-x-1 pb-3 border-b-2 border-transparent hover:border-b-primary hover:text-gray-600">
+                    <span>Equipment</span>
+                </a>
+                <a href="{% url 'samples' project_name=project.name %}"
+                    class="flex items-center space-x-1 pb-3 border-b-2 border-transparent hover:border-b-primary hover:text-gray-600">
+                    <span>Samples</span>
+                </a>
+            </nav>
+            <div class="table-container">
+                <div class="mt-8 text-gray-500">
+
+                    <table class="w-full table-auto">
+                        <thead class="uppercase tracking-wider border-b h-7 align-top text-xs font-semibold">
+                            <tr>
+                                <td class="min-w-fit w-3/5 md:w-1/2 lg:w-fit">Name</td>
+                                <td class="">Product Code</td>
+                                <td class="">Pack Size</td>
+                                <td class="">Quantity</td>
+                                <td class="">Date Created</td>
+                                <td class="">Expiry Date</td>
+                                <td class="">Storage Location</td>
+                                <td class=""></td>
+                            </tr>
+                        </thead>
+                        <tbody id="consumablesTable">
+                            {% for consumable in consumables %}
+                            <tr {% if consumable.quantity < consumable.threshold_value %}class="h-16 border-b border-gray-100 row-highlight" {% endif %} class="h-16 border-b border-gray-100 hover:bg-primary/5" data-id="{{ consumable.id }}">
+                                <td class="font-semibold text-sm">
+                                    {{ consumable.name }}
+                                </td>
+                                <td class="text-xs space-y-1.5">
+                                    {{ consumable.product_code }}
+                                </td>
+                                <td class="text-xs space-y-1.5">
+                                    {{ consumable.pack_size_rem }} / {{ consumable.pack_size }}
+                                </td>
+                                <td class="text-xs space-y-1.5">
+                                    {{ consumable.quantity }}
+                                </td>
+                                <td class="text-xs space-y-1.5">
+                                    {{ consumable.date_recorded|date:"Y-m-d" }}
+                                </td>
+                                <td class="text-xs space-y-1.5">
+                                    {{ consumable.expiry_date|date:"Y-m-d" }}
+                                </td>
+                                <td class="text-xs space-y-1.5">
+                                    {{ consumable.storage_location }}
+                                </td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button class="dropbtn">. . .</button>
+                                        <div class="dropdown-content">
+                                            <a href=""
+                                                onclick="showRetrievePopup('{{ consumable.id }}'); return false;">Retrieve</a>
+                                            <a href=""
+                                            onclick="showReturnPopup('{{ consumable.id }}'); return false;">Return</a>
+                                            {% if user == project.project_manager or user in project.project_editors.all %}
+                                            <hr>
+                                            <a href=""
+                                                onclick="showEditPopup('{{ consumable.id }}'); return false;">Edit</a>
+                                            <a href=""
+                                                onclick="showDeletePopup('{{ project.name }}','{{ consumable.id }}'); return false;">Delete</a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+
+
+        <div class="popup-container1" id="addPopup">
+            <div class="popup-card">
+                <h2>Add Item</h2>
+                <div class="box">
+                    <form id="consumable-form" method="POST" action="{% url 'add_consumable' project_name=project.name %}">
+                        {% csrf_token %}
+                        <div class="inputBox">
+                            <input type="text" name="name" id="name" required=""
+                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.name }}">
+                            <label>Name</label>
+                        </div>
+                        <div class="inputBox">
+                            <input type="text" name="product_code" id="product_code" required=""
+                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.product_code }}">
+                            <label>Product Code</label>
+                        </div>
+                        <div class="inputBox">
+                            <input type="text" name="pack_size" id="pack_size" required=""
+                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.pack_size }}">
+                            <label>Pack Size</label>
+                        </div>
+                        <div class="inputBox">
+                            <input type="text" name="quantity" id="quantity" required=""
+                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.quantity }}">
+                            <label>Quantity</label>
+                        </div>
+                        <div class="form-row">
+                            <label for="expiry_date">Expiry Date</label>
+                            <div class="inputBox">
+                                <input type="date" name="expiry_date" id="expiry_date" required=""
+                                    value="{{ form.expiry_date }}">
+                            </div>
+                        </div>
+                        <div class="inputBox">
+                            <input type="text" name="storage_location" id="storage_location" required=""
+                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.storage_location }}">
+                            <label>Storage Location</label>
+                        </div>
+                        <div class="inputBox">
+                            <input type="text" name="threshold_value" id="threshold_value" required=""
+                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.threshold_value }}">
+                            <label>Threshold</label>
+                        </div>
+                        <div class="inputBox button">
+                            <button class = "bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="Submit">Add</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="popup-container2" id="editPopup">
+            <div class="popup-card">
+                <h2>Edit Item</h2>
+                <div class="box">
+                    <form id="edit-form" method="POST" action="">
+                        {% csrf_token %}
+                        <div class="inputBox">
+                            <input type="text" name="name" id="name" required=""
+                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.name }}">
+                            <label>Name</label>
+                        </div>
+                        <div class="inputBox">
+                            <input type="text" name="product_code" id="product_code" required=""
+                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.product_code }}">
+                            <label>Product Code</label>
+                        </div>
+                        <div class="inputBox">
+                            <input type="text" name="pack_size" id="pack_size" required=""
+                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.pack_size }}">
+                            <label>Pack Size</label>
+                        </div>
+                        <div class="inputBox">
+                            <input type="text" name="quantity" id="quantity" required=""
+                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.quantity }}">
+                            <label>Quantity</label>
+                        </div>
+                        <div class="form-row">
+                            <label for="expiry_date">Expiry Date</label>
+                            <div class="inputBox">
+                                <input type="date" name="expiry_date" id="expiry_date" required=""
+                                    value="{{ form.expiry_date }}">
+                            </div>
+                        </div>
+                        <div class="inputBox">
+                            <input type="text" name="storage_location" id="storage_location" required=""
+                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.storage_location }}">
+                            <label>Storage Location</label>
+                        </div>
+                        <div class="inputBox">
+                            <input type="text" name="threshold_value" id="threshold_value" required=""
+                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.threshold_value }}">
+                            <label>Threshold</label>
+                        </div>
+                        <div class="inputBox button">
+                            <button class = "bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="Submit" onclick="">Edit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="popup-container3" id="retrievePopup">
+            <div class="popup-card">
+                <h2>Retrieve Item</h2>
+                <br>
+                <form id="retrieve-form" method="POST" action="">
+                    {% csrf_token %}
+                    <div class="quantity-filter-container">
+                        <label for="retrieve_by">Retrieve By</label>
+                        <div class="inputBox">
+                            <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" id="retrieve_by" name="retrieve_by" required=""
+                            onkeyup="this.setAttribute('value', this.value);" value="">
+                                <option value="Pack size">Pack size</option>
+                                <option value="Quantity">Quantity</option>
+                              </select>
+                        </div>
+                    </div>
+                    <div class="quantity-filter-container">
+                    <h3>Amount</h3>
+                    <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" type="number" name="amount" id="retrieveFilterInput" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="">
+                    </div>
+                    <br>
+                    <div class="inputBox button">
+                        <button class = "bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="Submit" onclick="">OK</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="popup-container4" id="returnPopup">
+            <div class="popup-card">
+                <h2>Return Item</h2>
+                <br>
+                <form id="return-form" method="POST" action="">
+                    {% csrf_token %}
+                    <div class="quantity-filter-container">
+                        <label for="return_by">Return By</label>
+                        <div class="inputBox">
+                            <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" id="return_by" name="return_by" required=""
+                            onkeyup="this.setAttribute('value', this.value);" value="">
+                                <option value="Pack size">Pack size</option>
+                                <option value="Quantity">Quantity</option>
+                              </select>
+                        </div>
+                    </div>
+                    <div class="quantity-filter-container">
+                    <h3>Amount</h3>
+                    <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" type="number" name="amount" id="returnFilterInput" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="">
+                    </div>
+                    <br>
+                    <div class="inputBox button">
+                        <button class = "bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="Submit" onclick="">OK</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="popup-container1" id="deletePopup">
+            <div class="popup-card">
+                <h2>Confirm Deletion</h2>
+                <br>
+                <p>Are you sure you want to delete this item?</p>
+                <div class="buttons">
+                    <button class="border border-gray-300 font-medium text-sm w-1/3 text-gray-500 tracking-wide py-2 rounded-md hover:border-gray-400" style="margin-right: 10px;" onclick="closeDeletePopup()">Cancel</button>
+                    <button class="delete-bg-primary border delete-border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:delete-bg-primary/90" onclick="deleteItem()">Confirm</button>
+                </div>
+            </div>
+        </div>
+
+
+
+    </main>
+
+
+
+    <script>
+        const modalContainer1 = document.querySelector(".popup-container1");
+        const modalContainer2 = document.querySelector(".popup-container2");
+        const modalContainer3 = document.querySelector(".popup-container3");
+        const modalContainer4 = document.querySelector(".popup-container4");
+
+        let currentItemId; // Declare a variable to store the current item ID
+        let currentProject;
+
+        modalContainer1.addEventListener("click", (event) => {
+            if (event.target === modalContainer1) {
+                const popup = document.getElementById('addPopup');
+                popup.style.display = 'none';
+            }
+        });
+
+        modalContainer2.addEventListener("click", (event) => {
+            if (event.target === modalContainer2) {
+                const popup = document.getElementById('editPopup');
+                popup.style.display = 'none';
+            }
+        });
+
+        modalContainer3.addEventListener("click", (event) => {
+            if (event.target === modalContainer3) {
+                const popup = document.getElementById('retrievePopup');
+                popup.style.display = 'none';
+            }
+        });
+
+        modalContainer4.addEventListener("click", (event) => {
+            if (event.target === modalContainer4) {
+                const popup = document.getElementById('returnPopup');
+                popup.style.display = 'none';
+            }
+        });
+
+        function showAddPopup() {
+            const popup = document.getElementById('addPopup');
+            popup.style.display = 'flex';
+        }
+
+        function closeAddPopup() {
+            const popup = document.getElementById('addPopup');
+            popup.style.display = 'none';
+        }
+
+
+        // AJAX submission
+        const form = document.getElementById("consumable-form");
+
+        form.addEventListener("Submit", (event) => {
+            event.preventDefault();
+            const formData = new FormData(form);
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", form.action);
+            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    // Handle success response
+                    console.log(xhr.responseText);
+                    main.classList.remove("show"); // Close the modal dialog
+                } else {
+                    // Handle error response
+                    console.error(xhr.responseText);
+                }
+            };
+            xhr.send(formData);
+        });
+
+
+        function showEditPopup(id) {
+            console.log(id);
+            currentItemId = id;
+            const popup = document.getElementById('editPopup');
+            popup.style.display = 'flex';
+            getItemInfo()
+        }
+
+        function closeEditPopup() {
+            const popup = document.getElementById('editPopup');
+            popup.style.display = 'none';
+        }
+
+        function showRetrievePopup(id) {
+            console.log(id);
+            currentItemId = id;
+            const popup = document.getElementById('retrievePopup');
+            popup.style.display = 'flex';
+        }
+
+        function closeRetrievePopup() {
+            const popup = document.getElementById('retrievePopup');
+            popup.style.display = 'none';
+        }
+
+        function showReturnPopup(id) {
+            console.log(id);
+            currentItemId = id;
+            const popup = document.getElementById('returnPopup');
+            popup.style.display = 'flex';
+        }
+
+        function closeReturnPopup() {
+            const popup = document.getElementById('returnPopup');
+            popup.style.display = 'none';
+        }
+
+        function getItemInfo() {
+            const id = currentItemId;
+
+            fetch(`/get_consumable_info/${id}`, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Update the input fields with the retrieved data
+                    const form = document.getElementById('edit-form');
+
+                    // Update the input fields with the retrieved data
+                    form.elements.name.value = data.name;
+                    form.elements.product_code.value = data.product_code;
+                    form.elements.pack_size.value = data.pack_size;
+                    form.elements.quantity.value = data.quantity;
+                    form.elements.expiry_date.value = data.expiry_date;
+                    form.elements.storage_location.value = data.storage_location;
+                    form.elements.threshold_value.value = data.threshold_value;
+
+                })
+                .catch(error => {
+                    console.error(`Error retrieving consumable information:`, error);
+                });
+
+        }
+
+
+
+        function showDeletePopup(projectName,id) {
+            currentItemId = id;
+            currentProject = projectName;
+            const popup = document.getElementById('deletePopup');
+            popup.style.display = 'flex';
+        }
+
+        function closeDeletePopup() {
+            const popup = document.getElementById('deletePopup');
+            popup.style.display = 'none';
+        }
+
+        function deleteItem() {
+            const id = currentItemId;
+            const projectName = currentProject;
+
+            console.log(projectName);
+            console.log(id);
+
+            fetch(`/delete_consumable/${projectName}/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // Handle successful deletion
+                        console.log(`Consumable with ID ${id} deleted successfully.`);
+                        removeTableRow(id); // Call a function to remove the deleted row from the table
+                    } else {
+                        // Handle deletion error
+                        console.error(`Error deleting consumable with ID ${id}.`);
+                    }
+                    closeDeletePopup();
+                })
+                .catch(error => {
+                    // Handle deletion error
+                    console.error(`Error deleting consumable with ID ${id}:`, error);
+                    closeDeletePopup();
+                });
+        }
+
+
+        function removeTableRow(id) {
+            const table = document.getElementById('consumablesTable');
+            const row = table.querySelector(`tr[data-id="${id}"]`);
+
+            if (row) {
+                row.remove(); // Remove the row from the table
+            }
+        }
+
+        const form2 = document.getElementById('edit-form');
+        form2.addEventListener('submit', (event) => {
+            event.preventDefault(); // Prevent the form from submitting normally
+
+            const id = currentItemId;
+            const formData = new FormData(form2);
+
+            // Convert form data to JSON object
+            const jsonData = {};
+            formData.forEach((value, key) => {
+                jsonData[key] = value;
+            });
+
+            fetch(`/edit_consumable/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(jsonData),
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // Handle successful update
+                        console.log(`Consumable with ID ${id} updated successfully.`);
+                        refreshTableRow(id, jsonData)
+                        closeEditPopup();
+                    } else {
+                        // Handle update error
+                        console.error(`Error updating consumable with ID ${id}.`);
+                    }
+                })
+                .catch(error => {
+                    // Handle update error
+                    console.error(`Error updating consumable with ID ${id}:`, error);
+                });
+        });
+
+        const retrieveFilterInput = document.getElementById('retrieveFilterInput');
+
+        const form3 = document.getElementById('retrieve-form');
+        form3.addEventListener('submit', (event) => {
+            event.preventDefault(); // Prevent the form from submitting normally
+
+            const id = currentItemId;
+            const projectName = currentProject;
+
+            const formData = new FormData(form3);
+
+            // Convert form data to JSON object
+            const jsonData = {};
+            formData.forEach((value, key) => {
+                jsonData[key] = value;
+            });
+
+            fetch(`/retrieve_consumable/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(jsonData),
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // Handle successful update
+                        console.log(`Consumable with ID ${id} updated successfully.`);
+                        fetch(`/get_consumable_info/${id}`, {
+                            method: 'GET',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                        })
+                            .then(response => response.json())
+                            .then(data => refreshTableRow(id, data))
+                            .catch(error => {
+                                console.error(`Error retrieving consumable information:`, error);
+                            });
+                        closeRetrievePopup();
+                        retrieveFilterInput.value = '';
+
+                    } else {
+                        // Handle update error
+                        console.error(`Error updating consumable with ID ${id}.`);
+                    }
+                })
+                .catch(error => {
+                    // Handle update error
+                    console.error(`Error updating consumable with ID ${id}:`, error);
+                });
+        });
+
+
+
+        const returnFilterInput = document.getElementById('returnFilterInput');
+
+        const form4 = document.getElementById('return-form');
+        form4.addEventListener('submit', (event) => {
+            event.preventDefault(); // Prevent the form from submitting normally
+
+            const id = currentItemId;
+            const formData = new FormData(form4);
+
+            // Convert form data to JSON object
+            const jsonData = {};
+            formData.forEach((value, key) => {
+                jsonData[key] = value;
+            });
+
+            fetch(`/return_consumable/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(jsonData),
+            })
+                .then(response => {
+                    if (response.ok) {
+                        // Handle successful update
+                        console.log(`Consumable with ID ${id} updated successfully.`);
+                        fetch(`/get_consumable_info/${id}`, {
+                            method: 'GET',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                        })
+                            .then(response => response.json())
+                            .then(data => refreshTableRow(id, data))
+                            .catch(error => {
+                                console.error(`Error retrieving consumable information:`, error);
+                            });
+                        closeReturnPopup();
+                        returnFilterInput.value = '';
+
+                    } else {
+                        // Handle update error
+                        console.error(`Error updating consumable with ID ${id}.`);
+                    }
+                })
+                .catch(error => {
+                    // Handle update error
+                    console.error(`Error updating consumable with ID ${id}:`, error);
+                });
+        });
+
+
+
+        function refreshTableRow(id, data) {
+            const table = document.getElementById('consumablesTable');
+            const row = table.querySelector(`tr[data-id="${id}"]`);
+
+            if (row) {
+                // Update the values in the row with the new data
+                const columns = row.querySelectorAll('td');
+                columns[0].textContent = data.name;
+                columns[1].textContent = data.product_code;
+                columns[2].textContent = data.pack_size_rem + '/' + data.pack_size;
+                columns[3].textContent = data.quantity;
+                columns[5].textContent = data.expiry_date;
+                columns[6].textContent = data.storage_location;
+            }
+        }
+
+        // Get the filter inputs
+        const nameFilterInput = document.getElementById('nameFilterInput');
+        const productCodeFilterInput = document.getElementById('productCodeFilterInput');
+        const minQuantityFilterInput = document.getElementById('minQuantityFilterInput');
+        const maxQuantityFilterInput = document.getElementById('maxQuantityFilterInput');
+        const minDateExpiredFilterInput = document.getElementById('minDateExpiredFilterInput');
+        const maxDateExpiredFilterInput = document.getElementById('maxDateExpiredFilterInput');
+        const minDateCreatedFilterInput = document.getElementById('minDateCreatedFilterInput');
+        const maxDateCreatedFilterInput = document.getElementById('maxDateCreatedFilterInput');
+        const storageLocationFilterInput = document.getElementById('storageLocationFilterInput');
+
+
+        // Add event listeners to the filter inputs
+        nameFilterInput.addEventListener('input', filterTable);
+        productCodeFilterInput.addEventListener('input', filterTable);
+        minQuantityFilterInput.addEventListener('input', filterTable);
+        maxQuantityFilterInput.addEventListener('input', filterTable);
+        minDateExpiredFilterInput.addEventListener('change', filterTableByDate);
+        maxDateExpiredFilterInput.addEventListener('change', filterTableByDate);
+        minDateCreatedFilterInput.addEventListener('change', filterTableByDate);
+        maxDateCreatedFilterInput.addEventListener('change', filterTableByDate);
+        storageLocationFilterInput.addEventListener('input', filterTable);
+
+
+        // Define the filter function
+        function filterTable() {
+            const nameFilterValue = nameFilterInput.value.toLowerCase();
+            const productCodeFilterValue = productCodeFilterInput.value.toLowerCase();
+            const minQuantityFilterValue = minQuantityFilterInput.value !== '' ? parseInt(minQuantityFilterInput.value) : 0;
+            const maxQuantityFilterValue = maxQuantityFilterInput.value !== '' ? parseInt(maxQuantityFilterInput.value) : Infinity;
+            const minDateExpiredFilterValue = minDateExpiredFilterInput.value || '1900-01-01'; // Default minimum date
+            const maxDateExpiredFilterValue = maxDateExpiredFilterInput.value || '9999-12-31'; // Default maximum date
+            const minDateCreatedFilterValue = minDateCreatedFilterInput.value || '1900-01-01'; // Default minimum date
+            const maxDateCreatedFilterValue = maxDateCreatedFilterInput.value || '9999-12-31'; // Default maximum date
+            const storageLocationFilterValue = storageLocationFilterInput.value.toLowerCase();
+
+            const tableRows = document.querySelectorAll('#consumablesTable tr');
+
+            tableRows.forEach((row) => {
+                const name = row.querySelector('td:first-child').textContent.toLowerCase();
+                const productCode = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                const quantity = parseInt(row.querySelector('td:nth-child(4)').textContent);
+                const createdDate = row.querySelector('td:nth-child(5)').textContent;
+                const expiryDate = row.querySelector('td:nth-child(6)').textContent;
+                const storageLocation = row.querySelector('td:nth-child(7)').textContent.toLowerCase();
+
+                if (
+                    name.includes(nameFilterValue) &&
+                    productCode.includes(productCodeFilterValue) &&
+                    quantity >= minQuantityFilterValue &&
+                    quantity <= maxQuantityFilterValue &&
+                    isDateInRange(createdDate, minDateCreatedFilterValue, maxDateCreatedFilterValue) &&
+                    isDateInRange(expiryDate, minDateExpiredFilterValue, maxDateExpiredFilterValue) &&
+                    storageLocation.includes(storageLocationFilterValue)
+                ) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // Define the date filter function
+        function filterTableByDate() {
+            filterTable();
+        }
+
+        // Helper function to check if a date falls within a given range
+        function isDateInRange(date, minDate, maxDate) {
+            if (!date || !minDate || !maxDate) {
+                return true;
+            }
+
+            const currentDate = new Date(date);
+            const min = new Date(minDate);
+            const max = new Date(maxDate);
+
+            return currentDate >= min && currentDate <= max;
+        }
+
+        const resetButton = document.getElementById('resetButton');
+
+        resetButton.addEventListener('click', resetFilters);
+
+        function resetFilters() {
+            // Clear the filter input values
+            nameFilterInput.value = '';
+            productCodeFilterInput.value = '';
+            minQuantityFilterInput.value = '';
+            maxQuantityFilterInput.value = '';
+            minDateExpiredFilterInput.value = '';
+            maxDateExpiredFilterInput.value = '';
+            minDateCreatedFilterInput.value = '';
+            maxDateCreatedFilterInput.value = '';
+            storageLocationFilterInput.value = '';
+
+            // Call the filter function to reset the table
+            filterTable();
+            location.reload();
+        }
+
+        document.getElementById('sortColumnDropdown').addEventListener('change', sortTableByColumn);
+
+        function sortTableByColumn() {
+            const columnNum = document.getElementById('sortColumnDropdown').value;
+            const table = document.getElementById('consumablesTable');
+            const rows = Array.from(table.querySelectorAll('tr')).slice(0); // Exclude the table header row
+
+            rows.sort((row1, row2) => {
+                const value1 = getColumnValue(row1, columnNum);
+                const value2 = getColumnValue(row2, columnNum);
+
+                if (columnNum === '0') {
+                    // Clear the sorting and go back to the original order
+                    location.reload();
+                    return;
+                }
+
+                if (columnNum === '4') {
+                    // Convert the quantity values to numbers for proper numeric sorting
+                    return value1 - value2;
+                }
+
+                return value1.localeCompare(value2);
+            });
+
+            // Reorder the rows in the table
+            rows.forEach(row => table.appendChild(row));
+        }
+
+        function getColumnValue(row, columnNum) {
+            const column = row.querySelector(`td:nth-child(${columnNum})`);
+
+            if (column) {
+                const value = column.textContent.trim();
+
+                if (columnNum === '4') {
+                    // Convert the quantity value to a number
+                    return parseFloat(value);
+                }
+
+                return value.toLowerCase();
+            }
+
+            return '';
+        }
+
+        // Call the filter function initially to show the complete table
+        filterTable();
+    </script>
+</body>
+
+</html>
