@@ -59,6 +59,16 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Trusted Web origins
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://flux-inc.onrender.com',
+    'https://github.com',
+    'https://github.com/iamamofa/Flux.Inc/'
+    
+    # Add any other domains you trust
+]
+
 
 ROOT_URLCONF = 'inventory_system.urls'
 
