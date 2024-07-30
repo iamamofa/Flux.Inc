@@ -35,7 +35,7 @@ def send_approval_email(sender, instance, created, **kwargs):
         token = uuid.uuid4().hex  # Replace with the unique token or identifier generated for the user
         url = reverse('register_project_manager')  # Replace 'register_project_manager' with the URL name of your registration view
         params = urlencode({'email': instance.email, 'first_name': instance.first_name, 'last_name': instance.last_name, 'token': token})
-        # prefilled_url = f'http://127.0.0.1:8000{url}?{params}'  # Replace 'https://example.com' with your domain or base URL
+        # prefilled_url = f'https://flux-inc.onrender.com{url}?{params}'  # Replace 'https://example.com' with your domain or base URL
 
         # Include the prefilled form link in the email content
         # message += f'\n\nPlease register as a project manager using the following link:\n{prefilled_url}'
