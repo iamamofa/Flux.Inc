@@ -27,10 +27,11 @@ SECRET_KEY = 'django-insecure-i53-z!lwdqs$)-k)u=7!9*i$ko7etx3vb8kib20lw(zgogn3ds
 DEBUG = True
 
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'mawue2801@gmail.com'
-EMAIL_HOST_PASSWORD = 'tqwxtjtzuajwnjhu'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'justiceoheneamofa@gmail.com'
+EMAIL_HOST_PASSWORD = 'lzdgdscpgltpnoud'
+EMAIL_PORT = 465
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
 ALLOWED_HOSTS = ['flux-inc.onrender.com']
