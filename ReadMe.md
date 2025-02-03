@@ -36,10 +36,10 @@ git clone https://github.com/iamamofa/flux.git
 1.  ``` python -m venv venv ``` 
 
 2. 
- ```source venv/bin/activate  # Linux/macOS
+ ```source venv/bin/activate  # Linux/macOS ```
 # or
-venv\Scripts\activate
-```
+
+``` venv\Scripts\activate ```
 
 ## Install dependencies:
 
