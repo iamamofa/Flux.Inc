@@ -39,7 +39,7 @@ git clone https://github.com/iamamofa/flux.git
  ```source venv/bin/activate  # Linux/macOS ```
 # or
 
-``` venv\Scripts\activate ```
+``` venv\Scripts\activate   #Windows Users ```
 
 ## Install dependencies:
 
