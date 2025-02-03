@@ -33,9 +33,10 @@ git clone https://github.com/iamamofa/flux.git
 
 ## Create a virtual environment:
 
+1.  ``` python -m venv venv ``` 
 
-``` python -m venv venv ``
-```source venv/bin/activate  # Linux/macOS
+2. 
+ ```source venv/bin/activate  # Linux/macOS
 # or
 venv\Scripts\activate
 ```
