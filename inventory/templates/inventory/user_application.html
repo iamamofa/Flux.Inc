@@ -266,6 +266,12 @@
     #drop-zone.has-image #file-label {
       display: none;
     }
+    
+    /* Add style for required fields */
+    .required-field::after {
+      content: " *";
+      color: red;
+    }
   </style>
 </head>
 
@@ -283,35 +289,35 @@
         </svg>
       </div>
     </div>
-    <form action="{% url 'user_application' %}" method="POST" enctype="multipart/form-data">
+    <form action="{% url 'user_application' %}" method="POST" enctype="multipart/form-data" onsubmit="return validateForm()">
       {% csrf_token %}
       <div class="inputBox">
-        <input type="text" name="first_name" required="" onkeyup="this.setAttribute('value', this.value);" value="">
-        <label>First Name</label>
+        <input type="text" name="first_name" required onkeyup="this.setAttribute('value', this.value);" value="">
+        <label class="required-field">First Name</label>
       </div>
       <div class="inputBox">
-        <input type="text" name="last_name" required="" onkeyup="this.setAttribute('value', this.value);" value="">
-        <label>Last Name</label>
+        <input type="text" name="last_name" required onkeyup="this.setAttribute('value', this.value);" value="">
+        <label class="required-field">Last Name</label>
       </div>
       <div class="inputBox">
-        <input type="email" name="email" required="" onkeyup="this.setAttribute('value', this.value);" value="">
-        <label>Email</label>
+        <input type="email" name="email" required onkeyup="this.setAttribute('value', this.value);" value="">
+        <label class="required-field">Email</label>
       </div>
       <div class="inputBox">
-        <input type="text" name="workplace" required="" onkeyup="this.setAttribute('value', this.value);" value="">
-        <label>Workplace</label>
+        <input type="text" name="workplace" required onkeyup="this.setAttribute('value', this.value);" value="">
+        <label class="required-field">Workplace</label>
       </div>
       <div class="inputBox">
-        <input type="text" name="department" required="" onkeyup="this.setAttribute('value', this.value);" value="">
-        <label>Department</label>
+        <input type="text" name="department" required onkeyup="this.setAttribute('value', this.value);" value="">
+        <label class="required-field">Department</label>
       </div>
       <div id="drop-zone">
-        <p id="file-name">Drag and drop a valid id here, or click to select</p>
+        <p id="file-name" class="required-field">Drag and drop a valid id here, or click to select</p>
         <input type="file" id="id_image" name="id_image" accept="image/*" required />
         <label for="id_image" id="file-label">Choose File</label>
       </div>
       <div class="inputBox button">
-        <input type="Submit" name="submit">
+        <input type="Submit" name="submit" value="Submit">
       </div>
       <div class="text">
         <h3>Already have an account? <a href="{% url 'login' %}">Login</a></h3>
@@ -359,8 +365,33 @@
       fileName.textContent = name;
     }
 
-
-
+    function validateForm() {
+      const inputs = document.querySelectorAll('input[required]');
+      let isValid = true;
+      
+      inputs.forEach(input => {
+        if (!input.value.trim()) {
+          isValid = false;
+          input.style.border = '1px solid red';
+        } else {
+          input.style.border = '1px solid #ccc';
+        }
+      });
+      
+      // Check if file is selected
+      if (!fileInput.files || fileInput.files.length === 0) {
+        isValid = false;
+        dropZone.style.border = '2px dashed red';
+      } else {
+        dropZone.style.border = '2px dashed #ccc';
+      }
+      
+      if (!isValid) {
+        alert('Please fill in all required fields');
+      }
+      
+      return isValid;
+    }
   </script>
 </body>
 
