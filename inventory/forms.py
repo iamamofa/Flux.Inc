@@ -11,10 +11,10 @@ import string
 
 
 # Centralized email validation
-def validate_noguchi_email(email, request):
+def validate_noguchi_email(email):
     if not email.endswith("@noguchi.ug.edu.gh"):
-        messages.error(self.request, 'Only noguchi.ug.edu.gh domain emails are allowed.')
-        raise ValidationError('')
+        # messages.error(self.request, 'Only noguchi.ug.edu.gh domain emails are allowed.')
+        raise ValidationError("Only noguchi.ug.edu.gh domain emails are allowed.")
 
 
 # Centralized username generation
@@ -49,7 +49,7 @@ class UserApplicationForm(forms.ModelForm):
         if User.objects.filter(email=email).exists():
             messages.error(self.request, 'This email is already in use. Please choose a different email.')
             raise forms.ValidationError('')
-        validate_noguchi_email(email, self.request)
+        validate_noguchi_email(email)
         return email
 
 class ProjectManagerSignUpForm(UserCreationForm):
@@ -78,7 +78,7 @@ class ProjectManagerSignUpForm(UserCreationForm):
         if User.objects.filter(email=email).exists():
             messages.error(self.request, 'This email is already in use. Please choose a different email.')
             raise forms.ValidationError('')
-        validate_noguchi_email(email, self.request)
+        validate_noguchi_email(email)
         return email
 
     def save(self, commit=True):
@@ -112,7 +112,7 @@ class EditorMemberSignUpForm(UserCreationForm):
         if User.objects.filter(email=email).exists():
             messages.error(self.request, 'This email is already in use. Please choose a different email.')
             raise forms.ValidationError('')
-        validate_noguchi_email(email, self.request)
+        validate_noguchi_email(email)
         return email
 
     def save(self, commit=True):
