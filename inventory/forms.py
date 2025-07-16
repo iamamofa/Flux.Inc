@@ -44,12 +44,14 @@ class ProjectManagerSignUpForm(UserCreationForm):
             messages.error(self.request, 'Project name already exists. Please choose a different name.')
             raise forms.ValidationError('')  # Empty validation error to prevent form submission
         return project_name
-    
+
     def clean_email(self):
         email = self.cleaned_data['email']
         if User.objects.filter(email=email).exists():
             messages.error(self.request, 'This email is already in use. Please choose a different email.')
             raise forms.ValidationError('')
+        if not email.endswith("@noguchi.ug.edu.gh"):
+            raise forms.ValidationError("Only noguchi domain names are allowed.")
         return email
 
     def save(self, commit=True):
