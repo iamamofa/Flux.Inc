@@ -29,8 +29,9 @@ EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-ALLOWED_HOSTS = [#'flux-inc.onrender.com',
-                 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['flux-inc.onrender.com', '127.0.0.1', 'localhost']
+
+
 
 # Application definition
 INSTALLED_APPS = [
