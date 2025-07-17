@@ -25,6 +25,7 @@ from email.mime.image import MIMEImage
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 
+
 @login_required
 def change_password(request):
     if request.method == 'POST':
@@ -42,7 +43,12 @@ def change_password(request):
         form = PasswordChangeForm(request.user)
     return render(request, 'inventory/settings.html', {'form': form})
 
+
 def user_application(request):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['id_image'].widget.attrs.update({'data-preserve-file': 'true'})
+
     form = UserApplicationForm()
     if request.method == 'POST':
         form = UserApplicationForm(request.POST, request.FILES)
@@ -52,17 +58,20 @@ def user_application(request):
             message1 = 'Your information has been uploaded.We would review it and get back to you shortly.'
             message2 = 'If you do not receive a mail in the next 24 hours, do well to reach out via mail.'
             return render(request, 'inventory/confirmed_registration.html', {'message1': message1, 'message2': message2})
-           
+
         else:
             form = UserApplicationForm()
 
     return render(request, 'inventory/user_application.html', {'form': form})
 
+
 def home(request):
     return render(request, 'inventory/home.html')
 
+
 def registration_page(request):
     return render(request, 'inventory/registration_page.html')
+
 
 def register_project_manager(request):
     email = request.GET.get('email')
@@ -119,6 +128,7 @@ def register_user(request):
 
     return render(request, 'inventory/register_user.html', {'form': form})
 
+
 def login_view(request):
     if request.method == 'POST':
         form = LoginForm(request.POST)
@@ -145,9 +155,11 @@ def login_view(request):
     
     return render(request, 'inventory/login.html', {'form': form})
 
+
 def logoutUser(request):
     logout(request)
     return redirect('login')
+
 
 def team(request,project_name):
     user = request.user
@@ -158,6 +170,7 @@ def team(request,project_name):
     context = {'project': project, 'projects': projects,'team_members': team_members}
     return render(request, 'inventory/team.html', context)
 
+
 def log(request,project_name):
     user = request.user
     user_profile = UserProfile.objects.get(user=user)
@@ -166,6 +179,7 @@ def log(request,project_name):
     logs = Log.objects.filter(project=project).order_by('-id')
     context = {'project': project, 'projects': projects,'logs': logs}
     return render(request, 'inventory/logs.html', context)
+
 
 def add_user_to_project(request, project_name):
     project = get_object_or_404(Project, name=project_name)
@@ -201,6 +215,7 @@ def add_user_to_project(request, project_name):
                 return redirect(f'/team/{project_name}')
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
 
 def remove_user(request,project_name,id):
     try:
@@ -238,7 +253,8 @@ def remove_user(request,project_name,id):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    
+
+
 def edit_user_access(request,project_name,id):
     user = User.objects.get(id=id)
     project = get_object_or_404(Project, name=project_name)
@@ -269,6 +285,7 @@ def edit_user_access(request,project_name,id):
     # Return a JSON response indicating failure
     return JsonResponse({'error': f'Error updating user with ID {id}.'}, status=400)
 
+
 @login_required
 def create_project(request):
     if request.method == 'PUT':
@@ -295,6 +312,7 @@ def create_project(request):
     # Return a JSON response indicating failure
     return JsonResponse({'error': f'Error creating project'}, status=400)
 
+
 @login_required(login_url='login')
 def consumables(request,project_name):
     # projects = Project.objects.all()
@@ -312,6 +330,7 @@ def consumables(request,project_name):
 
         context = {'project': project, 'projects': projects,'consumables': consumables, 'user': user}
         return render(request, 'inventory/consumables.html', context)
+
 
 def addConsumable(request, project_name):
     try:
@@ -333,7 +352,8 @@ def addConsumable(request, project_name):
             # return JsonResponse({'message': 'Consumable created successfully'}, status=200)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    
+
+
 def dashboard_consumables(request,project_name):
     user = request.user
     user_profile = UserProfile.objects.get(user=user)
@@ -354,6 +374,7 @@ def dashboard_consumables(request,project_name):
     # Render the template with the plot data
     return render(request, 'inventory/dashboard_consumables.html', {'plot_data': plot_data,'project': project, 'projects': projects,'consumables': consumables})
 
+
 def trash_consumables(request,project_name):
     user = request.user
     user_profile = UserProfile.objects.get(user=user)
@@ -362,7 +383,8 @@ def trash_consumables(request,project_name):
     trash_consumables = project.trashconsumable_set.all()
     context = {'project': project, 'projects': projects,'trash_consumables': trash_consumables}
     return render(request, 'inventory/trash_consumables.html', context)
-    
+
+
 def get_consumable_info(request, id):
     consumable = get_object_or_404(Consumable, id=id)
     
@@ -381,6 +403,7 @@ def get_consumable_info(request, id):
     }
     
     return JsonResponse(data)
+
 
 def edit_consumable(request, id):
     consumable = get_object_or_404(Consumable, id=id)
@@ -409,6 +432,7 @@ def edit_consumable(request, id):
 
     # Return a JSON response indicating failure
     return JsonResponse({'error': f'Error updating consumable with ID {id}.'}, status=400)
+
 
 def retrieve_consumable(request, id):
     consumable = get_object_or_404(Consumable, id=id)
@@ -458,6 +482,7 @@ def retrieve_consumable(request, id):
     # Return a JSON response indicating failure
     return JsonResponse({'error': f'Error updating consumable with ID {id}.'}, status=400)
 
+
 def send_consumable_notification(consumable):
     subject = 'Consumable Quantity Below Threshold'
     message = f"The quantity of {consumable.name} is below the threshold. Please take necessary action."
@@ -482,6 +507,7 @@ def send_consumable_notification(consumable):
                 msg.attach(img)
 
     msg.send()
+
 
 def return_consumable(request, id):
     consumable = get_object_or_404(Consumable, id=id)
@@ -522,6 +548,7 @@ def return_consumable(request, id):
     # Return a JSON response indicating failure
     return JsonResponse({'error': f'Error updating consumable with ID {id}.'}, status=400)
 
+
 def deleteConsumable(request,project_name,pk):
     try:
         project = get_object_or_404(Project, name=project_name)
@@ -551,6 +578,7 @@ def deleteConsumable(request,project_name,pk):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+
 def deleteTrashConsumable(request,trash_consumable_id):
     trash_consumable = TrashConsumable.objects.get(id=trash_consumable_id)
 
@@ -560,6 +588,7 @@ def deleteTrashConsumable(request,trash_consumable_id):
     
     return redirect(f'/trash_consumables/{trash_consumable.project.name}')
 
+
 def delete_all_consumables_in_trash(request,project_name):
     user = request.user
     user_profile = UserProfile.objects.get(user=user)
@@ -568,6 +597,7 @@ def delete_all_consumables_in_trash(request,project_name):
     trashconsumables.delete()
     log_entry = Log.objects.create(project=project,user=request.user,action=f'Consumables trash emptied')
     return JsonResponse({'message': 'All consumables in the trash have been deleted.'})
+
 
 def restoreConsumable(request,project_name,trash_consumable_id):
     project = get_object_or_404(Project, name=project_name)
@@ -616,6 +646,7 @@ def export_consumable_csv(request,project_name):
 
     return response
 
+
 def export_consumable_excel(request,project_name):
     # Create a new Workbook object
     workbook = Workbook()
@@ -659,6 +690,7 @@ def export_consumable_excel(request,project_name):
 
     return response
 
+
 def export_consumable_txt(request, project_name):
     response = HttpResponse(content_type='text/plain')
     response['Content-Disposition'] = 'attachment; filename="consumables.txt"'
@@ -686,7 +718,6 @@ def export_consumable_txt(request, project_name):
     return response
 
 
-
 @login_required(login_url='login')
 def reagents(request,project_name):
     # projects = Project.objects.all()
@@ -704,6 +735,7 @@ def reagents(request,project_name):
 
         context = {'project': project, 'projects': projects,'reagents': reagents, 'user': user}
         return render(request, 'inventory/reagents.html', context)
+
 
 def addReagent(request, project_name):
     try:
@@ -725,7 +757,8 @@ def addReagent(request, project_name):
             # return JsonResponse({'message': 'Reagent created successfully'}, status=200)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    
+
+
 def dashboard_reagents(request,project_name):
     user = request.user
     user_profile = UserProfile.objects.get(user=user)
@@ -746,6 +779,7 @@ def dashboard_reagents(request,project_name):
     # Render the template with the plot data
     return render(request, 'inventory/dashboard_reagents.html', {'plot_data': plot_data,'project': project, 'projects': projects,'reagents': reagents})
 
+
 def trash_reagents(request,project_name):
     user = request.user
     user_profile = UserProfile.objects.get(user=user)
@@ -754,7 +788,8 @@ def trash_reagents(request,project_name):
     trash_reagents = project.trashreagent_set.all()
     context = {'project': project, 'projects': projects,'trash_reagents': trash_reagents}
     return render(request, 'inventory/trash_reagents.html', context)
-    
+
+
 def get_reagent_info(request, id):
     reagent = get_object_or_404(Reagent, id=id)
     
@@ -773,6 +808,7 @@ def get_reagent_info(request, id):
     }
     
     return JsonResponse(data)
+
 
 def edit_reagent(request, id):
     reagent = get_object_or_404(Reagent, id=id)
@@ -801,6 +837,7 @@ def edit_reagent(request, id):
 
     # Return a JSON response indicating failure
     return JsonResponse({'error': f'Error updating reagent with ID {id}.'}, status=400)
+
 
 def retrieve_reagent(request, id):
     reagent = get_object_or_404(Reagent, id=id)
@@ -850,6 +887,7 @@ def retrieve_reagent(request, id):
     # Return a JSON response indicating failure
     return JsonResponse({'error': f'Error updating reagent with ID {id}.'}, status=400)
 
+
 def send_reagent_notification(reagent):
     subject = 'Reagent Quantity Below Threshold'
     message = f"The quantity of {reagent.name} is below the threshold. Please take necessary action."
@@ -874,6 +912,7 @@ def send_reagent_notification(reagent):
                 msg.attach(img)
 
     msg.send()
+
 
 def return_reagent(request, id):
     reagent = get_object_or_404(Reagent, id=id)
@@ -914,6 +953,7 @@ def return_reagent(request, id):
     # Return a JSON response indicating failure
     return JsonResponse({'error': f'Error updating reagent with ID {id}.'}, status=400)
 
+
 def deleteReagent(request,project_name,pk):
     try:
         project = get_object_or_404(Project, name=project_name)
@@ -943,6 +983,7 @@ def deleteReagent(request,project_name,pk):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+
 def deleteTrashReagent(request,trash_reagent_id):
     trash_reagent = TrashReagent.objects.get(id=trash_reagent_id)
 
@@ -952,6 +993,7 @@ def deleteTrashReagent(request,trash_reagent_id):
     
     return redirect(f'/trash_reagents/{trash_reagent.project.name}')
 
+
 def delete_all_reagents_in_trash(request,project_name):
     user = request.user
     user_profile = UserProfile.objects.get(user=user)
@@ -960,6 +1002,7 @@ def delete_all_reagents_in_trash(request,project_name):
     trashreagents.delete()
     log_entry = Log.objects.create(project=project,user=request.user,action=f'Reagents trash emptied')
     return JsonResponse({'message': 'All reagents in the trash have been deleted.'})
+
 
 def restoreReagent(request,project_name,trash_reagent_id):
     project = get_object_or_404(Project, name=project_name)
@@ -1008,6 +1051,7 @@ def export_reagent_csv(request,project_name):
 
     return response
 
+
 def export_reagent_excel(request,project_name):
     # Create a new Workbook object
     workbook = Workbook()
@@ -1051,6 +1095,7 @@ def export_reagent_excel(request,project_name):
 
     return response
 
+
 def export_reagent_txt(request, project_name):
     response = HttpResponse(content_type='text/plain')
     response['Content-Disposition'] = 'attachment; filename="reagents.txt"'
@@ -1078,9 +1123,6 @@ def export_reagent_txt(request, project_name):
     return response
 
 
-
-
-
 @login_required(login_url='login')
 def equipment_(request,project_name):
     # projects = Project.objects.all()
@@ -1098,6 +1140,7 @@ def equipment_(request,project_name):
 
         context = {'project': project, 'projects': projects,'equipment_': equipment_, 'user': user}
         return render(request, 'inventory/equipment_.html', context)
+
 
 def addEquipment(request, project_name):
     try:
@@ -1122,7 +1165,8 @@ def addEquipment(request, project_name):
             # return JsonResponse({'message': 'Equipment created successfully'}, status=200)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    
+
+
 def dashboard_equipment_(request,project_name):
     user = request.user
     user_profile = UserProfile.objects.get(user=user)
@@ -1143,6 +1187,7 @@ def dashboard_equipment_(request,project_name):
     # Render the template with the plot data
     return render(request, 'inventory/dashboard_equipment_.html', {'plot_data': plot_data,'project': project, 'projects': projects,'equipment_': equipment_})
 
+
 def trash_equipment_(request,project_name):
     user = request.user
     user_profile = UserProfile.objects.get(user=user)
@@ -1151,7 +1196,8 @@ def trash_equipment_(request,project_name):
     trash_equipment_ = project.trashequipment_set.all()
     context = {'project': project, 'projects': projects,'trash_equipment_': trash_equipment_}
     return render(request, 'inventory/trash_equipment_.html', context)
-    
+
+
 def get_equipment_info(request, id):
     equipment = get_object_or_404(Equipment, id=id)
     
@@ -1169,6 +1215,7 @@ def get_equipment_info(request, id):
     }
     
     return JsonResponse(data)
+
 
 def send_equipment_fault_notification(equipment):
     subject = 'Faulty Equipment'
@@ -1202,6 +1249,7 @@ def send_equipment_fault_notification(equipment):
                 msg.attach(img)
 
     msg.send()
+
 
 def edit_equipment(request, id):
     equipment = get_object_or_404(Equipment, id=id)
@@ -1238,6 +1286,7 @@ def edit_equipment(request, id):
     # Return a JSON response indicating failure
     return JsonResponse({'error': f'Error updating equipment with ID {id}.'}, status=400)
 
+
 def retrieve_equipment(request, id):
     equipment = get_object_or_404(Equipment, id=id)
 
@@ -1260,6 +1309,7 @@ def retrieve_equipment(request, id):
     # Return a JSON response indicating failure
     return JsonResponse({'error': f'Error updating equipment with ID {id}.'}, status=400)
 
+
 def return_equipment(request, id):
     equipment = get_object_or_404(Equipment, id=id)
 
@@ -1281,6 +1331,7 @@ def return_equipment(request, id):
 
     # Return a JSON response indicating failure
     return JsonResponse({'error': f'Error updating equipment with ID {id}.'}, status=400)
+
 
 def deleteEquipment(request,project_name,pk):
     try:
@@ -1312,6 +1363,7 @@ def deleteEquipment(request,project_name,pk):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+
 def deleteTrashEquipment(request,trash_equipment_id):
     trash_equipment = TrashEquipment.objects.get(id=trash_equipment_id)
 
@@ -1321,6 +1373,7 @@ def deleteTrashEquipment(request,trash_equipment_id):
     
     return redirect(f'/trash_equipment_/{trash_equipment.project.name}')
 
+
 def delete_all_equipment__in_trash(request,project_name):
     user = request.user
     user_profile = UserProfile.objects.get(user=user)
@@ -1329,6 +1382,7 @@ def delete_all_equipment__in_trash(request,project_name):
     trashequipment_.delete()
     log_entry = Log.objects.create(project=project,user=request.user,action=f'Equipment trash emptied')
     return JsonResponse({'message': 'All equipment_ in the trash have been deleted.'})
+
 
 def restoreEquipment(request,project_name,trash_equipment_id):
     project = get_object_or_404(Project, name=project_name)
@@ -1379,6 +1433,7 @@ def export_equipment_csv(request,project_name):
 
     return response
 
+
 def export_equipment_excel(request,project_name):
     # Create a new Workbook object
     workbook = Workbook()
@@ -1423,6 +1478,7 @@ def export_equipment_excel(request,project_name):
 
     return response
 
+
 def export_equipment_txt(request, project_name):
     response = HttpResponse(content_type='text/plain')
     response['Content-Disposition'] = 'attachment; filename="equipment_.txt"'
@@ -1450,14 +1506,6 @@ def export_equipment_txt(request, project_name):
     return response
 
 
-
-
-
-
-
-
-
-
 @login_required(login_url='login')
 def samples(request,project_name):
     # projects = Project.objects.all()
@@ -1475,6 +1523,7 @@ def samples(request,project_name):
 
         context = {'project': project, 'projects': projects,'samples': samples, 'user': user}
         return render(request, 'inventory/samples.html', context)
+
 
 def addSample(request, project_name):
     try:
@@ -1497,7 +1546,8 @@ def addSample(request, project_name):
             # return JsonResponse({'message': 'Sample created successfully'}, status=200)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-    
+
+
 def dashboard_samples(request,project_name):
     user = request.user
     user_profile = UserProfile.objects.get(user=user)
@@ -1518,6 +1568,7 @@ def dashboard_samples(request,project_name):
     # Render the template with the plot data
     return render(request, 'inventory/dashboard_samples.html', {'plot_data': plot_data,'project': project, 'projects': projects,'samples': samples})
 
+
 def trash_samples(request,project_name):
     user = request.user
     user_profile = UserProfile.objects.get(user=user)
@@ -1526,7 +1577,8 @@ def trash_samples(request,project_name):
     trash_samples = project.trashsample_set.all()
     context = {'project': project, 'projects': projects,'trash_samples': trash_samples}
     return render(request, 'inventory/trash_samples.html', context)
-    
+
+
 def get_sample_info(request, id):
     sample = get_object_or_404(Sample, id=id)
     
@@ -1545,6 +1597,7 @@ def get_sample_info(request, id):
     }
     
     return JsonResponse(data)
+
 
 def edit_sample(request, id):
     sample = get_object_or_404(Sample, id=id)
@@ -1575,6 +1628,7 @@ def edit_sample(request, id):
     # Return a JSON response indicating failure
     return JsonResponse({'error': f'Error updating sample with ID {id}.'}, status=400)
 
+
 def retrieve_sample(request, id):
     sample = get_object_or_404(Sample, id=id)
 
@@ -1601,6 +1655,7 @@ def retrieve_sample(request, id):
     # Return a JSON response indicating failure
     return JsonResponse({'error': f'Error updating sample with ID {id}.'}, status=400)
 
+
 def send_sample_notification(sample):
     subject = 'Sample Volume Below Threshold'
     message = f"The volume of {sample.sample_id} is below the threshold. Please take necessary action."
@@ -1626,6 +1681,7 @@ def send_sample_notification(sample):
 
     msg.send()
 
+
 def return_sample(request, id):
     sample = get_object_or_404(Sample, id=id)
 
@@ -1648,6 +1704,7 @@ def return_sample(request, id):
 
     # Return a JSON response indicating failure
     return JsonResponse({'error': f'Error updating sample with ID {id}.'}, status=400)
+
 
 def deleteSample(request,project_name,pk):
     try:
@@ -1678,6 +1735,7 @@ def deleteSample(request,project_name,pk):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+
 def deleteTrashSample(request,trash_sample_id):
     trash_sample = TrashSample.objects.get(id=trash_sample_id)
 
@@ -1687,6 +1745,7 @@ def deleteTrashSample(request,trash_sample_id):
     
     return redirect(f'/trash_samples/{trash_sample.project.name}')
 
+
 def delete_all_samples_in_trash(request,project_name):
     user = request.user
     user_profile = UserProfile.objects.get(user=user)
@@ -1695,6 +1754,7 @@ def delete_all_samples_in_trash(request,project_name):
     trashsamples.delete()
     log_entry = Log.objects.create(project=project,user=request.user,action=f'Samples trash emptied')
     return JsonResponse({'message': 'All samples in the trash have been deleted.'})
+
 
 def restoreSample(request,project_name,trash_sample_id):
     project = get_object_or_404(Project, name=project_name)
@@ -1744,6 +1804,7 @@ def export_sample_csv(request,project_name):
 
     return response
 
+
 def export_sample_excel(request,project_name):
     # Create a new Workbook object
     workbook = Workbook()
@@ -1788,6 +1849,7 @@ def export_sample_excel(request,project_name):
 
     return response
 
+
 def export_sample_txt(request, project_name):
     response = HttpResponse(content_type='text/plain')
     response['Content-Disposition'] = 'attachment; filename="samples.txt"'
@@ -1814,3 +1876,4 @@ def export_sample_txt(request, project_name):
     response.write(content)
 
     return response
+
