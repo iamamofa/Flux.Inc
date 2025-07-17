@@ -14,6 +14,7 @@ import uuid
 # Centralized email validation
 def validate_noguchi_email(email):
     if not email.endswith("@noguchi.ug.edu.gh"):
+        print("Email was false")
         # messages.error(self.request, 'Only noguchi.ug.edu.gh domain emails are allowed.')
         raise ValidationError("Only Noguchi's domain emails are allowed.")
 
