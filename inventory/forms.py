@@ -8,13 +8,14 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import AuthenticationForm
 import random
 import string
+import uuid
 
 
 # Centralized email validation
 def validate_noguchi_email(email):
     if not email.endswith("@noguchi.ug.edu.gh"):
         # messages.error(self.request, 'Only noguchi.ug.edu.gh domain emails are allowed.')
-        raise ValidationError("Only noguchi.ug.edu.gh domain emails are allowed.")
+        raise ValidationError("Only Noguchi's domain emails are allowed.")
 
 
 # Centralized username generation
@@ -47,8 +48,8 @@ class UserApplicationForm(forms.ModelForm):
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
-            messages.error(self.request, 'This email is already in use. Please choose a different email.')
-            raise forms.ValidationError('')
+            # messages.error(self.request, 'This email is already in use. Please use a different email.')
+            raise forms.ValidationError('This email is already in use. Please use a different email.')
         validate_noguchi_email(email)
         return email
 
@@ -69,15 +70,15 @@ class ProjectManagerSignUpForm(UserCreationForm):
     def clean_project_name(self):
         project_name = self.cleaned_data['project_name']
         if Project.objects.filter(name=project_name).exists():
-            messages.error(self.request, 'Project name already exists. Kindly provide a different name.')
-            raise forms.ValidationError('')  # Empty validation error to prevent form submission
+            # messages.error(self.request, 'Project name already exists. Kindly provide a different name.')
+            raise forms.ValidationError('Project name already exists. Kindly provide a different name.')
         return project_name
 
     def clean_email(self):
         email = self.cleaned_data['email']
         if User.objects.filter(email=email).exists():
-            messages.error(self.request, 'This email is already in use. Please choose a different email.')
-            raise forms.ValidationError('')
+            # messages.error(self.request, 'This email is already in use. Please choose a different email.')
+            raise forms.ValidationError('This email is already in use. Please use a different email.')
         validate_noguchi_email(email)
         return email
 
@@ -110,8 +111,8 @@ class EditorMemberSignUpForm(UserCreationForm):
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
-            messages.error(self.request, 'This email is already in use. Please choose a different email.')
-            raise forms.ValidationError('')
+            # messages.error(self.request, 'This email is already in use. Please choose a different email.')
+            raise forms.ValidationError('This email is already in use. Please use a different email.')
         validate_noguchi_email(email)
         return email
 
