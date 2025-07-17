@@ -14,9 +14,7 @@ import uuid
 # Centralized email validation
 def validate_noguchi_email(email):
     if not email.endswith("@noguchi.ug.edu.gh"):
-        print("Email was false")
-        # messages.error(self.request, 'Only noguchi.ug.edu.gh domain emails are allowed.')
-        raise ValidationError("Only Noguchi's domain emails are allowed.")
+        raise ValidationError("Only Noguchi's email domains are allowed.")
 
 
 # Centralized username generation
@@ -46,17 +44,20 @@ class UserApplicationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['id_image'].widget.attrs.update({'data-preserve-file': 'true'})
 
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+
+        if User.objects.filter(email=email).exists():
+            raise ValidationError('This email is already in use. Please use a different email.')
+
+        validate_noguchi_email(email)
+
+        return email
+
     class Meta:
         model = UserApplication
         fields = ['first_name', 'last_name', 'email', 'workplace', 'department', 'id_image']
 
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if User.objects.filter(email=email).exists():
-            # messages.error(self.request, 'This email is already in use. Please use a different email.')
-            raise forms.ValidationError('This email is already in use. Please use a different email.')
-        validate_noguchi_email(email)
-        return email
 
 class ProjectManagerSignUpForm(UserCreationForm):
     email = forms.EmailField(max_length=254, help_text='Required. Enter a valid email address.')

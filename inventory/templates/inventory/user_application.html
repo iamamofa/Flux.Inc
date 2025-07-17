@@ -366,7 +366,6 @@
               {% for error in form.email.errors %}
                 {{ error }}
               {% endfor %}
-              /* {{ form.email.errors.0 }} */
           </span>
         {% endif %}
       </div>
@@ -415,7 +414,6 @@
       </div>
       
       <div class="inputBox button">
-        {{ form.as_p }}
         <input type="submit" name="submit" value="Submit">
       </div>
       

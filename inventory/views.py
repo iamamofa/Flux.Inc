@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login,logout
 from django.contrib import messages
@@ -44,20 +45,18 @@ def change_password(request):
     return render(request, 'inventory/settings.html', {'form': form})
 
 
+@csrf_protect
 def user_application(request):
-    form = UserApplicationForm()
-    print("Beginning")
     if request.method == 'POST':
-        print("In the if")
         form = UserApplicationForm(request.POST, request.FILES)
         if form.is_valid():
-            application = form.save()
+            form.save()
 
             message1 = 'Your information has been submitted. Kindly be patient as it is reviewed. We will get back to you!'
             message2 = 'If you do not receive a mail in the next 24 hours, do well to reach out via mail.'
             return render(request, 'inventory/confirmed_registration.html', {'message1': message1, 'message2': message2})
-        else:
-            form = UserApplicationForm()
+    else:
+        form = UserApplicationForm()
 
     return render(request, 'inventory/user_application.html', {'form': form})
 
