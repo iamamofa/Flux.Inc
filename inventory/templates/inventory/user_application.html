@@ -24,6 +24,7 @@
       background: #fbfbfb;
       background-image: url("{% static 'images/Background 3.jpg' %}");
       background-size: cover;
+      padding: 20px
     }
 
     .box {
@@ -45,7 +46,6 @@
     .box h2 {
       margin: 0px 0 -0.125rem;
       padding: 0;
-      color: #fff;
       text-align: center;
       color: #202124;
       font-family: 'Poppins', 'Google Sans', 'Noto Sans Myanmar UI', arial, sans-serif;
@@ -58,7 +58,7 @@
     }
 
     .box form .inputBox {
-      height: 52px;
+      position: relative;
       margin: 18px 0;
     }
 
@@ -71,17 +71,12 @@
       text-align: center;
     }
 
-    .box .inputBox {
-      position: relative;
-    }
-
     .box .inputBox input {
-      height: 100%;
+      height: 52px;
       width: 100%;
       padding: 0.625rem 10px;
       font-size: 1rem;
       letter-spacing: 0.062rem;
-      margin-bottom: 1.875rem;
       border: 1px solid #ccc;
       background: transparent;
       border-radius: 4px;
@@ -134,30 +129,11 @@
       box-shadow: 0 1px 1px 0 rgba(66, 133, 244, 0.45), 0 1px 3px 1px rgba(66, 133, 244, 0.3);
     }
 
-    .box .inputBox input:focus~label,
-    .box .inputBox input:valid~label,
-    .box .inputBox input:not([value=""])~label {
-      top: -1.125rem;
-      left: 10px;
-      color: #6464e6;
-      font-size: 0.75rem;
-      background-color: white;
-      height: 10px;
-      padding-left: 5px;
-      padding-right: 5px;
-    }
-
-    .box .inputBox input:focus {
-      outline: none;
-      border: 2px solid #6464e6;
-    }
-
     .forgot {
       margin-top: 20px;
     }
 
     .forgot button {
-      -webkit-border-radius: 4px;
       border-radius: 4px;
       color: #6464e6;
       display: inline-block;
@@ -186,6 +162,8 @@
       border: none;
       background: #6464e6;
       cursor: pointer;
+      height: auto;
+      margin-top: 20px;
     }
 
     .inputBox.button input:hover {
@@ -196,6 +174,7 @@
       color: #333;
       width: 100%;
       text-align: center;
+      margin-top: 20px;
     }
 
     form .text h3 a {
@@ -213,23 +192,28 @@
       width: 100%;
       text-align: center;
       padding: 10px;
-      /* background-color: #f9f9f9; */
     }
 
     #drop-zone {
       border: 2px dashed #ccc;
       padding: 20px;
       text-align: center;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      transition: all 0.3s ease;
+      position: relative;
     }
 
     #preview {
       display: none;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
+      max-width: 100%;
     }
 
     #preview img {
       max-width: 100%;
       max-height: 200px;
+      border-radius: 4px;
     }
 
     #id_image {
@@ -240,31 +224,90 @@
       display: inline-block;
       cursor: pointer;
       padding: 10px 20px;
-      border: 2px solid #ccc;
+      background: #f5f5f5;
       border-radius: 4px;
+      color: #6464e6;
+      font-weight: 500;
+      transition: background 0.3s;
     }
 
-    #file-label .icon {
-      font-size: 24px;
-      line-height: 1;
-      margin-right: 8px;
-    }
-
-    #file-label .text {
-      font-size: 16px;
-      line-height: 1.5;
+    #file-label:hover {
+        background: #e6e6ff;
     }
 
     #drop-zone.dragover {
-      background-color: #f7f7f7;
+      background-color: #f0f8ff;
+      border-color: #6464e6;
     }
 
     #drop-zone.has-image {
-      border: none;
+      border: 2px solid #6464e6;
+      background-color: #f0f8ff;
     }
 
-    #drop-zone.has-image #file-label {
-      display: none;
+    #drop-zone.error {
+      border-color: #ff4d4d;
+      background-color: #fff0f0;
+    }
+    
+    /* Add style for required fields */
+    .required-field::after {
+      content: " *";
+      color: red;
+    }
+
+    /* Error styles */
+    .error-message {
+        color: #ff4d4d;
+        font-size: 13px;
+        margin-top: 5px;
+        display: block;
+    }
+
+    .input-error {
+        border: 1px solid #ff4d4d !important;
+    }
+
+    .form-messages {
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+
+    .form-messages.error{
+        background-color: #fff0f0;
+        border: 1px solid #ffd6d6;
+        color: #ff4d4d;
+    }
+
+    .form-messages.success {
+      background-color: #f0fff4;
+      border: 1px solid #d6ffdf;
+      color: #2ecc40;
+    }
+    
+    .preview-container {
+      position: relative;
+      display: inline-block;
+      margin-top: 10px;
+    }
+    
+    .remove-image {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: #ff4d4d;
+      color: white;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 16px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
   </style>
 </head>
@@ -283,84 +326,262 @@
         </svg>
       </div>
     </div>
-    <form action="{% url 'user_application' %}" method="POST" enctype="multipart/form-data">
+
+    <!-- Form Messages -->
+    {% if messages %}
+    <div class="form-messages {% if message.tags %}{{ message.tags }}{% endif %}">
+      {% for message in messages %}
+        {{ message }}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form action="{% url 'user_application' %}" method="POST" enctype="multipart/form-data" id="application-form">
       {% csrf_token %}
+
+     <!-- First Name -->
       <div class="inputBox">
-        <input type="text" name="first_name" required="" onkeyup="this.setAttribute('value', this.value);" value="">
-        <label>First Name</label>
+        <input type="text" name="first_name" required value="{% if form.first_name.value %}{{ form.first_name.value }}{% endif %}">
+        <label class="required-field">First Name</label>
+        {% if form.first_name.errors %}
+          <span class="error-message">{{ form.first_name.errors.0 }}</span>
+        {% endif %}
       </div>
+      
+      <!-- Last Name -->
       <div class="inputBox">
-        <input type="text" name="last_name" required="" onkeyup="this.setAttribute('value', this.value);" value="">
-        <label>Last Name</label>
+        <input type="text" name="last_name" required value="{% if form.last_name.value %}{{ form.last_name.value }}{% endif %}">
+        <label class="required-field">Last Name</label>
+        {% if form.last_name.errors %}
+          <span class="error-message">{{ form.last_name.errors.0 }}</span>
+        {% endif %}
       </div>
+      
+      <!-- Email -->
       <div class="inputBox">
-        <input type="email" name="email" required="" onkeyup="this.setAttribute('value', this.value);" value="">
-        <label>Email</label>
+        <input type="email" name="email" required value="{% if form.email.value %}{{ form.email.value }}{% endif %}">
+        <label class="required-field">Email</label>
+        {% if form.email.errors %}
+          <span class="error-message">
+              {% for error in form.email.errors %}
+                {{ error }}
+              {% endfor %}
+          </span>
+        {% endif %}
       </div>
+      
+      <!-- Workplace -->
       <div class="inputBox">
-        <input type="text" name="workplace" required="" onkeyup="this.setAttribute('value', this.value);" value="">
-        <label>Workplace</label>
+        <input type="text" name="workplace" required value="{% if form.workplace.value %}{{ form.workplace.value }}{% endif %}">
+        <label class="required-field">Workplace</label>
+        {% if form.workplace.errors %}
+          <span class="error-message">{{ form.workplace.errors.0 }}</span>
+        {% endif %}
       </div>
+      
+      <!-- Department -->
       <div class="inputBox">
-        <input type="text" name="department" required="" onkeyup="this.setAttribute('value', this.value);" value="">
-        <label>Department</label>
+        <input type="text" name="department" required value="{% if form.department.value %}{{ form.department.value }}{% endif %}">
+        <label class="required-field">Department</label>
+        {% if form.department.errors %}
+          <span class="error-message">{{ form.department.errors.0 }}</span>
+        {% endif %}
       </div>
-      <div id="drop-zone">
-        <p id="file-name">Drag and drop a valid id here, or click to select</p>
+      
+      <!-- ID Image Upload -->
+      <div id="drop-zone" class="{% if form.id_image.errors %}error{% endif %}">
+        <p id="file-name" class="required-field">
+          {% if form.id_image.value %} 
+            {{ form.id_image.value.name }}
+          {% else %} 
+            Drag and drop a valid ID here, or click to select
+          {% endif %}
+        </p>
         <input type="file" id="id_image" name="id_image" accept="image/*" required />
         <label for="id_image" id="file-label">Choose File</label>
+        
+        <!-- Image Preview -->
+        <div id="preview">
+          <div class="preview-container">
+            <img id="preview-image" src="" alt="ID Preview">
+            <div class="remove-image" id="remove-image">×</div>
+          </div>
+        </div>
+        
+        {% if form.id_image.errors %}
+          <span class="error-message">{{ form.id_image.errors.0 }}</span>
+        {% endif %}
       </div>
+      
       <div class="inputBox button">
-        <input type="Submit" name="submit">
+        <input type="submit" name="submit" value="Submit">
       </div>
+      
       <div class="text">
         <h3>Already have an account? <a href="{% url 'login' %}">Login</a></h3>
       </div>
     </form>
-    {% for message in messages %}
-    <p>{{message}}</p>
-    {% endfor%}
   </div>
-  <footer>
-    <!-- <p>&copy; 2023 Flux</p> -->
-  </footer>
+  
   <script>
-    const dropZone = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('id_image');
-    const fileName = document.getElementById('file-name');
-
-    dropZone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropZone.classList.add('highlight');
-    });
-
-    dropZone.addEventListener('dragleave', () => {
-      dropZone.classList.remove('highlight');
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('highlight');
-      const files = e.dataTransfer.files;
-      if (files.length > 0) {
-        fileInput.files = files;
-        updateFileName(files[0].name);
+    document.addEventListener('DOMContentLoaded', function() {
+      const dropZone = document.getElementById('drop-zone');
+      const fileInput = document.getElementById('id_image');
+      const fileName = document.getElementById('file-name');
+      const preview = document.getElementById('preview');
+      const previewImage = document.getElementById('preview-image');
+      const removeImageBtn = document.getElementById('remove-image');
+      const form = document.getElementById('application-form');
+      const formFields = form.querySelectorAll('input[required]');
+      
+      // Handle drag and drop events
+      ['dragover', 'dragenter'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+      });
+      
+      ['dragleave', 'dragend'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+      });
+      
+      dropZone.addEventListener('drop', handleDrop, false);
+      fileInput.addEventListener('change', handleFileSelect, false);
+      removeImageBtn.addEventListener('click', removeImage, false);
+      form.addEventListener('submit', validateForm);
+      
+      // Highlight drop zone
+      function highlight(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add('dragover');
       }
-    });
-
-    fileInput.addEventListener('change', () => {
-      const selectedFile = fileInput.files[0];
-      if (selectedFile) {
-        updateFileName(selectedFile.name);
+      
+      // Unhighlight drop zone
+      function unhighlight(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('dragover');
       }
+      
+      // Handle dropped files
+      function handleDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          fileInput.files = files;
+          handleFileSelect();
+        }
+      }
+      
+      // Handle file selection
+      function handleFileSelect() {
+        const file = fileInput.files[0];
+        
+        if (file) {
+          // Update file name
+          fileName.textContent = file.name;
+          
+          // Show preview if it's an image
+          if (file.type.match('image.*')) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+              previewImage.src = e.target.result;
+              preview.style.display = 'block';
+              dropZone.classList.add('has-image');
+            };
+            
+            reader.readAsDataURL(file);
+          } else {
+            alert('Please select a valid image file (JPG, PNG, etc.)');
+            fileInput.value = '';
+            fileName.textContent = 'Drag and drop a valid ID here, or click to select';
+            preview.style.display = 'none';
+            dropZone.classList.remove('has-image');
+          }
+        }
+      }
+      
+      // Remove image
+      function removeImage() {
+        fileInput.value = '';
+        fileName.textContent = 'Drag and drop a valid ID here, or click to select';
+        preview.style.display = 'none';
+        dropZone.classList.remove('has-image');
+        dropZone.classList.remove('error');
+      }
+      
+      // Form validation
+      function validateForm(e) {
+        let isValid = true;
+        
+        // Validate text fields
+        formFields.forEach(field => {
+          if (field.type !== 'file' && !field.value.trim()) {
+            isValid = false;
+            field.classList.add('input-error');
+            field.nextElementSibling.nextElementSibling.textContent = 'This field is required';
+          } else {
+            field.classList.remove('input-error');
+          }
+        });
+        
+        // Validate file input
+        if (!fileInput.files || fileInput.files.length === 0) {
+          isValid = false;
+          dropZone.classList.add('error');
+          const errorElement = dropZone.querySelector('.error-message') || document.createElement('span');
+          errorElement.className = 'error-message';
+          errorElement.textContent = 'Please upload a valid ID';
+          if (!dropZone.querySelector('.error-message')) {
+            dropZone.appendChild(errorElement);
+          }
+        } else {
+          dropZone.classList.remove('error');
+          const errorElement = dropZone.querySelector('.error-message');
+          if (errorElement) {
+            errorElement.remove();
+          }
+        }
+        
+        if (!isValid) {
+          e.preventDefault();
+          scrollToFirstError();
+        }
+      }
+      
+      // Scroll to first error
+      function scrollToFirstError() {
+        const firstError = document.querySelector('.input-error, .error');
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+      
+      // Auto-set value attributes for labels
+      formFields.forEach(field => {
+        if (field.type !== 'file') {
+          field.addEventListener('input', function() {
+            this.setAttribute('value', this.value);
+            
+            if (this.value.trim()) {
+              this.classList.remove('input-error');
+              const errorElement = this.nextElementSibling.nextElementSibling;
+              if (errorElement && errorElement.classList.contains('error-message')) {
+                errorElement.textContent = '';
+              }
+            }
+          });
+          
+          // Set initial value for labels
+          if (field.value) {
+            field.setAttribute('value', field.value);
+          }
+        }
+      });
     });
-
-    function updateFileName(name) {
-      fileName.textContent = name;
-    }
-
-
-
   </script>
 </body>
 
