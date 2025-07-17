@@ -45,7 +45,10 @@ def change_password(request):
 
 
 def user_application(request):
+    form = UserApplicationForm()
+    print("Beginning")
     if request.method == 'POST':
+        print("In the if")
         form = UserApplicationForm(request.POST, request.FILES)
         if form.is_valid():
             application = form.save()
