@@ -362,7 +362,12 @@
         <input type="email" name="email" required value="{% if form.email.value %}{{ form.email.value }}{% endif %}">
         <label class="required-field">Email</label>
         {% if form.email.errors %}
-          <span class="error-message">{{ form.email.errors.0 }}</span>
+          <span class="error-message">
+              {% for error in form.email.errors %}
+                {{ error }}
+              {% endfor %}
+              /* {{ form.email.errors.0 }} */
+          </span>
         {% endif %}
       </div>
       
@@ -410,6 +415,7 @@
       </div>
       
       <div class="inputBox button">
+        {{ form.as_p }}
         <input type="submit" name="submit" value="Submit">
       </div>
       
