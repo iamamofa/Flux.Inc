@@ -41,6 +41,10 @@ class ReagentForm(forms.ModelForm):
         fields = '__all__'
 
 class UserApplicationForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['id_image'].widget.attrs.update({'data-preserve-file': 'true'})
+
     class Meta:
         model = UserApplication
         fields = ['first_name', 'last_name', 'email', 'workplace', 'department', 'id_image']

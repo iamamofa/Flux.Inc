@@ -45,20 +45,14 @@ def change_password(request):
 
 
 def user_application(request):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['id_image'].widget.attrs.update({'data-preserve-file': 'true'})
-
-    form = UserApplicationForm()
     if request.method == 'POST':
         form = UserApplicationForm(request.POST, request.FILES)
         if form.is_valid():
             application = form.save()
 
-            message1 = 'Your information has been uploaded.We would review it and get back to you shortly.'
+            message1 = 'Your information has been submitted. Kindly be patient as it is reviewed. We will get back to you!'
             message2 = 'If you do not receive a mail in the next 24 hours, do well to reach out via mail.'
             return render(request, 'inventory/confirmed_registration.html', {'message1': message1, 'message2': message2})
-
         else:
             form = UserApplicationForm()
 
