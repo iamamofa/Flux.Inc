@@ -85,7 +85,6 @@
       border: 1px solid #ccc;
       background: transparent;
       border-radius: 4px;
-
     }
 
     .box .inputBox label {
@@ -132,24 +131,6 @@
     .box input[type="submit"]:hover {
       background-color: #6464e6;
       box-shadow: 0 1px 1px 0 rgba(66, 133, 244, 0.45), 0 1px 3px 1px rgba(66, 133, 244, 0.3);
-    }
-
-    .box .inputBox input:focus~label,
-    .box .inputBox input:valid~label,
-    .box .inputBox input:not([value=""])~label {
-      top: -1.125rem;
-      left: 10px;
-      color: #6464e6;
-      font-size: 0.75rem;
-      background-color: white;
-      height: 10px;
-      padding-left: 5px;
-      padding-right: 5px;
-    }
-
-    .box .inputBox input:focus {
-      outline: none;
-      border: 2px solid #6464e6;
     }
 
     .forgot {
@@ -213,7 +194,97 @@
       width: 100%;
       text-align: center;
       padding: 10px;
-      /* background-color: #f9f9f9; */
+    }
+
+    /* NEW STYLES FOR PASSWORD HINTS AND REQUIRED FIELDS */
+    .required-field::after {
+      content: " *";
+      color: #e74c3c;
+    }
+
+    .password-hint {
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 0;
+      width: 100%;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      z-index: 100;
+      display: none;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+      font-size: 0.85rem;
+    }
+
+    .password-hint.visible {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .password-hint h4 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      color: #6464e6;
+      font-weight: 600;
+    }
+
+    .password-hint ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .password-hint li {
+      margin-bottom: 8px;
+      position: relative;
+      padding-left: 25px;
+      list-style-type: none;
+    }
+
+    .password-hint li:before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: #6464e6;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .error-message {
+      color: #e74c3c;
+      font-size: 0.85rem;
+      margin-top: -20px;
+      margin-bottom: 15px;
+      padding: 0 10px;
+    }
+
+    .valid {
+      color: #27ae60;
+      position: relative;
+    }
+
+    .valid:after {
+      content: " ✓";
+      font-weight: bold;
+    }
+
+    .invalid {
+      color: #e74c3c;
+      position: relative;
+    }
+
+    .invalid:after {
+      content: " ✕";
+      font-weight: bold;
+    }
+    
+    .password-container {
+      position: relative;
+      margin-bottom: 2.5rem;
     }
   </style>
 </head>
@@ -234,46 +305,149 @@
         </div>
       </div>
     </a>
-    <form action="{% url 'register_user' %}" method="POST">
+    <form action="{% url 'register_user' %}" method="POST" id="registrationForm">
       {% csrf_token %}
+      <!-- Email -->
       <div class="inputBox">
-        <input type="email" name="email" required="" onkeyup="this.setAttribute('value', this.value);" value="">
-        <label>Email</label>
+        <input type="email" name="email" required onkeyup="this.setAttribute('value', this.value);" value="">
+        <label class="required-field">Email</label>
       </div>
+      
+      <!-- First Name -->
       <div class="inputBox">
-        <input type="text" name="first_name" required="" onkeyup="this.setAttribute('value', this.value);" value="">
-        <label>First Name</label>
+        <input type="text" name="first_name" required onkeyup="this.setAttribute('value', this.value);" value="">
+        <label class="required-field">First Name</label>
       </div>
+      
+      <!-- Last Name -->
       <div class="inputBox">
-        <input type="text" name="last_name" required="" onkeyup="this.setAttribute('value', this.value);" value="">
-        <label>Last Name</label>
+        <input type="text" name="last_name" required onkeyup="this.setAttribute('value', this.value);" value="">
+        <label class="required-field">Last Name</label>
       </div>
+      
+      <!-- Password with hints -->
+      <div class="inputBox password-container">
+        <input type="password" name="password1" id="password1" required onkeyup="this.setAttribute('value', this.value); checkPasswordStrength(this.value);" value="">
+        <label class="required-field">Password</label>
+        <div class="password-hint" id="passwordHint">
+          <h4>Password Requirements:</h4>
+          <ul>
+            <li id="lengthRequirement">At least 8 characters</li>
+            <li id="numberRequirement">Contains at least one number</li>
+            <li id="letterRequirement">Contains at least one letter</li>
+            <li id="specialRequirement">Contains at least one special character (!@#$%^&*)</li>
+          </ul>
+        </div>
+      </div>
+      
+      <!-- Confirm Password -->
       <div class="inputBox">
-        <input type="password" name="password1" required="" onkeyup="this.setAttribute('value', this.value);" value="">
-        <label>Password</label>
+        <input type="password" name="password2" id="password2" required onkeyup="this.setAttribute('value', this.value); validatePasswordMatch();" value="">
+        <label class="required-field">Confirm Password</label>
       </div>
-      <div class="inputBox">
-        <input type="password" name="password2" required="" onkeyup="this.setAttribute('value', this.value);" value="">
-        <label>Confirm Password</label>
-      </div>
-      <!-- <div class="inputBox">
-        <input type="email" name="pm_email" required="" onkeyup="this.setAttribute('value', this.value);" value="">
-        <label>Project Manager Email</label>
-      </div> -->
+      <div class="error-message" id="passwordMatchError"></div>
+      
+      <!-- Submit Button -->
       <div class="inputBox button">
-        <input type="Submit" name="submit">
+        <input type="submit" name="submit" value="Register">
       </div>
+      
+      <!-- Login link -->
       <div class="text">
         <h3>Already have an account? <a href="{% url 'login' %}">Login</a></h3>
       </div>
     </form>
+    
+    <!-- Messages display -->
     {% for message in messages %}
-    <p>{{message}}</p>
+    <p class="error-message">{{message}}</p>
     {% endfor%}
   </div>
+  
   <footer>
-    <p>&copy; 2024 Flux</p>
+    <p>&copy; 2025 Flux</p>
   </footer>
+
+  <script>
+    // Get DOM elements
+    const passwordInput = document.getElementById('password1');
+    const passwordHint = document.getElementById('passwordHint');
+    
+    // Show password hint when password field is focused
+    passwordInput.addEventListener('focus', function() {
+      passwordHint.classList.add('visible');
+    });
+    
+    // Hide password hint when clicking outside
+    document.addEventListener('click', function(event) {
+      if (!passwordHint.contains(event.target) {
+        passwordHint.classList.remove('visible');
+      }
+    });
+    
+    // Prevent hiding when clicking inside the hint
+    passwordHint.addEventListener('click', function(event) {
+      event.stopPropagation();
+    });
+
+    function checkPasswordStrength(password) {
+      const lengthReq = document.getElementById('lengthRequirement');
+      const numberReq = document.getElementById('numberRequirement');
+      const letterReq = document.getElementById('letterRequirement');
+      const specialReq = document.getElementById('specialRequirement');
+      
+      // Check requirements
+      const hasMinLength = password.length >= 8;
+      const hasNumber = /\d/.test(password);
+      const hasLetter = /[a-zA-Z]/.test(password);
+      const hasSpecial = /[!@#$%^&*]/.test(password);
+      
+      // Update styling
+      lengthReq.className = hasMinLength ? 'valid' : 'invalid';
+      numberReq.className = hasNumber ? 'valid' : 'invalid';
+      letterReq.className = hasLetter ? 'valid' : 'invalid';
+      specialReq.className = hasSpecial ? 'valid' : 'invalid';
+      
+      // Validate confirmation password when password changes
+      validatePasswordMatch();
+    }
+    
+    function validatePasswordMatch() {
+      const password1 = document.getElementById('password1').value;
+      const password2 = document.getElementById('password2').value;
+      const errorElement = document.getElementById('passwordMatchError');
+      
+      if (password2.length > 0 && password1 !== password2) {
+        errorElement.textContent = "Passwords do not match!";
+      } else {
+        errorElement.textContent = "";
+      }
+    }
+    
+    // Form validation
+    document.getElementById('registrationForm').addEventListener('submit', function(e) {
+      const password1 = document.getElementById('password1').value;
+      const password2 = document.getElementById('password2').value;
+      let hasError = false;
+      
+      // Check password match
+      if (password1 !== password2) {
+        document.getElementById('passwordMatchError').textContent = "Passwords must match!";
+        hasError = true;
+      }
+      
+      // Check password strength
+      if (!/(?=.*\d)(?=.*[a-zA-Z])(?=.*[!@#$%^&*]).{8,}/.test(password1)) {
+        alert("Password must be at least 8 characters long and contain letters, numbers, and special characters");
+        hasError = true;
+      }
+      
+      // Prevent submission if errors
+      if (hasError) {
+        e.preventDefault();
+      }
+    });
+  </script>
 </body>
 
 </html>
