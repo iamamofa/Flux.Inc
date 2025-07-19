@@ -1,11 +1,9 @@
 # forms.py
 from django import forms
-from .models import *
+from .models import UserApplication, Project, Consumable, Reagent
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.contrib.auth.forms import AuthenticationForm
 import random
 import string
 import uuid
@@ -34,10 +32,12 @@ class ConsumableForm(forms.ModelForm):
         model = Consumable
         fields = ['name', 'product_code', 'quantity', 'expiry_date', 'storage_location', 'threshold_value']
 
+
 class ReagentForm(forms.ModelForm):
     class Meta:
         model = Reagent
         fields = '__all__'
+
 
 class UserApplicationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -47,7 +47,7 @@ class UserApplicationForm(forms.ModelForm):
     def clean_email(self):
         email = self.cleaned_data.get('email')
 
-        if User.objects.filter(email=email).exists():
+        if UserApplication.objects.filter(email=email).exists():
             raise ValidationError('This email is already in use. Please use a different email.')
 
         validate_noguchi_email(email)
@@ -76,22 +76,18 @@ class ProjectManagerSignUpForm(UserCreationForm):
     def clean_project_name(self):
         project_name = self.cleaned_data['project_name']
         if Project.objects.filter(name=project_name).exists():
-            # messages.error(self.request, 'Project name already exists. Kindly provide a different name.')
-            raise forms.ValidationError('Project name already exists. Kindly provide a different name.')
+            raise forms.ValidationError('Project name already exists!')
         return project_name
 
     def clean_email(self):
         email = self.cleaned_data['email']
         if User.objects.filter(email=email).exists():
-            # messages.error(self.request, 'This email is already in use. Please choose a different email.')
             raise forms.ValidationError('This email is already in use. Please use a different email.')
         validate_noguchi_email(email)
         return email
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        # random_string = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
-        # user.username = f'{self.cleaned_data["first_name"]}_{self.cleaned_data["last_name"]}_{random_string}'
         user.username = generate_unique_username(
                 self.cleaned_data["first_name"],
                 self.cleaned_data["last_name"]
@@ -99,6 +95,7 @@ class ProjectManagerSignUpForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
 
 class EditorMemberSignUpForm(UserCreationForm):
     email = forms.EmailField(max_length=254, help_text='Required. Enter a valid email address.')
@@ -117,15 +114,12 @@ class EditorMemberSignUpForm(UserCreationForm):
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
-            # messages.error(self.request, 'This email is already in use. Please choose a different email.')
             raise forms.ValidationError('This email is already in use. Please use a different email.')
         validate_noguchi_email(email)
         return email
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        # random_string = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
-        # user.username = f'{self.cleaned_data["first_name"]}_{self.cleaned_data["last_name"]}_{random_string}'
         user.username = generate_unique_username(
                 self.cleaned_data["first_name"],
                 self.cleaned_data["last_name"]
@@ -134,9 +128,11 @@ class EditorMemberSignUpForm(UserCreationForm):
             user.save()
         return user
 
+
 class LoginForm(forms.Form):
     email = forms.EmailField(label='Email', max_length=254)
     password = forms.CharField(label='Password', widget=forms.PasswordInput)
+
 
 class NewProjectForm(forms.Form):
     project_name = forms.CharField(max_length=255)

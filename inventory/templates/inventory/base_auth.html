@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flux | {% block title %}{% endblock %}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css?family=Poppins:400,500,600,700&display=swap');
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-size: cover;
+        }
+        .box {
+            position: relative;
+            max-width: 430px;
+            width: 100%;
+            background: #fff;
+            padding: 34px;
+            border-radius: 6px;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+            margin: 20px;
+        }
+        footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            padding: 10px;
+            /* background: #f8f9fa; */
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% block content %}{% endblock %}
+    
+    <footer>
+        <p>&copy; {% now "Y" %} Flux</p>
+    </footer>
+</body>
+</html>

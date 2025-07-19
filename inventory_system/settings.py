@@ -32,7 +32,6 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 ALLOWED_HOSTS = ['flux-inc.onrender.com', '127.0.0.1', 'localhost']
 
 
-
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -61,7 +60,6 @@ CSRF_TRUSTED_ORIGINS = [
     'https://github.com/iamamofa/Flux.Inc/',
     'https://localhost:8000',
     'http://127.0.0.1:8000',
-    
     # Add any other domains you trust
 ]
 
@@ -131,5 +129,6 @@ STATICFILES_DIRS = [
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
     'inventory_system.backends.EmailBackend',
 ]
