@@ -1,42 +1,20 @@
+{% extends "inventory/base_auth.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registration Page</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css?family=Poppins:400,500,600,700&display=swap');
+{% block title %}Choose Registration Type{% endblock %}
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        body {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            /* background: #fbfbfb; */
-            background-image: url("{% static 'images/Background 2.jpg' %}");
-            background-size: cover;
-        }
-
-        .box {
-            position: relative;
-            max-width: 430px;
-            width: 100%;
-            background: #fff;
-            padding: 34px;
-            border-radius: 6px;
-            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .flux-logo {
+{% block extra_css %}
+<style>
+    body {
+        background-image: url("{% static 'images/Background 2.jpg' %}");
+    }
+    .button-container {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 30px;
+    }
+    .flux-logo {
             display: flex;
             justify-content: center;
             padding-bottom: 5px;
@@ -186,15 +164,6 @@
             text-decoration: underline;
         }
 
-        footer {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            text-align: center;
-            padding: 10px;
-            /* background-color: #f9f9f9; */
-        }
-
         .button-container {
         display: flex;
         flex-direction: column;
@@ -203,27 +172,23 @@
         margin-top: 20px;
     }
 
-    .register-button{
-        --tw-bg-opacity: 1;
-        background-color: rgb(100 100 230 / var(--tw-bg-opacity));
-        padding: 15px 20px;
-        margin: 10px;
-        color: #fff;
-        text-decoration: none;
-        font-weight: bold;
-        border-radius: 5px;
-    }
-
     .register-button:hover{
         background-color: rgb(100 100 230 / 0.9);
     }
+    .register-button {
+        background: #6464e6;
+        color: white;
+        padding: 15px;
+        text-align: center;
+        border-radius: 5px;
+    }
+</style>
+{% endblock %}
 
-    </style>
-</head>
-
-<body>
-    <div class="box">
-        <a href="{% url 'home' %}"><div id="logo" class="flux-logo" title="Flux">
+{% block content %}
+<div class="box">
+    <a href="{% url 'home' %}">
+        <div id="logo" class="flux-logo" title="Flux">
             <div class="rr0DNb" jsname="l4eHX">
                 <svg width="92" height="28" viewBox="0 0 92 28" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
@@ -234,15 +199,15 @@
                         fill="black" />
                 </svg>
             </div>
-        </div></a>
-        <div class="button-container">
-            <a href="{% url 'user_application' %}" class="register-button">Register as a Project Coordinator</a>
-            <a href="{% url 'register_user' %}" class="register-button">Register as a Research Assistant</a>
         </div>
+    </a>
+    <div class="button-container">
+        <a href="{% url 'user_application' %}" class="register-button">
+            Register as Project Coordinator
+        </a>
+        <a href="{% url 'register_user' %}" class="register-button">
+            Register as Research Assistant
+        </a>
     </div>
-    <footer>
-        <p>&copy; 2025 Flux</p>
-    </footer>
-</body>
-
-</html>
+</div>
+{% endblock %}

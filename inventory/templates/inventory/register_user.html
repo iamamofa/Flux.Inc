@@ -1,41 +1,14 @@
+{% extends "inventory/base_auth.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registration</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css?family=Poppins:400,500,600,700&display=swap');
+{% block title %}Register User{% endblock %}
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Poppins', sans-serif;
-    }
-
+{% block extra_css %}
+<style>
     body {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #fbfbfb;
-      background-image: url("{% static 'images/Background 5.jpg' %}");
-      background-size: cover;
+        background: #fbfbfb;
+        background-image: url("{% static 'images/Background 5.jpg' %}");
     }
-
-    .box {
-      position: relative;
-      max-width: 430px;
-      width: 100%;
-      background: #fff;
-      padding: 34px;
-      border-radius: 6px;
-      box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-    }
-
     .flux-logo {
       display: flex;
       justify-content: center;
@@ -188,14 +161,6 @@
       text-decoration: underline;
     }
 
-    footer {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      text-align: center;
-      padding: 10px;
-    }
-
     /* NEW STYLES FOR PASSWORD HINTS AND REQUIRED FIELDS */
     .required-field::after {
       content: " *";
@@ -286,11 +251,11 @@
       position: relative;
       margin-bottom: 2.5rem;
     }
-  </style>
-</head>
+</style>
+{% endblock %}
 
-<body>
-  <div class="box">
+{% block content %}
+<div class="box">
     <a href="{% url 'home' %}">
       <div id="logo" class="flux-logo" title="Flux">
         <div class="rr0DNb" jsname="l4eHX">
@@ -362,13 +327,8 @@
     {% for message in messages %}
     <p class="error-message">{{message}}</p>
     {% endfor%}
-  </div>
-  
-  <footer>
-      <p>&copy; {% now 'Y' %} Flux</p>
-  </footer>
-
-  <script>
+</div>
+<script>
     // Get DOM elements
     const passwordInput = document.getElementById('password1');
     const passwordHint = document.getElementById('passwordHint');
@@ -448,6 +408,4 @@
       }
     });
   </script>
-</body>
-
-</html>
+{% endblock %}
