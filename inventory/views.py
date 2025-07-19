@@ -103,7 +103,7 @@ def register_project_manager(request):
             try:
                 project_name = form.cleaned_data['project_name']
                 user = form.save()
-                login(request, user)
+                login(request, user, backend='inventory_system.backends.EmailBackend')
 
                 # Create a user profile for the project manager
                 user_profile = UserProfile.objects.create(user=user)
