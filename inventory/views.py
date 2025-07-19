@@ -156,35 +156,42 @@ def login_view(request):
         if form.is_valid():
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
+
+            # Authenticate user
             user = authenticate(request, username=email, password=password)
+
             if user is not None:
-                login(request, user)
-                user_profile = UserProfile.objects.get(user=user)
-                projects = user_profile.managed_projects.all()
-                first_project = projects.first()
-                if first_project:
-                    first_project_name = first_project.name
-                    return redirect(f'/consumables/{first_project_name}')
-                else:
-                    message1 = (
-                            "Sorry, you do not seem to have a project "
-                            "associated with this account."
-                    )
-                    message2 = (
-                            "Contact your project coordinator to be added to "
-                            "a project, or reach out to us for support."
-                    )
-                    return render(
-                            request,
-                            'inventory/404_page.html',
-                            {'message1': message1, 'message2': message2}
+                print("A user")
+                try:
+                    login(request, user)
+                    user_profile = UserProfile.objects.get(user=user)
+                    projects = user_profile.managed_projects.all()
+
+                    if projects.exists():
+                        return redirect(f'/consumables/{projects.first().name}')
+                    else:
+                        message1 = (
+                                "Sorry, you do not seem to have a project "
+                                "associated with this account."
+                        )
+                        message2 = (
+                                "Contact your project coordinator to be added "
+                                "to a project, or reach out to us for support."
+                        )
+                        return render(
+                                request,
+                                'inventory/404_page.html',
+                                {'message1': message1, 'message2': message2}
+                        )
+                except UserProfile.DoesNotExist:
+                    messages.error(
+                            request, "Your account is not properly set up."
                     )
             else:
-                messages.error(request, 'Invalid email or password.')
-    else:
-        form = LoginForm()
+                messages.error(request, 'Invalid credentials.')
+                return redirect('login')
 
-    return render(request, 'inventory/login.html', {'form': form})
+    return render(request, 'inventory/login.html', {'form': LoginForm()})
 
 
 def logoutUser(request):

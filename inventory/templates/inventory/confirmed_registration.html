@@ -1,28 +1,22 @@
+{% extends "inventory/base_auth.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html>
 
-<head>
-    <title>Flux: Information Uploaded</title>
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-        }
+{% block title %}Information Uploaded{% endblock %}
 
-        img {
-            max-width: 100%;
-            height: auto;
-            max-height: 70vh;
-        }
-
-        .button {
+{% block extra_css %}
+<style>
+    body {
+        flex-direction: column;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        overflow: hidden;
+    }
+    img {
+        max-width: 100%;
+        height: auto;
+        max-height: 70vh;
+    }
+    .button {
             display: inline-block;
             padding: 10px 20px;
             border: 2px solid #000;
@@ -45,25 +39,16 @@
         }
 
         footer {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            text-align: center;
-            padding: 10px;
             background-color: #f9f9f9;
         }
-    </style>
-</head>
+</style>
+{% endblock %}
 
-<body>
-    <img src="{% static '/images/Uploaded.png' %}" alt="Uploaded Image">
+{% block content %}
+<div style="text-align: center; padding: 20px;">
+    <img src="{% static 'images/Uploaded.png' %}" alt="Uploaded Image">
     <p>{{ message1 }}</p>
     <p>{{ message2 }}</p>
-    <br>
-    <a class="button" href="{% url 'home' %}">Back to Home Page</a>
-    <footer>
-        <p>&copy; 2024 Flux</p>
-    </footer>
-</body>
-
-</html>
+    <a href="{% url 'home' %}" class="button">Back to Home</a>
+</div>
+{% endblock %}

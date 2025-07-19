@@ -30,19 +30,22 @@ class UserApplication(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
-        # Resize and optimize image after saving
-        img_path = self.id_image.path
-        img = Image.open(img_path)
+        try:
+            # Resize and optimize image after saving
+            img_path = self.id_image.path
+            img = Image.open(img_path)
 
-        output_size = (800, 600)
-        img = img.resize(output_size, Image.ANTIALIAS)
+            output_size = (800, 600)
+            img = img.resize(output_size, Image.LANCZOS)
 
-        # Save with desired quality
-        img.save(img_path, quality=70, optimize=True)
-
+            # Save with desired quality
+            img.save(img_path, quality=70, optimize=True)
+        except Exception as e:
+            # Optional: log the error or raise it [Production]
+            print(f"Image processing failed: {e}")
 
 @receiver(post_save, sender=UserApplication)
-def send_approval_email(instance):
+def send_approval_email(sender, instance, created, **kwargs):
     if instance.is_approved:
         subject = 'Application Approved'
         recipient_list = [instance.email]
@@ -85,8 +88,10 @@ def send_approval_email(instance):
                     img = MIMEImage(open(file_path, 'rb').read())
                     img.add_header('Content-Id', f'<{filename}>')
                     msg.attach(img)
-
-        msg.send()
+        try:
+            msg.send()
+        except Exception as e:
+            print("Email failed to send:", e)
 
 
 class Project(models.Model):
@@ -117,7 +122,6 @@ class UserProfile(models.Model):
     managed_projects = models.ManyToManyField(
             Project,
             related_name='related_projects',
-            null=True,
             blank=True
     )
     # You can add additional fields to store user-related information

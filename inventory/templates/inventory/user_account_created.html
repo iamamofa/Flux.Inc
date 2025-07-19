@@ -1,26 +1,22 @@
+{% extends "inventory/base_auth.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Flux: Account Created</title>
-    <style>
-        body {
-            display: flex;
+
+{% block title %}Account Created{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
             margin: 0;
             font-family: Arial, sans-serif;
         }
-
-        img {
+    img {
             max-width: 100%;
             height: auto;
             max-height: 70vh;
         }
 
-        .button {
+    .button {
             display: inline-block;
             padding: 10px 20px;
             border: 2px solid #000;
@@ -30,21 +26,23 @@
             transition: background-color 0.3s ease;
         }
 
-        .button:hover {
+    .button:hover {
             background-color: #000;
             color: #fff;
         }
-        p {
+    p {
             margin: 0; /* Set the margin to 0 to remove spacing between paragraphs */
             padding: 0; /* Set the padding to 0 to remove spacing between paragraphs */
         }
-    </style>
-</head>
-<body>
-    <img src="{% static '/images/Account_created.png' %}" alt="Error Image">
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 20px;">
+    <img src="{% static 'images/Account_created.png' %}" alt="Account Created">
     <p>Your account has been created successfully</p>
     <p>Kindly reach out to your project coordinator to be added to a project.</p> 
     <br>
-    <a class="button" href="{% url 'home' %}">Back to Home Page</a>
-</body>
-</html>
+    <a href="{% url 'home' %}" class="button">Back to Home</a>
+</div>
+{% endblock %}

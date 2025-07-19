@@ -4,6 +4,10 @@ __pycache__/
 *$py.class
 
 db.sqlite3
+# Ignore all files in user_applications*
+user_applications/*
+# But keep the directory itself and any ".gitkeep" or ".placeholder" files
+!user_applications/.gitkeep
 
 # C extensions
 *.so
