@@ -1,8 +1,9 @@
 {% load static %}
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flux: Page Cannot Be Loaded</title>
     <style>
         body {
@@ -10,26 +11,50 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             font-family: Arial, sans-serif;
-            overflow: hidden;
+            background-color: #f8f9fa;
+            color: #333;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .error-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 800px;
+            width: 100%;
         }
 
         img {
             max-width: 100%;
             height: auto;
-            max-height: 70vh;
+            max-height: 60vh;
+            margin-bottom: 2rem;
+        }
+
+        .error-messages {
+            margin-bottom: 2rem;
+        }
+
+        .error-messages p {
+            margin: 0.5rem 0;
+            font-size: 1.1rem;
+            color: #555;
         }
 
         .button {
             display: inline-block;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border: 2px solid #000;
             border-radius: 4px;
             text-decoration: none;
             color: #000;
-            transition: background-color 0.3s ease;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 1rem 0;
         }
 
         .button:hover {
@@ -37,33 +62,34 @@
             color: #fff;
         }
 
-        p {
-            margin: 0;
-            /* Set the margin to 0 to remove spacing between paragraphs */
-            padding: 0;
-            /* Set the padding to 0 to remove spacing between paragraphs */
-        }
-
         footer {
-            position: absolute;
-            bottom: 0;
+            margin-top: auto;
             width: 100%;
             text-align: center;
-            padding: 10px;
-            background-color: #f9f9f9;
+            padding: 20px;
+            background-color: #f1f1f1;
+            font-size: 0.9rem;
         }
     </style>
 </head>
 
 <body>
-    <img src="{% static '/images/404.png' %}" alt="Error Image">
-    <p>{{ message1 }}</p>
-    <p>{{ message2 }}</p>
-    <br>
-    <a class="button" href="{% url 'home' %}">Back to Home Page</a>
+    <main class="error-container">
+        <img src="{% static '/images/404.png' %}" alt="Error illustration showing page not found">
+        <div class="error-messages">
+            <p>{{ message1 }}</p>
+            <p>{{ message2 }}</p>
+        </div>
+        <a class="button" href="{% url 'home' %}" aria-label="Return to home page">Back to Home Page</a>
+    </main>
+    
     <footer>
-        <p>&copy; 2024 Flux</p>
+        <p>&copy; <span id="currentYear"></span> Flux</p>
     </footer>
-</body>
 
+    <script>
+        // Dynamic year for copyright
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+    </script>
+</body>
 </html>

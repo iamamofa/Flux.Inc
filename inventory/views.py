@@ -46,7 +46,7 @@ def change_password(request):
             messages.error(request, 'Try again')
     else:
         form = PasswordChangeForm(request.user)
-    return render(request, 'inventory/settings.html', {'form': form})
+    return render(request, 'inventory/change_password.html', {'form': form})
 
 
 @csrf_protect
