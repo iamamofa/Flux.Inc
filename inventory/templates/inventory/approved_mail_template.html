@@ -4,6 +4,7 @@
     <title>Application Approved</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="x-apple-disable-message-reformatting">
     <!--[if mso]>
     <xml>
         <o:OfficeDocumentSettings>
@@ -21,6 +22,8 @@
             padding: 0;
             background-color: #f8f8f9;
             font-family: Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
         }
         a[x-apple-data-detectors] {
             color: inherit !important;
@@ -52,6 +55,9 @@
             border-radius: 4px;
             display: inline-block;
             font-weight: 500;
+            font-size: 16px;
+            font-family: Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans, Lucida Sans Unicode, Tahoma, sans-serif;
+            mso-border-alt: none;
         }
         @media (max-width: 660px) {
             .desktop_hide table.icons-inner,
@@ -81,6 +87,28 @@
                 padding: 10px 20px !important;
                 font-size: 14px !important;
             }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body, .row-content {
+                background-color: #121212 !important;
+                color: #ffffff !important;
+            }
+            .row-4, .row-5 {
+                background-color: #1e1e1e !important;
+            }
+            p, span, div {
+                color: #e0e0e0 !important;
+            }
+            .button {
+                background-color: #ff7b4d !important;
+            }
+        }
+
+        /* Force light colors for Outlook */
+        [data-ogsc] .row-content {
+            background-color: #ffffff !important;
+            color: #000000 !important;
         }
     </style>
 </head>
@@ -126,7 +154,13 @@
                                             <tr>
                                                 <td class="pad" style="padding-bottom:25px;padding-top:25px;width:100%;padding-right:0px;padding-left:0px;">
                                                     <div class="alignment" align="center" style="line-height:10px;">
-                                                        <img src="cid:Logo_Orange" style="display: block; height: auto; border: 0; width: 92px; max-width: 100%;" width="92" alt="Flux Logo" title="Flux">
+                                                        <img src="cid:Logo_Orange"
+                                                             style="display: block; height: auto; border: 0; width: 92px; max-width: 100%;"
+                                                             width="92"
+                                                             height="auto"
+                                                             alt="Flux Logo"
+                                                             title="Flux"
+                                                             loading="lazy">
                                                     </div>
                                                 </td>
                                             </tr>
@@ -149,7 +183,14 @@
                                             <tr>
                                                 <td class="pad" style="padding-left:40px;padding-right:40px;width:100%;">
                                                     <div class="alignment" align="center" style="line-height:10px;">
-                                                        <img class="big" src="cid:Check" style="display: block; height: auto; border: 0; width: 352px; max-width: 100%;" width="352" alt="Approved Checkmark" title="Approved">
+                                                        <img class="big"
+                                                             src="cid:Check"
+                                                             style="display: block; height: auto; border: 0; width: 352px; max-width: 100%;"
+                                                             width="352"
+                                                             height="auto"
+                                                             alt="Approved Checkmark"
+                                                             title="Approved"
+                                                             loading="lazy">
                                                     </div>
                                                 </td>
                                             </tr>
@@ -285,7 +326,13 @@
                                             <tr>
                                                 <td class="pad" style="padding-top:30px;width:100%;padding-right:0px;padding-left:0px;">
                                                     <div class="alignment" align="center" style="line-height:10px;">
-                                                        <img src="cid:Logo_White" style="display: block; height: auto; border: 0; width: 92px; max-width: 100%;" width="92" alt="Flux Logo" title="Flux">
+                                                        <img src="cid:Logo_White"
+                                                             style="display: block; height: auto; border: 0; width: 92px; max-width: 100%;"
+                                                             width="92"
+                                                             height="auto"
+                                                             alt="Flux Logo"
+                                                             title="Flux"
+                                                             loading="lazy">
                                                     </div>
                                                 </td>
                                             </tr>
@@ -298,22 +345,22 @@
                                                             <tr>
                                                                 <td style="padding:0 10px 0 10px;">
                                                                     <a href="https://www.facebook.com/" target="_blank">
-                                                                        <img src="cid:facebook2x" width="32" height="32" alt="Facebook" title="Facebook" style="display: block; height: auto; border: 0;">
+                                                                        <img src="cid:facebook2x" width="32" height="32" alt="Facebook" title="Facebook" style="display: block; height: auto; border: 0;" loading="lazy">
                                                                     </a>
                                                                 </td>
                                                                 <td style="padding:0 10px 0 10px;">
                                                                     <a href="https://twitter.com/" target="_blank">
-                                                                        <img src="cid:twitter2x" width="32" height="32" alt="Twitter" title="Twitter" style="display: block; height: auto; border: 0;">
+                                                                        <img src="cid:twitter2x" width="32" height="32" alt="Twitter" title="Twitter" style="display: block; height: auto; border: 0;" loading="lazy">
                                                                     </a>
                                                                 </td>
                                                                 <td style="padding:0 10px 0 10px;">
                                                                     <a href="https://instagram.com/" target="_blank">
-                                                                        <img src="cid:instagram2x" width="32" height="32" alt="Instagram" title="Instagram" style="display: block; height: auto; border: 0;">
+                                                                        <img src="cid:instagram2x" width="32" height="32" alt="Instagram" title="Instagram" style="display: block; height: auto; border: 0;" loading="lazy">
                                                                     </a>
                                                                 </td>
                                                                 <td style="padding:0 10px 0 10px;">
                                                                     <a href="https://www.linkedin.com/" target="_blank">
-                                                                        <img src="cid:linkedin2x" width="32" height="32" alt="LinkedIn" title="LinkedIn" style="display: block; height: auto; border: 0;">
+                                                                        <img src="cid:linkedin2x" width="32" height="32" alt="LinkedIn" title="LinkedIn" style="display: block; height: auto; border: 0;" loading="lazy">
                                                                     </a>
                                                                 </td>
                                                             </tr>

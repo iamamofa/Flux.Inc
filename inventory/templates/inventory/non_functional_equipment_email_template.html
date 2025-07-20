@@ -87,9 +87,31 @@
 
 		@media (max-width: 600px) {
 			table.mobile-table span {
-			font-size: 10px; /* Adjust the font size as needed */
+			    font-size: 10px; /* Adjust the font size as needed */
 			}
 		}
+
+        @media (prefers-color-scheme: dark) {
+            body, .row-content {
+                background-color: #121212 !important;
+                color: #ffffff !important;
+            }
+            .row-4, .row-5 {
+                background-color: #1e1e1e !important;
+            }
+            p, span, div {
+                color: #e0e0e0 !important;
+            }
+            .button {
+                background-color: #ff7b4d !important;
+            }
+        }
+
+        /* Force light colors for Outlook */
+        [data-ogsc] .row-content {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
 	</style>
 </head>
 
@@ -138,7 +160,7 @@
 													<table class="image_block block-1" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 														<tr>
 															<td class="pad" style="padding-bottom:25px;padding-top:22px;width:100%;padding-right:0px;padding-left:0px;">
-																<div class="alignment" align="center" style="line-height:10px"><img src="static\images\Logo_Orange.png" style="display: block; height: auto; border: 0; width: 92px; max-width: 100%;" width="92" alt="Logo" title="Logo"></div>
+																<div class="alignment" align="center" style="line-height:10px"><img src="static\images\Logo_Orange.png" style="display: block; height: auto; border: 0; width: 92px; max-width: 100%;" width="92" height="auto" loading="lazy" alt="Logo" title="Logo"></div>
 															</td>
 														</tr>
 													</table>
@@ -203,7 +225,7 @@
 													<table class="image_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 														<tr>
 															<td class="pad" style="padding-left:40px;padding-right:40px;width:100%;">
-																<div class="alignment" align="center" style="line-height:10px"><img class="big" src="cid:Bell" style="display: block; height: auto; border: 0; width: 352px; max-width: 100%;" width="352" alt="Notification" title="Notification"></div>
+																<div class="alignment" align="center" style="line-height:10px"><img class="big" src="cid:Bell" style="display: block; height: auto; border: 0; width: 352px; max-width: 100%;" width="352" height="auto" loading="lazy" alt="Notification" title="Notification"></div>
 															</td>
 														</tr>
 													</table>
@@ -286,15 +308,33 @@
 															</td>
 														</tr>
 													</table>
-													<table class="text_block block-3" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
-														<tr>
-															<td class="pad" style="padding-bottom:40px;padding-left:30px;padding-right:30px;padding-top:20px;">
-																<div style="font-family: sans-serif">
-																	<div class style="font-size: 12px; font-family: Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif; mso-line-height-alt: 18px; color: #555555; line-height: 1.5;">
-																		<p style="margin: 0; font-size: 15px; mso-line-height-alt: 22.5px;"><span style="font-size:15px;">We would like to inform you that <strong>{{ equipment.name }}</strong> has been flagged as non-functional. Kindly take note.</span></p>
-																		<p style="margin: 0; font-size: 15px; mso-line-height-alt: 18px;">&nbsp;</p>
-																		<p style="margin: 0; font-size: 15px; mso-line-height-alt: 18px;">&nbsp;</p>
-																		<p style="margin: 0; font-size: 15px; mso-line-height-alt: 18px;">&nbsp;</p>
+                                                    <table class="text_block block-3" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
+                                                        <tr>
+                                                            <td class="pad" style="padding-bottom:40px;padding-left:30px;padding-right:30px;padding-top:20px;">
+                                                                <div style="font-family: sans-serif">
+                                                                    <div class style="font-size: 12px; font-family: Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif; mso-line-height-alt: 18px; color: #555555; line-height: 1.5;">
+                                                                        <p style="margin: 0; font-size: 15px; mso-line-height-alt: 22.5px;"><span style="font-size:15px;">We would like to inform you that the following equipment has been flagged as non-functional:</span></p>
+                                                                        <p style="margin: 0; font-size: 15px; mso-line-height-alt: 18px;">&nbsp;</p>
+                                                                        <table class="mobile-table" style="width: 100%; table-layout: fixed;">
+                                                                            <tr>
+                                                                                <td style="width: 30%; text-align: left; font-size: 14px; mso-line-height-alt: 22.5px;">
+                                                                                    <span style="color:#2b303a; font-size: 20px;"><strong>Equipment</strong></span>
+                                                                                </td>
+                                                                                <td style="width: 70%; text-align: right; font-size: 14px; mso-line-height-alt: 22.5px;">
+                                                                                    <span style="color:#2b303a; font-size: 20px;">{{ equipment.name }}</span>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td style="width: 30%; text-align: left; font-size: 14px; mso-line-height-alt: 22.5px;">
+                                                                                    <span style="color:#2b303a; font-size: 20px;"><strong>Project</strong></span>
+                                                                                </td>
+                                                                                <td style="width: 70%; text-align: right; font-size: 14px; mso-line-height-alt: 22.5px;">
+                                                                                    <span style="color:#2b303a; font-size: 20px;">{{ equipment.project.name }}</span>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </table>
+                                                                        <p style="margin: 0; font-size: 15px; mso-line-height-alt: 18px;">&nbsp;</p>
+                                                                        <p style="margin: 0; font-size: 15px; mso-line-height-alt: 22.5px;"><span style="font-size:15px;">Please take appropriate action to repair or replace this equipment as soon as possible.</span></p>
 																		<p style="margin: 0; font-size: 15px; mso-line-height-alt: 22.5px;"><span style="font-size:15px;">Thank you for your attention.</span></p>
 																		<p style="margin: 0; font-size: 15px; mso-line-height-alt: 18px;">&nbsp;</p>
 																		<p style="margin: 0; font-size: 15px; mso-line-height-alt: 18px;">&nbsp;</p>
@@ -402,7 +442,7 @@
 													<table class="image_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 														<tr>
 															<td class="pad" style="padding-top:40px;width:100%;padding-right:0px;padding-left:0px;">
-																<div class="alignment" align="center" style="line-height:10px"><img src="cid:Logo_White" style="display: block; height: auto; border: 0; width: 92px; max-width: 100%;" width="92" alt="Alternate text" title="Alternate text"></div>
+																<div class="alignment" align="center" style="line-height:10px"><img src="cid:Logo_White" style="display: block; height: auto; border: 0; width: 92px; max-width: 100%;" width="92" height="auto" loading="lazy" alt="Alternate text" title="Alternate text"></div>
 															</td>
 														</tr>
 													</table>
@@ -412,10 +452,10 @@
 																<div class="alignment" align="center">
 																	<table class="social-table" width="208px" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; display: inline-block;">
 																		<tr>
-																			<td style="padding:0 10px 0 10px;"><a href="https://www.facebook.com/" target="_blank"><img src="cid:facebook2x" width="32" height="32" alt="Facebook" title="Facebook" style="display: block; height: auto; border: 0;"></a></td>
-																			<td style="padding:0 10px 0 10px;"><a href="https://twitter.com/" target="_blank"><img src="cid:twitter2x" width="32" height="32" alt="Twitter" title="Twitter" style="display: block; height: auto; border: 0;"></a></td>
-																			<td style="padding:0 10px 0 10px;"><a href="https://instagram.com/" target="_blank"><img src="cid:instagram2x" width="32" height="32" alt="Instagram" title="Instagram" style="display: block; height: auto; border: 0;"></a></td>
-																			<td style="padding:0 10px 0 10px;"><a href="https://www.linkedin.com/" target="_blank"><img src="cid:linkedin2x" width="32" height="32" alt="LinkedIn" title="LinkedIn" style="display: block; height: auto; border: 0;"></a></td>
+																			<td style="padding:0 10px 0 10px;"><a href="https://www.facebook.com/" target="_blank"><img src="cid:facebook2x" width="32" height="32" alt="Facebook" title="Facebook" style="display: block; height: auto; border: 0;" loading="lazy"></a></td>
+																			<td style="padding:0 10px 0 10px;"><a href="https://twitter.com/" target="_blank"><img src="cid:twitter2x" width="32" height="32" alt="Twitter" title="Twitter" style="display: block; height: auto; border: 0;" loading="lazy"></a></td>
+																			<td style="padding:0 10px 0 10px;"><a href="https://instagram.com/" target="_blank"><img src="cid:instagram2x" width="32" height="32" alt="Instagram" title="Instagram" style="display: block; height: auto; border: 0;" loading="lazy"></a></td>
+																			<td style="padding:0 10px 0 10px;"><a href="https://www.linkedin.com/" target="_blank"><img src="cid:linkedin2x" width="32" height="32" alt="LinkedIn" title="LinkedIn" style="display: block; height: auto; border: 0;" loading="lazy"></a></td>
 																		</tr>
 																	</table>
 																</div>
