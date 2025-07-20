@@ -1,0 +1,25 @@
+<!-- Base Popup Structure -->
+<div class="popup-container" id="basePopup" style="display: none;">
+    <div class="popup-card">
+        <h2 class="popup-title"></h2>
+        <button class="popup-close" onclick="closePopup(this)">&times;</button>
+        <div class="popup-body">
+            <!-- Content will be injected here -->
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Popup -->
+<div class="popup-container" id="deletePopup" style="display: none;">
+    <div class="popup-card">
+        <h2>Confirm Deletion</h2>
+        <button class="popup-close" onclick="closePopup(this)">&times;</button>
+        <div class="popup-body">
+            <p>Are you sure you want to delete this item?</p>
+            <div class="popup-actions">
+                <button class="btn btn-secondary" onclick="closePopup(this)">Cancel</button>
+                <button class="btn btn-danger" onclick="deleteItem()">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
