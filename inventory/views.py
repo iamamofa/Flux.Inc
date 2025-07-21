@@ -1,3 +1,4 @@
+from django.forms import ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.decorators import login_required
@@ -22,9 +23,19 @@ from django.conf import settings
 from email.mime.image import MIMEImage
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
+import bleach
 
 
 static_img_path = os.path.join(settings.BASE_DIR, 'static')
+
+
+def clean_text_field(value):
+    """Clean and escape text fields for HTML forms"""
+    if value is None:
+        return ""
+    # Strip harmful tags/attributes while preserving basic formatting
+    allowed_tags = ['b', 'i', 'u', 'em', 'strong', 'br', 'p']
+    return bleach.clean(str(value), tags=allowed_tags, strip=True)
 
 
 @login_required
@@ -436,13 +447,16 @@ def addConsumable(request, project_name):
         if request.method == 'POST':
             # Retrieve the form data from the request
             project = Project.objects.get(name=project_name)
-            name = request.POST.get('name')
-            product_code = request.POST.get('product_code')
-            pack_size = request.POST.get('pack_size')
-            quantity = request.POST.get('quantity')
-            expiry_date = request.POST.get('expiry_date')
-            storage_location = request.POST.get('storage_location')
-            threshold_value = request.POST.get('threshold_value')
+
+            name = clean_text_field(request.POST.get('name'))
+            product_code = clean_text_field(request.POST.get('product_code'))
+            pack_size = int(request.POST.get('pack_size'))
+            quantity = int(request.POST.get('quantity'))
+            expiry_date = int(request.POST.get('expiry_date'))
+            storage_location = clean_text_field(
+                    request.POST.get('storage_location')
+            )
+            threshold_value = int(request.POST.get('threshold_value'))
 
             # Create a new Consumable instance associated with
             # the active project
@@ -517,14 +531,14 @@ def get_consumable_info(id):
 
     # Prepare the data to be sent back as a JSON response
     data = {
-        'name': consumable.name,
-        'product_code': consumable.product_code,
+        'name': clean_text_field(consumable.name),
+        'product_code': clean_text_field(consumable.product_code),
         'pack_size': consumable.pack_size,
         'pack_size_rem': consumable.pack_size_rem,
         'quantity': consumable.quantity,
         'expiry_date': consumable.expiry_date,
         'date_recorded': consumable.date_recorded,
-        'storage_location': consumable.storage_location,
+        'storage_location': clean_text_field(consumable.storage_location),
         'threshold_value': consumable.threshold_value,
     }
 
@@ -1060,14 +1074,14 @@ def get_reagent_info(id):
 
     # Prepare the data to be sent back as a JSON response
     data = {
-        'name': reagent.name,
-        'product_code': reagent.product_code,
+        'name': clean_text_field(reagent.name),
+        'product_code': clean_text_field(reagent.product_code),
         'pack_size': reagent.pack_size,
         'pack_size_rem': reagent.pack_size_rem,
         'quantity': reagent.quantity,
         'expiry_date': reagent.expiry_date,
         'date_recorded': reagent.date_recorded,
-        'storage_location': reagent.storage_location,
+        'storage_location': clean_text_field(reagent.storage_location),
         'threshold_value': reagent.threshold_value,
 
     }
@@ -1593,15 +1607,15 @@ def get_equipment_info(id):
 
     # Prepare the data to be sent back as a JSON response
     data = {
-        'name': equipment.name,
-        'equip_id': equipment.equip_id,
-        'serial_num': equipment.serial_num,
+        'name': clean_text_field(equipment.name),
+        'equip_id': clean_text_field(equipment.equip_id),
+        'serial_num': clean_text_field(equipment.serial_num),
         'quantity': equipment.quantity,
-        'status': equipment.status,
+        'status': clean_text_field(equipment.status),
         'service_contract_start': equipment.service_contract_start,
         'service_contract_end': equipment.service_contract_end,
-        'donated_by': equipment.donated_by,
-        'storage_location': equipment.storage_location,
+        'donated_by': clean_text_field(equipment.donated_by),
+        'storage_location': clean_text_field(equipment.storage_location),
     }
 
     return JsonResponse(data)
@@ -2071,14 +2085,14 @@ def get_sample_info(id):
 
     # Prepare the data to be sent back as a JSON response
     data = {
-        'sample_id': sample.sample_id,
-        'sample_type': sample.sample_type,
-        'description': sample.description,
-        'country': sample.country,
+        'sample_id': clean_text_field(sample.sample_id),
+        'sample_type': clean_text_field(sample.sample_type),
+        'description': clean_text_field(sample.description),
+        'country': clean_text_field(sample.country),
         'volume': sample.volume,
-        'well_id': sample.well_id,
+        'well_id': clean_text_field(sample.well_id),
         'date_recorded': sample.date_recorded,
-        'storage_location': sample.storage_location,
+        'storage_location': clean_text_field(sample.storage_location),
         'threshold_value': sample.threshold_value,
     }
 

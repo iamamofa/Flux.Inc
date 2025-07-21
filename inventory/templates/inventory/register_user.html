@@ -272,28 +272,50 @@
     </a>
     <form action="{% url 'register_user' %}" method="POST" id="registrationForm">
       {% csrf_token %}
+
+      <!-- Display form errors -->
+      {% if form.non_field_errors %}
+        <div class="error-message">
+            {% for error in form.non_field_errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+      {% endif %}
+
       <!-- Email -->
       <div class="inputBox">
-        <input type="email" name="email" required onkeyup="this.setAttribute('value', this.value);" value="">
+        {{ form.email }}
         <label class="required-field">Email</label>
+        {% if form.email.errors %}
+            <div class="error-message">{{ form.email.errors.as_text }}</div>
+        {% endif %}
       </div>
-      
+
       <!-- First Name -->
       <div class="inputBox">
-        <input type="text" name="first_name" required onkeyup="this.setAttribute('value', this.value);" value="">
+        {{ form.first_name }}
         <label class="required-field">First Name</label>
+        {% if form.first_name.errors %}
+          <div class="error-message">{{ form.first_name.errors.as_text }}</div>
+        {% endif %}
       </div>
       
       <!-- Last Name -->
       <div class="inputBox">
-        <input type="text" name="last_name" required onkeyup="this.setAttribute('value', this.value);" value="">
+        {{ form.last_name }}
         <label class="required-field">Last Name</label>
+        {% if form.last_name.errors %}
+          <div class="error-message">{{ form.last_name.errors.as_text }}</div>
+        {% endif %}
       </div>
       
       <!-- Password with hints -->
       <div class="inputBox password-container">
-        <input type="password" name="password1" id="password1" required onkeyup="this.setAttribute('value', this.value); checkPasswordStrength(this.value);" value="">
+        {{ form.password1 }}
         <label class="required-field">Password</label>
+        {% if form.password1.errors %}
+          <div class="error-message">{{ form.password1.errors.as_text }}</div>
+        {% endif %}
         <div class="password-hint" id="passwordHint">
           <h4>Password Requirements:</h4>
           <ul>
@@ -307,8 +329,11 @@
       
       <!-- Confirm Password -->
       <div class="inputBox">
-        <input type="password" name="password2" id="password2" required onkeyup="this.setAttribute('value', this.value); validatePasswordMatch();" value="">
+        {{ form.password2 }}
         <label class="required-field">Confirm Password</label>
+        {% if form.password2.errors %}
+          <div class="error-message">{{ form.password2.errors.as_text }}</div>
+        {% endif %}
       </div>
       <div class="error-message" id="passwordMatchError"></div>
       
@@ -330,7 +355,7 @@
 </div>
 <script>
     // Get DOM elements
-    const passwordInput = document.getElementById('password1');
+    const passwordInput = document.getElementById('id_password1');
     const passwordHint = document.getElementById('passwordHint');
     
     // Show password hint when password field is focused
@@ -340,7 +365,7 @@
     
     // Hide password hint when clicking outside
     document.addEventListener('click', function(event) {
-      if (!passwordHint.contains(event.target) {
+      if (!passwordHint.contains(event.target) && event.target !== passwordInput) {
         passwordHint.classList.remove('visible');
       }
     });
@@ -373,8 +398,8 @@
     }
     
     function validatePasswordMatch() {
-      const password1 = document.getElementById('password1').value;
-      const password2 = document.getElementById('password2').value;
+      const password1 = document.getElementById('id_password1').value;
+      const password2 = document.getElementById('id_password2').value;
       const errorElement = document.getElementById('passwordMatchError');
       
       if (password2.length > 0 && password1 !== password2) {
@@ -384,10 +409,17 @@
       }
     }
     
+    // Add event listeners to password fields
+    document.getElementById('id_password1').addEventListener('input', function() {
+      checkPasswordStrength(this.value);
+    });
+    
+    document.getElementById('id_password2').addEventListener('input', validatePasswordMatch);
+    
     // Form validation
     document.getElementById('registrationForm').addEventListener('submit', function(e) {
-      const password1 = document.getElementById('password1').value;
-      const password2 = document.getElementById('password2').value;
+      const password1 = document.getElementById('id_password1').value;
+      const password2 = document.getElementById('id_password2').value;
       let hasError = false;
       
       // Check password match
@@ -407,5 +439,5 @@
         e.preventDefault();
       }
     });
-  </script>
-{% endblock %}
+</script>
+{% endblock %}    

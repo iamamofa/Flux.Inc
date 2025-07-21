@@ -7,7 +7,201 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="{% static '/images/Icon.png' %}">
     <link rel="stylesheet" href="{% static 'css/inventory_style.css' %}">
+        <style>
+        /* Popup Styles */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .popup-overlay.active {
+            z-indexopacity: 1;
+            visibility: visible;
+        }
+
+        .popup-container {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transform: translateY(20px);
+            transition: transform 0.3s;
+        }
+
+        .popup-overlay.active .popup-container {
+            transform: translateY(0);
+        }
+
+        .popup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .popup-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #111827;
+            margin: 0;
+        }
+
+        .popup-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6b7280;
+            padding: 0.25rem;
+            border-radius: 4px;
+        }
+
+        .popup-close:hover {
+            color: #111827;
+            background: #f3f4f6;
+        }
+
+        .popup-body {
+            padding: 1.5rem;
+        }
+
+        .popup-form .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .popup-form label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: #374151;
+        }
+
+        .popup-form .form-control {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        .popup-form .form-control:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: white;
+        }
+
+        .loading-spinner svg {
+            width: 3rem;
+            height: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }   
+
+        /* Notifications */
+        .notification-container {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            z-index: 1000;
+        }
+
+        .notification {
+            padding: 1rem;
+            border-radius: 4px;
+            color: white;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-width: 300px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification.success {
+            background-color: #10b981;
+        }
+
+        .notification.error {
+            background-color: #ef4444;
+        }
+
+        .notification.warning {
+            background-color: #f59e0b;
+        }
+
+        .notification.fade-out {
+            animation: fadeOut 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        /* Focus styles for accessibility */
+        button:focus, input:focus, select:focus {
+            outline: 2px solid #FF5C00;
+            outline-offset: 2px;
+        }
+    </style>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="{% static 'js/inventory.js' %}" defer></script>
     <title>Flux - {% block title %}{% endblock %}</title>
 </head>
 <body class="relative min-h-screen font-poppins antialiased text-sm bg-white flex text-gray-800 h-full 2xl:max-w-[1920px] 2xl:mx-auto 2xl:border-r-2"
@@ -22,22 +216,20 @@
              x-show="showMenu" 
              x-transition.opacity.duration.500ms>
         </div>
-
-        {% block filters %}{% endblock %}
+        
+         <!-- Filters Sidebar -->
+        <aside class="hidden sm:block w-48 md:w-60 2xl:w-80 bg-gray-50 py-5 lg:py-10 px-2 md:px-4 text-sm">
+            {% block filters %}{% endblock %}
+        </aside>
 
         <!-- Main Content -->
         <section class="flex-1 py-6 px-4 md:px-4 lg:px-8">
-            {% block header %}{% endblock %}
-            
-            {% block navigation %}{% endblock %}
-            
             {% block content %}{% endblock %}
         </section>
 
         {% include 'inventory/partials/popups.html' %}
     </main>
 
-    <script src="{% static 'js/inventory.js' %}"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

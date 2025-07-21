@@ -113,9 +113,12 @@ class EditorMemberSignUpForm(UserCreationForm):
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
+
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError('This email is already in use. Please use a different email.')
+
         validate_noguchi_email(email)
+
         return email
 
     def save(self, commit=True):

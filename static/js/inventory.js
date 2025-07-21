@@ -1,756 +1,543 @@
+/**
+ * Inventory Management System - Unified JavaScript for all inventory types
+ * Handles: Consumables, Equipment, Reagents, Samples
+ */
+
 // Utility functions
-function getCSRFToken() {
-    return document.querySelector('[name=csrfmiddlewaretoken]').value;
-}
-
-function showLoading(button) {
-    button.dataset.originalText = button.innerHTML;
-    button.disabled = true;
-    button.innerHTML = '<span class="spinner">Loading...</span>';
-}
-
-function resetLoading(button) {
-    button.disabled = false;
-    button.innerHTML = button.dataset.originalText;
-}
-
-// Table Management
-function initTable(tableSelector, options) {
-    const table = document.querySelector(tableSelector);
-    if (!table) return;
-
-    if (options.sortOptions) {
-        initTableSorting(table, options.sortOptions);
+class InventoryUtils {
+    static getCSRFToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]').value;
     }
 
-    if (options.filterOptions) {
-        initTableFiltering(table, options.filterOptions);
+    static showLoading(button) {
+        button.dataset.originalText = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<span class="spinner">Loading...</span>';
     }
-}
 
-function initTableSorting(table, sortOptions) {
-    const headers = table.querySelectorAll('th[data-sort]');
-    
-    headers.forEach(header => {
-        header.addEventListener('click', () => {
-            const sortKey = header.getAttribute('data-sort');
-            const sortType = sortOptions[sortKey].type;
-            const isAscending = !header.classList.contains('asc');
-            
-            headers.forEach(h => h.classList.remove('asc', 'desc'));
-            header.classList.add(isAscending ? 'asc' : 'desc');
-            sortTable(table, sortKey, sortType, isAscending);
-        });
-    });
-}
+    static resetLoading(button) {
+        button.disabled = false;
+        button.innerHTML = button.dataset.originalText;
+    }
 
-function sortTable(table, sortKey, sortType, ascending) {
-    const tbody = table.querySelector('tbody');
-    const rows = Array.from(tbody.querySelectorAll('tr'));
-    
-    rows.sort((a, b) => {
-        const aValue = a.getAttribute(`data-${sortKey.replace('_', '-')}`);
-        const bValue = b.getAttribute(`data-${sortKey.replace('_', '-')}`);
+    static showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
         
-        if (sortType === 'number') {
-            return ascending ? 
-                parseFloat(aValue) - parseFloat(bValue) : 
-                parseFloat(bValue) - parseFloat(aValue);
-        } else if (sortType === 'date') {
-            return ascending ? 
-                new Date(aValue) - new Date(bValue) : 
-                new Date(bValue) - new Date(aValue);
-        } else {
-            return ascending ? 
-                aValue.localeCompare(bValue) : 
-                bValue.localeCompare(aValue);
+        setTimeout(() => {
+            notification.classList.add('fade-out');
+            setTimeout(() => notification.remove(), 500);
+        }, 3000);
+    }
+
+    static handleResponse(response) {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-    });
-    
-    rows.forEach(row => tbody.appendChild(row));
+        return response.json();
+    }
+
+    static handleError(error) {
+        console.error('Error:', error);
+        this.showNotification('An error occurred. Please try again.', 'error');
+    }
+
+    // Safe HTML escaping function
+    static escapeHTML(unsafe) {
+        if (!unsafe) return '';
+        return unsafe
+            .toString()
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&alt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
 }
 
-function initTableFiltering(table, filterOptions) {
-    Object.entries(filterOptions).forEach(([key, selector]) => {
-        if (typeof selector === 'object') {
-            if (selector.min) {
-                const input = document.querySelector(selector.min);
-                if (input) input.addEventListener('input', () => applyFilters(table, filterOptions));
+// Main Inventory Manager
+class InventoryManager {
+    constructor() {
+        this.currentType = this.detectInventoryType();
+        this.currentItemId = null;
+        this.currentProject = null;
+        this.modalManager = new ModalManager(this.currentType);
+        this.init();
+    }
+
+    detectInventoryType() {
+        const path = window.location.pathname;
+        if (path.includes('consumables')) return 'consumable';
+        if (path.includes('equipment')) return 'equipment';
+        if (path.includes('reagents')) return 'reagent';
+        if (path.includes('samples')) return 'sample';
+        return 'consumable'; // default
+    }
+
+    init() {
+        this.initTable();
+        this.initFilters();
+        this.initSorting();
+        this.setupEventListeners();
+    }
+
+    initTable() {
+        const tableConfig = {
+            consumable: {
+                columns: ['name', 'product_code', 'pack_size', 'quantity', 'date_recorded', 'expiry_date', 'storage_location'],
+                sortable: ['name', 'product_code', 'quantity', 'date_recorded', 'expiry_date', 'storage_location'],
+                filterable: ['name', 'product_code', 'quantity', 'date_recorded', 'expiry_date', 'storage_location']
+            },
+            equipment: {
+                columns: ['name', 'equip_id', 'serial_num', 'quantity', 'status', 'service_contract_start', 'service_contract_end', 'date_recorded', 'donated_by', 'storage_location'],
+                sortable: ['name', 'equip_id', 'serial_num', 'quantity', 'status', 'service_contract_start', 'service_contract_end', 'date_recorded', 'donated_by', 'storage_location'],
+                filterable: ['name', 'equip_id', 'serial_num', 'quantity', 'status', 'service_contract_start', 'service_contract_end', 'date_recorded', 'donated_by', 'storage_location']
+            },
+            reagent: {
+                columns: ['name', 'product_code', 'pack_size', 'quantity', 'date_recorded', 'expiry_date', 'storage_location'],
+                sortable: ['name', 'product_code', 'quantity', 'date_recorded', 'expiry_date', 'storage_location'],
+                filterable: ['name', 'product_code', 'quantity', 'date_recorded', 'expiry_date', 'storage_location']
+            },
+            sample: {
+                columns: ['sample_id', 'sample_type', 'description', 'country', 'volume', 'date_recorded', 'well_id', 'storage_location'],
+                sortable: ['sample_id', 'sample_type', 'country', 'volume', 'date_recorded', 'well_id', 'storage_location'],
+                filterable: ['sample_id', 'sample_type', 'country', 'volume', 'date_recorded', 'well_id', 'storage_location']
             }
-            if (selector.max) {
-                const input = document.querySelector(selector.max);
-                if (input) input.addEventListener('input', () => applyFilters(table, filterOptions));
-            }
-        } else {
-            const input = document.querySelector(selector);
-            if (input) input.addEventListener('input', () => applyFilters(table, filterOptions));
-        }
-    });
-    
-    const resetButton = document.getElementById('resetButton');
-    if (resetButton) {
-        resetButton.addEventListener('click', () => {
-            Object.values(filterOptions).forEach(selector => {
-                if (typeof selector === 'object') {
-                    if (selector.min) document.querySelector(selector.min).value = '';
-                    if (selector.max) document.querySelector(selector.max).value = '';
-                } else {
-                    const input = document.querySelector(selector);
-                    if (input) input.value = '';
+        };
+
+        this.config = tableConfig[this.currentType];
+    }
+
+    initFilters() {
+        const filterInputs = document.querySelectorAll('.filter-input');
+        filterInputs.forEach(input => {
+            input.addEventListener('input', () => this.applyFilters());
+        });
+
+        document.getElementById('resetButton')?.addEventListener('click', () => {
+            document.querySelectorAll('.filter-input').forEach(input => {
+                input.value = '';
+            });
+            this.applyFilters();
+        });
+    }
+
+    applyFilters() {
+        const filters = {};
+        const filterInputs = document.querySelectorAll('.filter-input');
+        
+        filterInputs.forEach(input => {
+            const filterName = input.id.replace('FilterInput', '').replace(/([A-Z])/g, '_$1').toLowerCase();
+            filters[filterName] = input.value.toLowerCase();
+        });
+
+        const rows = document.querySelectorAll(`#${this.currentType}Table tbody tr`);
+        
+        rows.forEach(row => {
+            let shouldShow = true;
+            
+            this.config.filterable.forEach(filterKey => {
+                const cellValue = row.querySelector(`td[data-column="${filterKey}"]`)?.textContent.toLowerCase() || '';
+                const filterValue = filters[filterKey.replace('_', '')] || '';
+                
+                if (filterValue && !cellValue.includes(filterValue)) {
+                    shouldShow = false;
                 }
             });
-            applyFilters(table, filterOptions);
+
+            row.style.display = shouldShow ? '' : 'none';
         });
     }
-}
 
-function applyFilters(table, filterOptions) {
-    const rows = table.querySelectorAll('tbody tr');
-    
-    rows.forEach(row => {
-        let shouldShow = true;
-        
-        Object.entries(filterOptions).forEach(([key, selector]) => {
-            if (typeof selector === 'object') {
-                const minInput = selector.min ? document.querySelector(selector.min) : null;
-                const maxInput = selector.max ? document.querySelector(selector.max) : null;
-                
-                const rowValue = parseFloat(row.getAttribute(`data-${key.replace('_', '-')}`)) || 0;
-                const minValue = minInput?.value ? parseFloat(minInput.value) : -Infinity;
-                const maxValue = maxInput?.value ? parseFloat(maxInput.value) : Infinity;
-                    
-                if (rowValue < minValue || rowValue > maxValue) {
-                    shouldShow = false;
-                }
-            } else {
-                const input = document.querySelector(selector);
-                if (!input) return;
-                
-                const filterValue = input.value.toLowerCase();
-                if (!filterValue) return;
-                
-                const rowValue = row.getAttribute(`data-${key.replace('_', '-')}`)?.toLowerCase() || '';
-                
-                if (key === 'sample_type' && filterValue === 'all') {
+    initSorting() {
+        const sortDropdown = document.getElementById('sortColumnDropdown');
+        if (sortDropdown) {
+            sortDropdown.addEventListener('change', () => {
+                const columnIndex = sortDropdown.value;
+                if (columnIndex === '0') {
+                    location.reload();
                     return;
                 }
-                
-                if (!rowValue.includes(filterValue)) {
-                    shouldShow = false;
-                }
+                this.sortTable(columnIndex);
+            });
+        }
+    }
+
+    sortTable(columnIndex) {
+        const table = document.querySelector(`#${this.currentType}Table`);
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        rows.sort((a, b) => {
+            const aValue = a.cells[columnIndex].textContent;
+            const bValue = b.cells[columnIndex].textContent;
+            
+            // Numeric sorting for quantity, volume, etc.
+            if (['quantity', 'volume', 'pack_size'].includes(this.config.columns[columnIndex])) {
+                return parseFloat(aValue) - parseFloat(bValue);
+            }
+            // Date sorting
+            else if (['date_recorded', 'expiry_date', 'service_contract_start', 'service_contract_end'].includes(this.config.columns[columnIndex])) {
+                return new Date(aValue) - new Date(bValue);
+            }
+            // Default text sorting
+            else {
+                return aValue.localeCompare(bValue);
             }
         });
+
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    setupEventListeners() {
+        // Add item button
+        document.getElementById('addItemBtn')?.addEventListener('click', () => {
+            this.modalManager.showAddPopup();
+        });
+
+        // Export buttons
+        document.querySelectorAll('.export-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const format = e.target.dataset.format;
+                this.exportData(format);
+            });
+        });
+    }
+
+    exportData(format) {
+        const endpoint = `/${this.currentType}s/export_${format}/${this.currentProject}`;
+        window.location.href = endpoint;
+    }
+}
+
+// Modal Management
+class ModalManager {
+    constructor(inventoryType) {
+        this.inventoryType = inventoryType;
+        this.modals = {
+            add: document.getElementById('addPopup'),
+            edit: document.getElementById('editPopup'),
+            retrieve: document.getElementById('retrievePopup'),
+            return: document.getElementById('returnPopup'),
+            delete: document.getElementById('deletePopup')
+        };
+        this.init();
+    }
+
+    init() {
+        // Close modals when clicking outside
+        Object.values(this.modals).forEach(modal => {
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) this.hide(modal.id.replace('Popup', ''));
+                });
+            }
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            const activeModal = Object.values(this.modals).find(m => 
+                m && (m.style.display === 'flex' || m.style.display === '')
+            );
+            
+            if (!activeModal) return;
+            
+            if (e.key === 'Escape') {
+                this.hide(activeModal.id.replace('Popup', ''));
+            }
+        });
+    }
+
+    show(modalName, itemId = null, projectName = null) {
+        this.hideAll();
+        this.currentItemId = itemId;
+        this.currentProject = projectName || document.querySelector('.project-name-text').textContent;
         
-        row.style.display = shouldShow ? '' : 'none';
-    });
+        const modal = this.modals[modalName];
+        if (!modal) return;
+
+        modal.style.display = 'flex';
+        
+        if (modalName === 'edit' && itemId) {
+            this.loadItemData(itemId);
+        }
+    }
+
+    hide(modalName) {
+        const modal = this.modals[modalName];
+        if (modal) modal.style.display = 'none';
+    }
+
+    hideAll() {
+        Object.keys(this.modals).forEach(key => this.hide(key));
+    }
+
+    async loadItemData(itemId) {
+        try {
+            const response = await fetch(`/get_${this.inventoryType}_info/${itemId}`);
+            const data = await InventoryUtils.handleResponse(response);
+            
+            const form = document.getElementById('edit-form');
+            if (form) {
+                Object.entries(data).forEach(([key, value]) => {
+                    const input = form.querySelector(`[name="${key}"]`);
+                    if (input) input.value = value || '';
+                });
+            }
+        } catch (error) {
+            InventoryUtils.handleError(error);
+        }
+    }
+
+    // Specific modal show methods
+    showAddPopup() {
+        this.show('add');
+    }
+
+    showEditPopup(itemId) {
+        this.show('edit', itemId);
+    }
+
+    showRetrievePopup(itemId) {
+        this.show('retrieve', itemId);
+    }
+
+    showReturnPopup(itemId) {
+        this.show('return', itemId);
+    }
+
+    showDeletePopup(projectName, itemId) {
+        this.show('delete', itemId, projectName);
+    }
 }
 
-// Popup Management
-function initPopups(config) {
-    window.popupConfig = config;
-}
+// Form Handlers
+class FormHandler {
+    static async handleAddForm(form, inventoryType) {
+        const submitButton = form.querySelector('button[type="submit"]');
+        InventoryUtils.showLoading(submitButton);
 
-function showPopup(type, itemId = null) {
-    const config = window.popupConfig[type];
-    if (!config) return;
-    
-    const popup = document.getElementById('basePopup');
-    const popupContent = popup.querySelector('.popup-body');
-    
-    popup.querySelector('.popup-title').textContent = config.title;
-    popupContent.innerHTML = typeof config.template === 'function' 
-        ? config.template(itemId) 
-        : templates[config.template];
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    'X-CSRFToken': InventoryUtils.getCSRFToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
 
-    if (itemId) popup.dataset.itemId = itemId;
-    popup.dataset.handler = type;
-    popup.style.display = 'flex';
+            const data = await InventoryUtils.handleResponse(response);
+            
+            if (data.success) {
+                InventoryUtils.showNotification(`${inventoryType.charAt(0).toUpperCase() + inventoryType.slice(1)} added successfully`);
+                this.addTableRow(data.new_item, inventoryType);
+                document.querySelector(`#${inventoryType}Popup`).style.display = 'none';
+                form.reset();
+            } else {
+                this.showFormErrors(form, data.errors);
+            }
+        } catch (error) {
+            InventoryUtils.handleError(error);
+        } finally {
+            InventoryUtils.resetLoading(submitButton);
+        }
+    }
 
-    const firstInput = popupContent.querySelector('input, select, textarea');
-    if (firstInput) firstInput.focus();
-}
+    static async handleEditForm(form, inventoryType, itemId) {
+        const submitButton = form.querySelector('button[type="submit"]');
+        InventoryUtils.showLoading(submitButton);
 
-function closePopup(closeButton) {
-    const popup = closeButton.closest('.popup-container');
-    popup.style.display = 'none';
+        try {
+            const response = await fetch(`/edit_${inventoryType}/${itemId}`, {
+                method: 'PUT',
+                body: new FormData(form),
+                headers: {
+                    'X-CSRFToken': InventoryUtils.getCSRFToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
 
-    const form = popup.querySelector('form');
-    if (form) {
-        form.reset();
+            const data = await InventoryUtils.handleResponse(response);
+            
+            if (data.success) {
+                InventoryUtils.showNotification(`${inventoryType.charAt(0).toUpperCase() + inventoryType.slice(1)} updated successfully`);
+                this.updateTableRow(itemId, data.updated_item, inventoryType);
+                document.querySelector(`#editPopup`).style.display = 'none';
+            } else {
+                this.showFormErrors(form, data.errors);
+            }
+        } catch (error) {
+            InventoryUtils.handleError(error);
+        } finally {
+            InventoryUtils.resetLoading(submitButton);
+        }
+    }
+
+    static async handleDelete(inventoryType, projectName, itemId) {
+        const submitButton = document.querySelector('#deletePopup .btn-danger');
+        InventoryUtils.showLoading(submitButton);
+
+        try {
+            const response = await fetch(`/delete_${inventoryType}/${projectName}/${itemId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': InventoryUtils.getCSRFToken(),
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await InventoryUtils.handleResponse(response);
+            
+            if (data.success) {
+                InventoryUtils.showNotification(`${inventoryType.charAt(0).toUpperCase() + inventoryType.slice(1)} deleted successfully`);
+                document.querySelector(`tr[data-id="${itemId}"]`)?.remove();
+                document.querySelector(`#deletePopup`).style.display = 'none';
+            }
+        } catch (error) {
+            InventoryUtils.handleError(error);
+        } finally {
+            InventoryUtils.resetLoading(submitButton);
+        }
+    }
+
+    static addTableRow(itemData, inventoryType) {
+        const table = document.querySelector(`#${inventoryType}Table tbody`);
+        if (!table) return;
+
+        const row = document.createElement('tr');
+        row.dataset.id = InventoryUtils.escapeHtml(itemData.id);
+
+        // Create cells based on inventory type
+        const columns = {
+            consumable: ['name', 'product_code', 'pack_size', 'quantity', 'date_recorded', 'expiry_date', 'storage_location'],
+            equipment: ['name', 'equip_id', 'serial_num', 'quantity', 'status', 'service_contract_start', 'service_contract_end', 'date_recorded', 'donated_by', 'storage_location'],
+            reagent: ['name', 'product_code', 'pack_size', 'quantity', 'date_recorded', 'expiry_date', 'storage_location'],
+            sample: ['sample_id', 'sample_type', 'description', 'country', 'volume', 'date_recorded', 'well_id', 'storage_location']
+        };
+
+        columns[inventoryType].forEach(col => {
+            const cell = document.createElement('td');
+            cell.textContent = itemData[col] ? InventoryUtils.escapeHtml(itemData[col]) : '';
+            cell.dataset.column = col;
+            row.appendChild(cell);
+        });
+
+        // Add action cell
+        const actionCell = document.createElement('td');
+        actionCell.innerHTML = this.getActionButtons(inventoryType, itemData.id);
+        row.appendChild(actionCell);
+
+        table.appendChild(row);
+    }
+
+    static updateTableRow(itemId, itemData, inventoryType) {
+        const row = document.querySelector(`tr[data-id="${InventoryUtils.escapeHtml(itemId)}"]`);
+        if (!row) return;
+
+        const columns = {
+            consumable: ['name', 'product_code', 'pack_size', 'quantity', 'date_recorded', 'expiry_date', 'storage_location'],
+            equipment: ['name', 'equip_id', 'serial_num', 'quantity', 'status', 'service_contract_start', 'service_contract_end', 'date_recorded', 'donated_by', 'storage_location'],
+            reagent: ['name', 'product_code', 'pack_size', 'quantity', 'date_recorded', 'expiry_date', 'storage_location'],
+            sample: ['sample_id', 'sample_type', 'description', 'country', 'volume', 'date_recorded', 'well_id', 'storage_location']
+        };
+
+        columns[inventoryType].forEach((col, index) => {
+            const cell = row.cells[index];
+            if (cell) cell.textContent = itemData[col] ? InventoryUtils.escapeHtml(itemData[col]) : '';
+        });
+    }
+
+    static getActionButtons(inventoryType, itemId) {
+        // Escape the itemId to prevent XSS
+        const escapedId = InventoryUtils.escapeHtml(itemId);
+        
+        // Create elements safely instead of using innerHTML
+        const dropdown = document.createElement('div');
+        dropdown.className = 'dropdown';
+        
+        const button = document.createElement('button');
+        button.className = 'dropbtn';
+        button.textContent = '...';
+        
+        const content = document.createElement('div');
+        content.className = 'dropdown-content';
+        
+        // Create links safely
+        const actions = [
+            { text: 'Retrieve', action: 'Retrieve' },
+            { text: 'Return', action: 'Return' },
+            { text: 'Edit', action: 'Edit' },
+            { text: 'Delete', action: 'Delete' }
+        ];
+        
+        actions.forEach(action => {
+            const link = document.createElement('a');
+            link.href = '#';
+            link.textContent = action.text;
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const modalName = `show${action.action}Popup`;
+                if (window.inventoryManager?.modalManager?.[modalName]) {
+                    window.inventoryManager.modalManager[modalName](escapedId);
+                }
+            });
+            content.appendChild(link);
+        });
+        
+        dropdown.appendChild(button);
+        dropdown.appendChild(content);
+        
+        return dropdown.outerHTML;
+    }
+
+    static showFormErrors(form, errors) {
         form.querySelectorAll('.error-message').forEach(el => el.remove());
         form.querySelectorAll('.has-error').forEach(el => el.classList.remove('has-error'));
-    }
-}
 
-// Specific popup functions
-function showAddPopup() {
-    showPopup('add');
-}
+        if (!errors) {
+            this.showGenericError(form);
+            return;
+        }
 
-function showEditPopup(itemId) {
-    const url = window.location.pathname.includes('reagents') 
-        ? `/get_reagent_info/${itemId}`
-        : `/get_sample_info/${itemId}`;
-
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            showPopup('edit', itemId);
-            const form = document.querySelector('#basePopup form');
-            if (form) populateForm(form, data);
-        })
-        .catch(error => console.error('Error loading item:', error));
-}
-
-function populateForm(form, data) {
-    Object.entries(data).forEach(([key, value]) => {
-        const input = form.querySelector(`[name="${key}"]`);
-        if (input) {
-            if (input.type === 'checkbox') {
-                input.checked = value;
-            } else {
-                input.value = value || '';
+        Object.entries(errors).forEach(([field, message]) => {
+            const input = form.querySelector(`[name="${field}"]`);
+            if (input) {
+                input.classList.add('has-error');
+                const errorEl = document.createElement('div');
+                errorEl.className = 'error-message';
+                errorEl.textContent = message;
+                input.closest('.form-group').appendChild(errorEl);
             }
-        }
-    });
-}
-
-function showDeletePopup(projectName, itemId) {
-    const popup = document.getElementById('deletePopup');
-    popup.dataset.projectName = projectName;
-    popup.dataset.itemId = itemId;
-    popup.style.display = 'flex';
-}
-
-// Form submission handlers
-function submitAddForm(form) {
-    const submitButton = form.querySelector('button[type="submit"]');
-    showLoading(submitButton);
-    
-    fetch(form.action, {
-        method: 'POST',
-        body: new FormData(form),
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': getCSRFToken()
-        }
-    })
-    .then(handleResponse)
-    .then(data => {
-        if (data.success) {
-            addNewRowToTable(data.new_item);
-            closePopup(form.closest('.popup-container'));
-        } else {
-            showFormErrors(form, data.errors);
-        }
-    })
-    .catch(handleError)
-    .finally(() => resetLoading(submitButton));
-
-    return false;
-}
-
-function submitEditForm(form) {
-    const submitButton = form.querySelector('button[type="submit"]');
-    showLoading(submitButton);
-    const itemId = form.closest('.popup-container').dataset.itemId;
-    
-    const url = window.location.pathname.includes('reagents')
-        ? `/edit_reagent/${itemId}`
-        : `/edit_sample/${itemId}`;
-    
-    fetch(url, {
-        method: 'PUT',
-        body: new FormData(form),
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': getCSRFToken()
-        }
-    })
-    .then(handleResponse)
-    .then(data => {
-        if (data.success) {
-            updateTableRow(itemId, data.updated_item);
-            closePopup(form.closest('.popup-container'));
-        } else {
-            showFormErrors(form, data.errors);
-        }
-    })
-    .catch(handleError)
-    .finally(() => resetLoading(submitButton));
-
-    return false;
-}
-
-function submitRetrieveForm(form) {
-    const submitButton = form.querySelector('button[type="submit"]');
-    showLoading(submitButton);
-    
-    const isReagent = window.location.pathname.includes('reagents');
-    const itemId = form.closest('.popup-container').dataset.itemId;
-    const url = isReagent 
-        ? `/retrieve_reagent/${itemId}`
-        : `/retrieve_sample/${itemId}`;
-
-    fetch(url, {
-        method: 'POST',
-        body: new FormData(form),
-        headers: {
-            'X-CSRFToken': getCSRFToken(),
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(handleResponse)
-    .then(data => {
-        if (data.success) {
-            updateTableRow(itemId, data.updated_item);
-            closePopup(form.closest('.popup-container'));
-        } else {
-            showFormErrors(form, data.errors);
-        }
-    })
-    .catch(handleError)
-    .finally(() => resetLoading(submitButton));
-
-    return false;
-}
-
-function submitReturnForm(form) {
-    const submitButton = form.querySelector('button[type="submit"]');
-    showLoading(submitButton);
-    
-    const isReagent = window.location.pathname.includes('reagents');
-    const itemId = form.closest('.popup-container').dataset.itemId;
-    const url = isReagent 
-        ? `/return_reagent/${itemId}`
-        : `/return_sample/${itemId}`;
-
-    fetch(url, {
-        method: 'POST',
-        body: new FormData(form),
-        headers: {
-            'X-CSRFToken': getCSRFToken(),
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(handleResponse)
-    .then(data => {
-        if (data.success) {
-            updateTableRow(itemId, data.updated_item);
-            closePopup(form.closest('.popup-container'));
-        } else {
-            showFormErrors(form, data.errors);
-        }
-    })
-    .catch(handleError)
-    .finally(() => resetLoading(submitButton));
-
-    return false;
-}
-
-function deleteItem() {
-    const popup = document.getElementById('deletePopup');
-    const submitButton = popup.querySelector('.btn-danger');
-    showLoading(submitButton);
-    const { projectName, itemId } = popup.dataset;
-
-    const url = window.location.pathname.includes('reagents')
-        ? `/delete_reagent/${projectName}/${itemId}`
-        : `/delete_sample/${projectName}/${itemId}`;
-
-    fetch(url, {
-        method: 'DELETE',
-        headers: {
-            'X-CSRFToken': getCSRFToken(),
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(handleResponse)
-    .then(data => {
-        if (data.success) {
-            document.querySelector(`tr[data-id="${itemId}"]`)?.remove();
-            closePopup(popup.querySelector('.popup-close'));
-        }
-    })
-    .catch(handleError)
-    .finally(() => resetLoading(submitButton));
-}
-
-function addNewRowToTable(itemData) {
-    const isReagent = window.location.pathname.includes('reagents');
-    const table = document.querySelector(isReagent ? '#reagentsTable tbody' : '#samplesTable tbody');
-    if (!table) return;
-
-    const newRow = document.createElement('tr');
-    newRow.dataset.id = itemData.id;
-    Object.entries(itemData).forEach(([key, value]) => {
-        newRow.dataset[key.replace('_', '-')] = value;
-    });
-
-    if (isReagent) {
-        newRow.innerHTML = `
-            <td>${itemData.name}</td>
-            <td>${itemData.product_code}</td>
-            <td>${itemData.pack_size_rem} / ${itemData.pack_size}</td>
-            <td>${itemData.quantity}</td>
-            <td>${itemData.date_recorded}</td>
-            <td>${itemData.expiry_date}</td>
-            <td>${itemData.storage_location}</td>
-            <td>${buildActionButtons(itemData.id)}</td>
-        `;
-    } else {
-        newRow.innerHTML = `
-            <td>${itemData.sample_id}</td>
-            <td>${itemData.sample_type}</td>
-            <td>${itemData.description}</td>
-            <td>${itemData.country}</td>
-            <td>${itemData.volume}</td>
-            <td>${itemData.date_recorded}</td>
-            <td>${itemData.well_id}</td>
-            <td>${itemData.storage_location}</td>
-            <td>${buildActionButtons(itemData.id)}</td>
-        `;
+        });
     }
 
-    table.appendChild(newRow);
-}
-
-function buildActionButtons(itemId) {
-    const isReagent = window.location.pathname.includes('reagents');
-    return `
-        <div class="dropdown">
-            <button class="btn btn-icon">. . .</button>
-            <div class="dropdown-content">
-                <a href="#" onclick="showRetrievePopup('${itemId}')">Retrieve</a>
-                <a href="#" onclick="showReturnPopup('${itemId}')">Return</a>
-                {% if user == project.project_manager or user in project.project_editors.all %}
-                <hr>
-                <a href="#" onclick="showEditPopup('${itemId}')">Edit</a>
-                <a href="#" onclick="showDeletePopup('{{ project.name }}','${itemId}')">Delete</a>
-                {% endif %}
-            </div>
-        </div>
-    `;
-}
-
-function updateTableRow(itemId, itemData) {
-    const row = document.querySelector(`tr[data-id="${itemId}"]`);
-    if (!row) return;
-
-    Object.entries(itemData).forEach(([key, value]) => {
-        row.dataset[key.replace('_', '-')] = value;
-    });
-
-    const isReagent = window.location.pathname.includes('reagents');
-    if (isReagent) {
-        row.cells[0].textContent = itemData.name;
-        row.cells[1].textContent = itemData.product_code;
-        row.cells[2].textContent = `${itemData.pack_size_rem} / ${itemData.pack_size}`;
-        row.cells[3].textContent = itemData.quantity;
-        row.cells[4].textContent = itemData.date_recorded;
-        row.cells[5].textContent = itemData.expiry_date;
-        row.cells[6].textContent = itemData.storage_location;
-    } else {
-        row.cells[0].textContent = itemData.sample_id;
-        row.cells[1].textContent = itemData.sample_type;
-        row.cells[2].textContent = itemData.description;
-        row.cells[3].textContent = itemData.country;
-        row.cells[4].textContent = itemData.volume;
-        row.cells[5].textContent = itemData.date_recorded;
-        row.cells[6].textContent = itemData.well_id;
-        row.cells[7].textContent = itemData.storage_location;
+    static showGenericError(form) {
+        const errorEl = document.createElement('div');
+        errorEl.className = 'error-message mb-4';
+        errorEl.textContent = 'An unexpected error occurred';
+        form.prepend(errorEl);
     }
 }
 
-// Error Handling
-function showFormErrors(form, errors) {
-    form.querySelectorAll('.error-message').forEach(el => el.remove());
-    form.querySelectorAll('.has-error').forEach(el => el.classList.remove('has-error'));
-
-    if (!errors) {
-        showGenericError(form);
-        return;
-    }
-
-    Object.entries(errors).forEach(([field, message]) => {
-        const input = form.querySelector(`[name="${field}"]`);
-        if (input) {
-            input.classList.add('has-error');
-            const errorEl = document.createElement('div');
-            errorEl.className = 'error-message';
-            errorEl.textContent = message;
-            input.closest('.form-group').appendChild(errorEl);
-        }
-    });
-}
-
-function showGenericError(form) {
-    const errorEl = document.createElement('div');
-    errorEl.className = 'error-message mb-4';
-    errorEl.textContent = 'An unexpected error occurred';
-    form.prepend(errorEl);
-}
-
-function handleResponse(response) {
-    if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-}
-
-function handleError(error) {
-    console.error('Error:', error);
-    alert('An error occurred. Please try again.');
-}
-
-// Templates
-const templates = {
-    // Sample Forms
-    addSampleForm: `
-        <form id="sample-form" method="POST" action="{% url 'add_sample' project_name=project.name %}">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="sample_id">Sample ID</label>
-                <input type="text" name="sample_id" id="sample_id" required>
-            </div>
-            <div class="form-group">
-                <label for="edit-sample_type">Type</label>
-                <select name="sample_type" id="edit-sample_type" required class="filter-input">
-                    <option value="Bacteria">Bacteria</option>
-                    <option value="Fungi">Fungi</option>
-                    <option value="Parasite">Parasite</option>
-                    <option value="Virus">Virus</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="description">Description</label>
-                <textarea name="description" id="description" rows="3" class="filter-input"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="country">Country</label>
-                <input type="text" name="country" id="country" required class="filter-input">
-            </div>
-            <div class="form-group">
-                <label for="volume">Volume (ml)</label>
-                <input type="number" name="volume" id="volume" required min="0" step="0.1" class="filter-input">
-            </div>
-            <div class="form-group">
-                <label for="well_id">Well ID</label>
-                <input type="text" name="well_id" id="well_id" required class="filter-input">
-            </div>
-            <div class="form-group">
-                <label for="storage_location">Storage Location</label>
-                <input type="text" name="storage_location" id="storage_location" required class="filter-input">
-            </div>
-            <div class="form-group">
-                <label for="threshold_value">Threshold Volume (ml)</label>
-                <input type="number" name="threshold_value" id="threshold_value" required min="0" step="0.1" class="filter-input">
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Add</button>
-            </div>
-        </form>
-    `,
-    editSampleForm: `
-        <form id="edit-form" method="POST">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="edit-sample_id">Sample ID</label>
-                <input type="text" name="sample_id" id="edit-sample_id" required class="filter-input">
-            </div>
-            <div class="form-group">
-                <label for="edit-sample_type">Type</label>
-                <select name="sample_type" id="edit-sample_type" required class="filter-input">
-                    <option value="Bacteria">Bacteria</option>
-                    <option value="Fungi">Fungi</option>
-                    <option value="Parasite">Parasite</option>
-                    <option value="Virus">Virus</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="description">Description</label>
-                <textarea name="description" id="description" rows="3" class="filter-input"></textarea>
-            </div>
-            <div class="form-group">
-                <label for="country">Country</label>
-                <input type="text" name="country" id="country" required class="filter-input">
-            </div>
-            <div class="form-group">
-                <label for="volume">Volume (ml)</label>
-                <input type="number" name="volume" id="volume" required min="0" step="0.1" class="filter-input">
-            </div>
-            <div class="form-group">
-                <label for="well_id">Well ID</label>
-                <input type="text" name="well_id" id="well_id" required class="filter-input">
-            </div>
-            <div class="form-group">
-                <label for="storage_location">Storage Location</label>
-                <input type="text" name="storage_location" id="storage_location" required class="filter-input">
-            </div>
-            <div class="form-group">
-                <label for="threshold_value">Threshold Volume (ml)</label>
-                <input type="number" name="threshold_value" id="threshold_value" required min="0" step="0.1" class="filter-input">
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Save Changes</button>
-            </div>
-        </form>
-    `,
-    retrieveSampleForm: `
-        <form id="retrieve-sample-form">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="retrieve-volume">Volume (ml)</label>
-                <input type="number" name="amount" id="retrieve-volume" required min="0" step="0.1" class="filter-input">
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Retrieve</button>
-            </div>
-        </form>
-    `,
-    returnSampleForm: `
-        <form id="return-sample-form">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="return-volume">Volume (ml)</label>
-                <input type="number" name="amount" id="return-volume" required min="0" step="0.1" class="filter-input">
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Return</button>
-            </div>
-        </form>
-    `,
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    window.inventoryManager = new InventoryManager();
     
-    // Reagent Forms
-    addReagentForm: `
-        <form id="reagent-form" method="POST" action="{% url 'add_reagent' project_name=project.name %}">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="name">Name</label>
-                <input type="text" name="name" id="name" required>
-            </div>
-            <div class="form-group">
-                <label for="product_code">Product Code</label>
-                <input type="text" name="product_code" id="product_code" required>
-            </div>
-            <div class="form-group">
-                <label for="pack_size">Pack Size</label>
-                <input type="text" name="pack_size" id="pack_size" required>
-            </div>
-            <div class="form-group">
-                <label for="quantity">Quantity</label>
-                <input type="number" name="quantity" id="quantity" required min="0" step="0.01">
-            </div>
-            <div class="form-group">
-                <label for="expiry_date">Expiry Date</label>
-                <input type="date" name="expiry_date" id="expiry_date" required>
-            </div>
-            <div class="form-group">
-                <label for="storage_location">Storage Location</label>
-                <input type="text" name="storage_location" id="storage_location" required>
-            </div>
-            <div class="form-group">
-                <label for="threshold_value">Threshold Value</label>
-                <input type="number" name="threshold_value" id="threshold_value" required min="0">
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Add</button>
-            </div>
-        </form>
-    `,
-    editReagentForm: `
-        <form id="edit-form" method="POST">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="edit-name">Name</label>
-                <input type="text" name="name" id="edit-name" required>
-            </div>
-            <div class="form-group">
-                <label for="edit-product_code">Product Code</label>
-                <input type="text" name="product_code" id="edit-product_code" required>
-            </div>
-            <div class="form-group">
-                <label for="edit-pack_size">Pack Size</label>
-                <input type="text" name="pack_size" id="edit-pack_size" required>
-            </div>
-            <div class="form-group">
-                <label for="edit-quantity">Quantity</label>
-                <input type="number" name="quantity" id="edit-quantity" required min="0" step="0.01">
-            </div>
-            <div class="form-group">
-                <label for="edit-expiry_date">Expiry Date</label>
-                <input type="date" name="expiry_date" id="edit-expiry_date" required>
-            </div>
-            <div class="form-group">
-                <label for="edit-storage_location">Storage Location</label>
-                <input type="text" name="storage_location" id="edit-storage_location" required>
-            </div>
-            <div class="form-group">
-                <label for="edit-threshold_value">Threshold Value</label>
-                <input type="number" name="threshold_value" id="edit-threshold_value" required min="0">
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Save Changes</button>
-            </div>
-        </form>
-    `,
-    retrieveReagentForm: `
-        <form id="retrieve-reagent-form">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="retrieve-by">Retrieve By</label>
-                <select class="filter-input" id="retrieve-by" name="retrieve_by" required>
-                    <option value="Pack size">Pack size</option>
-                    <option value="Quantity">Quantity</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="retrieve-amount">Amount</label>
-                <input type="number" name="amount" id="retrieve-amount" required min="0" step="0.01" class="filter-input">
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Retrieve</button>
-            </div>
-        </form>
-    `,
-    returnReagentForm: `
-        <form id="return-reagent-form">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="return-by">Return By</label>
-                <select class="filter-input" id="return-by" name="return_by" required>
-                    <option value="Pack size">Pack size</option>
-                    <option value="Quantity">Quantity</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="return-amount">Amount</label>
-                <input type="number" name="amount" id="return-amount" required min="0" step="0.01" class="filter-input">
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">Return</button>
-            </div>
-        </form>
-    `
-};
-
-// Initialization
-function setupEventListeners() {
-    document.addEventListener('submit', function(e) {
-        if (e.target.matches('#add-form, #edit-form, #sample-form, #reagent-form')) {
-            e.preventDefault();
-            const handlerType = e.target.closest('.popup-container').dataset.handler;
-            if (window.popupConfig?.[handlerType]?.submitHandler) {
-                window.popupConfig[handlerType].submitHandler(e.target);
-            }
-        }
-    });
-
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('minDateCreatedFilterInput')?.value = today;
-    document.getElementById('maxDateCreatedFilterInput')?.value = today;
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    setupEventListeners();
+    // Global functions for HTML onclick attributes
+    window.showAddPopup = () => inventoryManager.modalManager.showAddPopup();
+    window.showEditPopup = (id) => inventoryManager.modalManager.showEditPopup(InventoryUtils.escapeHtml(id));
+    window.showRetrievePopup = (id) => inventoryManager.modalManager.showRetrievePopup(InventoryUtils.escapeHtml(id));
+    window.showReturnPopup = (id) => inventoryManager.modalManager.showReturnPopup(InventoryUtils.escapeHtml(id));
+    window.showDeletePopup = (project, id) => inventoryManager.modalManager.showDeletePopup(
+        InventoryUtils.escapeHtml(project),
+        InventoryUtils.escapeHtml(id)
+    );
+    window.deleteItem = () => FormHandler.handleDelete(
+        inventoryManager.currentType, 
+        InventoryUtils.escapeHtml(inventoryManager.currentProject), 
+        InventoryUtils.escapeHtml(inventoryManager.currentItemId)
+    );
 });
