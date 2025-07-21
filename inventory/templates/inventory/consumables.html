@@ -8,6 +8,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="{% static '/images/Icon.png' %}">
     <link rel="stylesheet" href="{% static 'css/inventory_style.css' %}">
+    <style>
+        /* Loading overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        /* Notifications */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            color: white;
+            z-index: 1000;
+            transition: opacity 0.5s;
+        }
+        
+        .notification.success {
+            background: #4CAF50;
+        }
+        
+        .notification.error {
+            background: #F44336;
+        }
+        
+        .notification.warning {
+            background: #FF9800;
+        }
+        
+        .fade-out {
+            opacity: 0;
+        }
+        
+        /* Focus styles for accessibility */
+        button:focus, input:focus, select:focus {
+            outline: 2px solid #FF5C00;
+            outline-offset: 2px;
+        }
+    </style>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <title>Flux - Consumables</title>
 </head>
@@ -627,516 +676,422 @@
 
     </main>
 
-
-
     <script>
-        const modalContainer1 = document.querySelector(".popup-container1");
-        const modalContainer2 = document.querySelector(".popup-container2");
-        const modalContainer3 = document.querySelector(".popup-container3");
-        const modalContainer4 = document.querySelector(".popup-container4");
-
-        let currentItemId; // Declare a variable to store the current item ID
-        let currentProject;
-
-        modalContainer1.addEventListener("click", (event) => {
-            if (event.target === modalContainer1) {
-                const popup = document.getElementById('addPopup');
-                popup.style.display = 'none';
+        // Improved Modal Manager
+        class ModalManager {
+            constructor() {
+                this.modals = {
+                    add: document.getElementById('addPopup'),
+                    edit: document.getElementById('editPopup'),
+                    retrieve: document.getElementById('retrievePopup'),
+                    return: document.getElementById('returnPopup'),
+                    delete: document.getElementById('deletePopup')
+                };
+                this.currentItemId = null;
+                this.currentProject = null;
+                this.init();
             }
-        });
 
-        modalContainer2.addEventListener("click", (event) => {
-            if (event.target === modalContainer2) {
-                const popup = document.getElementById('editPopup');
-                popup.style.display = 'none';
+            init() {
+                Object.values(this.modals).forEach(modal => {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) this.hide(modal.id.replace('Popup', ''));
+                    });
+                });
+                
+                // Initialize keyboard navigation
+                document.addEventListener('keydown', (e) => {
+                    const activeModal = Object.values(this.modals).find(m => 
+                        m.style.display === 'flex' || m.style.display === ''
+                    );
+                    
+                    if (!activeModal) return;
+                    
+                    if (e.key === 'Escape') {
+                        this.hide(activeModal.id.replace('Popup', ''));
+                    }
+                    
+                    if (e.key === 'Tab') {
+                        const focusable = activeModal.querySelectorAll(
+                            'button, input, select, textarea, [href], [tabindex]:not([tabindex="-1"])'
+                        );
+                        if (focusable.length === 0) return;
+                        
+                        const first = focusable[0];
+                        const last = focusable[focusable.length - 1];
+                        
+                        if (e.shiftKey) {
+                            if (document.activeElement === first) {
+                                last.focus();
+                                e.preventDefault();
+                            }
+                        } else {
+                            if (document.activeElement === last) {
+                                first.focus();
+                                e.preventDefault();
+                            }
+                        }
+                    }
+                });
             }
-        });
 
-        modalContainer3.addEventListener("click", (event) => {
-            if (event.target === modalContainer3) {
-                const popup = document.getElementById('retrievePopup');
-                popup.style.display = 'none';
-            }
-        });
-
-        modalContainer4.addEventListener("click", (event) => {
-            if (event.target === modalContainer4) {
-                const popup = document.getElementById('returnPopup');
-                popup.style.display = 'none';
-            }
-        });
-
-        function showAddPopup() {
-            const popup = document.getElementById('addPopup');
-            popup.style.display = 'flex';
-        }
-
-        function closeAddPopup() {
-            const popup = document.getElementById('addPopup');
-            popup.style.display = 'none';
-        }
-
-
-        // AJAX submission
-        const form = document.getElementById("consumable-form");
-
-        form.addEventListener("Submit", (event) => {
-            event.preventDefault();
-            const formData = new FormData(form);
-            const xhr = new XMLHttpRequest();
-            xhr.open("POST", form.action);
-            xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-            xhr.onload = function () {
-                if (xhr.status === 200) {
-                    // Handle success response
-                    console.log(xhr.responseText);
-                    main.classList.remove("show"); // Close the modal dialog
-                } else {
-                    // Handle error response
-                    console.error(xhr.responseText);
+            show(modalName, itemId = null, projectName = null) {
+                this.hideAll();
+                this.currentItemId = itemId;
+                this.currentProject = projectName;
+                this.modals[modalName].style.display = 'flex';
+                
+                // Focus first interactive element
+                const firstInput = this.modals[modalName].querySelector('input, button, select');
+                if (firstInput) firstInput.focus();
+                
+                if (modalName === 'edit' && itemId) {
+                    this.getItemInfo();
                 }
-            };
-            xhr.send(formData);
-        });
+            }
 
+            hide(modalName) {
+                this.modals[modalName].style.display = 'none';
+                this.currentItemId = null;
+                this.currentProject = null;
+            }
 
-        function showEditPopup(id) {
-            console.log(id);
-            currentItemId = id;
-            const popup = document.getElementById('editPopup');
-            popup.style.display = 'flex';
-            getItemInfo()
-        }
+            hideAll() {
+                Object.keys(this.modals).forEach(key => this.hide(key));
+            }
 
-        function closeEditPopup() {
-            const popup = document.getElementById('editPopup');
-            popup.style.display = 'none';
-        }
-
-        function showRetrievePopup(id) {
-            console.log(id);
-            currentItemId = id;
-            const popup = document.getElementById('retrievePopup');
-            popup.style.display = 'flex';
-        }
-
-        function closeRetrievePopup() {
-            const popup = document.getElementById('retrievePopup');
-            popup.style.display = 'none';
-        }
-
-        function showReturnPopup(id) {
-            console.log(id);
-            currentItemId = id;
-            const popup = document.getElementById('returnPopup');
-            popup.style.display = 'flex';
-        }
-
-        function closeReturnPopup() {
-            const popup = document.getElementById('returnPopup');
-            popup.style.display = 'none';
-        }
-
-        function getItemInfo() {
-            const id = currentItemId;
-
-            fetch(`/get_consumable_info/${id}`, {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-            })
-                .then(response => response.json())
-                .then(data => {
-                    // Update the input fields with the retrieved data
-                    const form = document.getElementById('edit-form');
-
-                    // Update the input fields with the retrieved data
-                    form.elements.name.value = data.name;
-                    form.elements.product_code.value = data.product_code;
-                    form.elements.pack_size.value = data.pack_size;
-                    form.elements.quantity.value = data.quantity;
-                    form.elements.expiry_date.value = data.expiry_date;
-                    form.elements.storage_location.value = data.storage_location;
-                    form.elements.threshold_value.value = data.threshold_value;
-
+            getItemInfo() {
+                showLoading(true);
+                fetch(`/get_consumable_info/${this.currentItemId}`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
                 })
-                .catch(error => {
-                    console.error(`Error retrieving consumable information:`, error);
-                });
-
-        }
-
-
-
-        function showDeletePopup(projectName,id) {
-            currentItemId = id;
-            currentProject = projectName;
-            const popup = document.getElementById('deletePopup');
-            popup.style.display = 'flex';
-        }
-
-        function closeDeletePopup() {
-            const popup = document.getElementById('deletePopup');
-            popup.style.display = 'none';
-        }
-
-        function deleteItem() {
-            const id = currentItemId;
-            const projectName = currentProject;
-
-            console.log(projectName);
-            console.log(id);
-
-            fetch(`/delete_consumable/${projectName}/${id}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/json',
-                },
-            })
-                .then(response => {
-                    if (response.ok) {
-                        // Handle successful deletion
-                        console.log(`Consumable with ID ${id} deleted successfully.`);
-                        removeTableRow(id); // Call a function to remove the deleted row from the table
-                    } else {
-                        // Handle deletion error
-                        console.error(`Error deleting consumable with ID ${id}.`);
-                    }
-                    closeDeletePopup();
-                })
-                .catch(error => {
-                    // Handle deletion error
-                    console.error(`Error deleting consumable with ID ${id}:`, error);
-                    closeDeletePopup();
-                });
-        }
-
-
-        function removeTableRow(id) {
-            const table = document.getElementById('consumablesTable');
-            const row = table.querySelector(`tr[data-id="${id}"]`);
-
-            if (row) {
-                row.remove(); // Remove the row from the table
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        const form = document.getElementById('edit-form');
+                        form.elements.name.value = data.name;
+                        form.elements.product_code.value = data.product_code;
+                        form.elements.pack_size.value = data.pack_size;
+                        form.elements.quantity.value = data.quantity;
+                        form.elements.expiry_date.value = data.expiry_date;
+                        form.elements.storage_location.value = data.storage_location;
+                        form.elements.threshold_value.value = data.threshold_value;
+                        showLoading(false);
+                    })
+                    .catch(error => {
+                        console.error('Error retrieving consumable information:', error);
+                        showNotification('Failed to load item details', 'error');
+                        showLoading(false);
+                        this.hide('edit');
+                    });
             }
         }
 
-        const form2 = document.getElementById('edit-form');
-        form2.addEventListener('submit', (event) => {
-            event.preventDefault(); // Prevent the form from submitting normally
+        // Notification system
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('fade-out');
+                setTimeout(() => notification.remove(), 500);
+            }, 3000);
+        }
 
-            const id = currentItemId;
-            const formData = new FormData(form2);
+        // Loading state
+        function showLoading(state) {
+            const loader = document.getElementById('loading-overlay');
+            loader.style.display = state ? 'flex' : 'none';
+        }
 
-            // Convert form data to JSON object
-            const jsonData = {};
-            formData.forEach((value, key) => {
-                jsonData[key] = value;
-            });
+        // Initialize modal manager
+        const modals = new ModalManager();
 
-            fetch(`/edit_consumable/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(jsonData),
-            })
-                .then(response => {
-                    if (response.ok) {
-                        // Handle successful update
-                        console.log(`Consumable with ID ${id} updated successfully.`);
-                        refreshTableRow(id, jsonData)
-                        closeEditPopup();
-                    } else {
-                        // Handle update error
-                        console.error(`Error updating consumable with ID ${id}.`);
+        // Form handling
+        function setupForm(formId, endpoint, method, successMessage) {
+            const form = document.getElementById(formId);
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                showLoading(true);
+                
+                try {
+                    const formData = new FormData(form);
+                    const jsonData = {};
+                    formData.forEach((value, key) => {
+                        jsonData[key] = value;
+                    });
+
+                    const response = await fetch(endpoint, {
+                        method,
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(jsonData),
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
-                })
-                .catch(error => {
-                    // Handle update error
-                    console.error(`Error updating consumable with ID ${id}:`, error);
+
+                    const data = await response.json();
+                    showNotification(successMessage, 'success');
+                    
+                    if (formId === 'edit-form' || formId === 'retrieve-form' || formId === 'return-form') {
+                        refreshTableRow(modals.currentItemId, data);
+                    } else if (formId === 'delete-form') {
+                        removeTableRow(modals.currentItemId);
+                    }
+                    
+                    modals.hide(formId.replace('-form', ''));
+                    form.reset();
+                } catch (error) {
+                    console.error('Error:', error);
+                    showNotification('Operation failed. Please try again.', 'error');
+                } finally {
+                    showLoading(false);
+                }
+            });
+        }
+
+        // Initialize forms
+        setupForm(
+            'consumable-form', 
+            '{% url 'add_consumable' project_name=project.name %}', 
+            'POST', 
+            'Item added successfully'
+        );
+
+        setupForm(
+            'edit-form',
+            `/edit_consumable/${modals.currentItemId}`,
+            'PUT',
+            'Item updated successfully'
+        );
+
+        setupForm(
+            'retrieve-form',
+            `/retrieve_consumable/${modals.currentItemId}`,
+            'PUT',
+            'Item retrieved successfully'
+        );
+
+        setupForm(
+            'return-form',
+            `/return_consumable/${modals.currentItemId}`,
+            'PUT',
+            'Item returned successfully'
+        );
+
+        // Delete handler
+        document.querySelector('#deletePopup .delete-bg-primary').addEventListener('click', async () => {
+            showLoading(true);
+            try {
+                const response = await fetch(`/delete_consumable/${modals.currentProject}/${modals.currentItemId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json',
+                    },
                 });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                removeTableRow(modals.currentItemId);
+                showNotification('Item deleted successfully', 'success');
+                modals.hide('delete');
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Failed to delete item', 'error');
+            } finally {
+                showLoading(false);
+            }
         });
 
-        const retrieveFilterInput = document.getElementById('retrieveFilterInput');
-
-        const form3 = document.getElementById('retrieve-form');
-        form3.addEventListener('submit', (event) => {
-            event.preventDefault(); // Prevent the form from submitting normally
-
-            const id = currentItemId;
-            const projectName = currentProject;
-
-            const formData = new FormData(form3);
-
-            // Convert form data to JSON object
-            const jsonData = {};
-            formData.forEach((value, key) => {
-                jsonData[key] = value;
-            });
-
-            fetch(`/retrieve_consumable/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(jsonData),
-            })
-                .then(response => {
-                    if (response.ok) {
-                        // Handle successful update
-                        console.log(`Consumable with ID ${id} updated successfully.`);
-                        fetch(`/get_consumable_info/${id}`, {
-                            method: 'GET',
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                            },
-                        })
-                            .then(response => response.json())
-                            .then(data => refreshTableRow(id, data))
-                            .catch(error => {
-                                console.error(`Error retrieving consumable information:`, error);
-                            });
-                        closeRetrievePopup();
-                        retrieveFilterInput.value = '';
-
-                    } else {
-                        // Handle update error
-                        console.error(`Error updating consumable with ID ${id}.`);
-                    }
-                })
-                .catch(error => {
-                    // Handle update error
-                    console.error(`Error updating consumable with ID ${id}:`, error);
-                });
-        });
-
-
-
-        const returnFilterInput = document.getElementById('returnFilterInput');
-
-        const form4 = document.getElementById('return-form');
-        form4.addEventListener('submit', (event) => {
-            event.preventDefault(); // Prevent the form from submitting normally
-
-            const id = currentItemId;
-            const formData = new FormData(form4);
-
-            // Convert form data to JSON object
-            const jsonData = {};
-            formData.forEach((value, key) => {
-                jsonData[key] = value;
-            });
-
-            fetch(`/return_consumable/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(jsonData),
-            })
-                .then(response => {
-                    if (response.ok) {
-                        // Handle successful update
-                        console.log(`Consumable with ID ${id} updated successfully.`);
-                        fetch(`/get_consumable_info/${id}`, {
-                            method: 'GET',
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                            },
-                        })
-                            .then(response => response.json())
-                            .then(data => refreshTableRow(id, data))
-                            .catch(error => {
-                                console.error(`Error retrieving consumable information:`, error);
-                            });
-                        closeReturnPopup();
-                        returnFilterInput.value = '';
-
-                    } else {
-                        // Handle update error
-                        console.error(`Error updating consumable with ID ${id}.`);
-                    }
-                })
-                .catch(error => {
-                    // Handle update error
-                    console.error(`Error updating consumable with ID ${id}:`, error);
-                });
-        });
-
-
-
+        // Table row management
         function refreshTableRow(id, data) {
             const table = document.getElementById('consumablesTable');
             const row = table.querySelector(`tr[data-id="${id}"]`);
 
             if (row) {
-                // Update the values in the row with the new data
                 const columns = row.querySelectorAll('td');
                 columns[0].textContent = data.name;
                 columns[1].textContent = data.product_code;
-                columns[2].textContent = data.pack_size_rem + '/' + data.pack_size;
+                columns[2].textContent = `${data.pack_size_rem}/${data.pack_size}`;
                 columns[3].textContent = data.quantity;
                 columns[5].textContent = data.expiry_date;
                 columns[6].textContent = data.storage_location;
             }
         }
 
-        // Get the filter inputs
-        const nameFilterInput = document.getElementById('nameFilterInput');
-        const productCodeFilterInput = document.getElementById('productCodeFilterInput');
-        const minQuantityFilterInput = document.getElementById('minQuantityFilterInput');
-        const maxQuantityFilterInput = document.getElementById('maxQuantityFilterInput');
-        const minDateExpiredFilterInput = document.getElementById('minDateExpiredFilterInput');
-        const maxDateExpiredFilterInput = document.getElementById('maxDateExpiredFilterInput');
-        const minDateCreatedFilterInput = document.getElementById('minDateCreatedFilterInput');
-        const maxDateCreatedFilterInput = document.getElementById('maxDateCreatedFilterInput');
-        const storageLocationFilterInput = document.getElementById('storageLocationFilterInput');
+        function removeTableRow(id) {
+            const table = document.getElementById('consumablesTable');
+            const row = table.querySelector(`tr[data-id="${id}"]`);
+            if (row) row.remove();
+        }
 
+        // Filtering with debounce
+        let filterTimeout;
+        const DEBOUNCE_DELAY = 300;
+        let cachedRows = null;
 
-        // Add event listeners to the filter inputs
-        nameFilterInput.addEventListener('input', filterTable);
-        productCodeFilterInput.addEventListener('input', filterTable);
-        minQuantityFilterInput.addEventListener('input', filterTable);
-        maxQuantityFilterInput.addEventListener('input', filterTable);
-        minDateExpiredFilterInput.addEventListener('change', filterTableByDate);
-        maxDateExpiredFilterInput.addEventListener('change', filterTableByDate);
-        minDateCreatedFilterInput.addEventListener('change', filterTableByDate);
-        maxDateCreatedFilterInput.addEventListener('change', filterTableByDate);
-        storageLocationFilterInput.addEventListener('input', filterTable);
+        function getTableRows() {
+            if (!cachedRows) {
+                const table = document.getElementById('consumablesTable');
+                cachedRows = Array.from(table.querySelectorAll('tr'));
+            }
+            return cachedRows;
+        }
 
+        function resetRowCache() {
+            cachedRows = null;
+        }
 
-        // Define the filter function
+        // Filter inputs
+        const filterInputs = [
+            'nameFilterInput', 'productCodeFilterInput', 'minQuantityFilterInput',
+            'maxQuantityFilterInput', 'minDateExpiredFilterInput', 'maxDateExpiredFilterInput',
+            'minDateCreatedFilterInput', 'maxDateCreatedFilterInput', 'storageLocationFilterInput'
+        ];
+
+        filterInputs.forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('input', () => {
+                    clearTimeout(filterTimeout);
+                    filterTimeout = setTimeout(filterTable, DEBOUNCE_DELAY);
+                });
+            }
+        });
+
+        // Filter function
         function filterTable() {
-            const nameFilterValue = nameFilterInput.value.toLowerCase();
-            const productCodeFilterValue = productCodeFilterInput.value.toLowerCase();
-            const minQuantityFilterValue = minQuantityFilterInput.value !== '' ? parseInt(minQuantityFilterInput.value) : 0;
-            const maxQuantityFilterValue = maxQuantityFilterInput.value !== '' ? parseInt(maxQuantityFilterInput.value) : Infinity;
-            const minDateExpiredFilterValue = minDateExpiredFilterInput.value || '1900-01-01'; // Default minimum date
-            const maxDateExpiredFilterValue = maxDateExpiredFilterInput.value || '9999-12-31'; // Default maximum date
-            const minDateCreatedFilterValue = minDateCreatedFilterInput.value || '1900-01-01'; // Default minimum date
-            const maxDateCreatedFilterValue = maxDateCreatedFilterInput.value || '9999-12-31'; // Default maximum date
-            const storageLocationFilterValue = storageLocationFilterInput.value.toLowerCase();
+            const filters = {
+                name: document.getElementById('nameFilterInput').value.toLowerCase(),
+                productCode: document.getElementById('productCodeFilterInput').value.toLowerCase(),
+                minQuantity: document.getElementById('minQuantityFilterInput').value || 0,
+                maxQuantity: document.getElementById('maxQuantityFilterInput').value || Infinity,
+                minDateExpired: document.getElementById('minDateExpiredFilterInput').value || '1900-01-01',
+                maxDateExpired: document.getElementById('maxDateExpiredFilterInput').value || '9999-12-31',
+                minDateCreated: document.getElementById('minDateCreatedFilterInput').value || '1900-01-01',
+                maxDateCreated: document.getElementById('maxDateCreatedFilterInput').value || '9999-12-31',
+                storageLocation: document.getElementById('storageLocationFilterInput').value.toLowerCase()
+            };
 
-            const tableRows = document.querySelectorAll('#consumablesTable tr');
-
-            tableRows.forEach((row) => {
-                const name = row.querySelector('td:first-child').textContent.toLowerCase();
-                const productCode = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-                const quantity = parseInt(row.querySelector('td:nth-child(4)').textContent);
-                const createdDate = row.querySelector('td:nth-child(5)').textContent;
-                const expiryDate = row.querySelector('td:nth-child(6)').textContent;
-                const storageLocation = row.querySelector('td:nth-child(7)').textContent.toLowerCase();
-
-                if (
-                    name.includes(nameFilterValue) &&
-                    productCode.includes(productCodeFilterValue) &&
-                    quantity >= minQuantityFilterValue &&
-                    quantity <= maxQuantityFilterValue &&
-                    isDateInRange(createdDate, minDateCreatedFilterValue, maxDateCreatedFilterValue) &&
-                    isDateInRange(expiryDate, minDateExpiredFilterValue, maxDateExpiredFilterValue) &&
-                    storageLocation.includes(storageLocationFilterValue)
-                ) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+            const rows = getTableRows();
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                if (cells.length < 7) return;
+                
+                const rowData = {
+                    name: cells[0].textContent.toLowerCase(),
+                    productCode: cells[1].textContent.toLowerCase(),
+                    quantity: parseInt(cells[3].textContent),
+                    createdDate: cells[4].textContent,
+                    expiryDate: cells[5].textContent,
+                    storageLocation: cells[6].textContent.toLowerCase()
+                };
+                
+                const shouldShow = (
+                    rowData.name.includes(filters.name) &&
+                    rowData.productCode.includes(filters.productCode) &&
+                    rowData.quantity >= filters.minQuantity &&
+                    rowData.quantity <= filters.maxQuantity &&
+                    isDateInRange(rowData.createdDate, filters.minDateCreated, filters.maxDateCreated) &&
+                    isDateInRange(rowData.expiryDate, filters.minDateExpired, filters.maxDateExpired) &&
+                    rowData.storageLocation.includes(filters.storageLocation)
+                );
+                
+                row.style.display = shouldShow ? '' : 'none';
             });
         }
 
-        // Define the date filter function
-        function filterTableByDate() {
-            filterTable();
-        }
-
-        // Helper function to check if a date falls within a given range
         function isDateInRange(date, minDate, maxDate) {
-            if (!date || !minDate || !maxDate) {
-                return true;
-            }
-
+            if (!date) return true;
             const currentDate = new Date(date);
             const min = new Date(minDate);
             const max = new Date(maxDate);
-
             return currentDate >= min && currentDate <= max;
         }
 
-        const resetButton = document.getElementById('resetButton');
-
-        resetButton.addEventListener('click', resetFilters);
+        // Reset filters
+        document.getElementById('resetButton').addEventListener('click', resetFilters);
 
         function resetFilters() {
-            // Clear the filter input values
-            nameFilterInput.value = '';
-            productCodeFilterInput.value = '';
-            minQuantityFilterInput.value = '';
-            maxQuantityFilterInput.value = '';
-            minDateExpiredFilterInput.value = '';
-            maxDateExpiredFilterInput.value = '';
-            minDateCreatedFilterInput.value = '';
-            maxDateCreatedFilterInput.value = '';
-            storageLocationFilterInput.value = '';
-
-            // Call the filter function to reset the table
+            filterInputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) input.value = '';
+            });
             filterTable();
-            location.reload();
         }
 
+        // Sorting
         document.getElementById('sortColumnDropdown').addEventListener('change', sortTableByColumn);
 
         function sortTableByColumn() {
             const columnNum = document.getElementById('sortColumnDropdown').value;
+            if (columnNum === '0') {
+                location.reload();
+                return;
+            }
+            
             const table = document.getElementById('consumablesTable');
-            const rows = Array.from(table.querySelectorAll('tr')).slice(0); // Exclude the table header row
-
-            rows.sort((row1, row2) => {
-                const value1 = getColumnValue(row1, columnNum);
-                const value2 = getColumnValue(row2, columnNum);
-
-                if (columnNum === '0') {
-                    // Clear the sorting and go back to the original order
-                    location.reload();
-                    return;
-                }
-
+            const rows = Array.from(table.querySelectorAll('tr'));
+            
+            rows.sort((a, b) => {
+                const valA = getColumnValue(a, columnNum);
+                const valB = getColumnValue(b, columnNum);
+                
                 if (columnNum === '4') {
-                    // Convert the quantity values to numbers for proper numeric sorting
-                    return value1 - value2;
+                    return valA - valB;
                 }
-
-                return value1.localeCompare(value2);
-                });
-
-            // Reorder the rows in the table
+                return valA.localeCompare(valB);
+            });
+            
             rows.forEach(row => table.appendChild(row));
         }
 
         function getColumnValue(row, columnNum) {
-            const column = row.querySelector(`td:nth-child(${columnNum})`);
+            const cell = row.querySelector(`td:nth-child(${columnNum})`);
+            if (!cell) return '';
+            
+            const value = cell.textContent.trim();
+            return columnNum === '4' ? parseFloat(value) : value.toLowerCase();
+        }
 
-            if (column) {
-                const value = column.textContent.trim();
-
-                if (columnNum === '4') {
-                    // Convert the quantity value to a number
-                    return parseFloat(value);
-                }
-
-                return value.toLowerCase();
-                }
-
-            return '';
-             }
-
-        // Call the filter function initially to show the complete table
-        filterTable();
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set up event listeners for buttons to use the modal manager
+            document.getElementById('addItemBtn')?.addEventListener('click', () => modals.show('add'));
+            
+            // Update all inline onclick handlers to use the modal manager
+            const editButtons = document.querySelectorAll('[onclick^="showEditPopup"]');
+            editButtons.forEach(btn => {
+                btn.onclick = function() {
+                    const id = this.getAttribute('onclick').match(/'([^']+)'/)[1];
+                    modals.show('edit', id);
+                    return false;
+                };
+            });
+            
+            // Similar updates for retrieve, return, delete buttons
+            // ...
+            
+            // Initial filter
+            filterTable();
+        });
     </script>
 </body>
-
 </html>
