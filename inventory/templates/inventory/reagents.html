@@ -22,28 +22,36 @@
     <div class="text-gray-700 flex items-center justify-between mb-3">
         <span>Name</span>
     </div>
-    <input class="filter-input" type="text" id="nameFilterInput" placeholder="Filter by name">
+    <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" type="text"
+        id="nameFilterInput" placeholder="Filter by name">
 </div>
 
 <div class="border-b mt-5 pb-3">
     <div class="text-gray-700 flex items-center justify-between mb-3">
         <span>Product Code</span>
     </div>
-        <input type="text" id="productCodeFilterInput" placeholder="Filter by product code" class="filter-input">
+        <input type="text" id="productCodeFilterInput" placeholder="Filter by product code"
+            class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2">
 </div>
 
 <div class="border-b mt-5 pb-3">
     <div class="text-gray-700 flex items-center justify-between mb-3">
         <span>Quantity</span>
     </div>
-    <div class="filter-range">
-        <div class="range-input">
+    <div class="quantity-filter-container">
+        <div class="mt-1 text-gray-500 text-sm">
             <label for="minQuantityFilterInput">Min:</label>
-            <input type="number" id="minQuantityFilterInput" class="filter-input">
         </div>
-        <div class="range-input">
+        <div>
+            <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
+                type="number" id="minQuantityFilterInput">
+        </div>
+        <div class="mt-1 text-gray-500 text-sm">
             <label for="maxQuantityFilterInput">Max:</label>
-            <input type="number" id="maxQuantityFilterInput" class="filter-input">
+        </div>
+        <div>
+            <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
+                type="number" id="maxQuantityFilterInput">
         </div>
     </div>
 </div>
@@ -52,14 +60,21 @@
     <div class="text-gray-700 flex items-center justify-between mb-3">
         <span>Date Created</span>
     </div>
-    <div class="filter-range">
-        <div class="range-input">
-            <label for="minDateCreatedFilterInput">Min:</label>
-            <input type="date" id="minDateCreatedFilterInput" class="filter-input">
+    <div class="quantity-filter-container">
+        <div class="mt-1 text-gray-500 text-sm">
+            <label for="minDateCreatedFilterInput">From:</label>
         </div>
-        <div class="range-input">
-            <label for="maxDateCreatedFilterInput">Max:</label>
-            <input type="date" id="maxDateCreatedFilterInput" class="filter-input">
+        <div>
+            <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
+                type="date" id="minDateCreatedFilterInput">
+        </div>
+        <div class="quantity-filter-container">
+            <div class="mt-1 text-gray-500 text-sm">
+                <label id="maxDateCreatedFilterInputLabel" for="maxDateCreatedFilterInput">To:</label>
+        </div>
+        <div>
+            <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
+                type="date" id="maxDateCreatedFilterInput">
         </div>
     </div>
 </div>
@@ -68,14 +83,21 @@
     <div class="text-gray-700 flex items-center justify-between mb-3">
         <span>Expiry Date</span>
     </div>
-    <div class="filter-range">
-        <div class="range-input">
-            <label for="minDateExpiredFilterInput">Min:</label>
-            <input type="date" id="minDateExpiredFilterInput" class="filter-input">
+    <div class="quantity-filter-container">
+        <div class="mt-1 text-gray-500 text-sm">
+            <label for="minDateExpiredFilterInput">From:</label>
         </div>
-        <div class="range-input">
-            <label for="maxDateExpiredFilterInput">Max:</label>
-            <input type="date" id="maxDateExpiredFilterInput" class="filter-input">
+        <div>
+            <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
+                type="date" id="minDateCreatedFilterInput">
+        </div>
+        <div class="quantity-filter-container">
+            <div class="mt-1 text-gray-500 text-sm">
+                <label for="maxDateExpiredFilterInput">To:</label>
+        </div>
+        <div>
+            <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
+                type="date" id="maxDateCreatedFilterInput">
         </div>
     </div>
 </div>
@@ -84,14 +106,15 @@
     <div class="text-gray-700 flex items-center justify-between mb-3">
         <span>Storage Location</span>
     </div>
-        <input type="text" id="storageLocationFilterInput" placeholder="Filter by storage location" class="filter-input">
+        <input type="text" id="storageLocationFilterInput" placeholder="Filter by storage location"
+            class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2">
 </div>
 
 <div class="border-b mt-5 pb-3">
     <div class="text-gray-700 flex items-center justify-between mb-3">
         <span>Sort By</span>
     </div>
-    <select id="sortColumnDropdown" class="filter-input">
+    <select id="sortColumnDropdown" class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
         <option value="0">None</option>
         <option value="1">Name</option>
         <option value="2">Product Code</option>
@@ -102,7 +125,10 @@
     </select>
 </div>
 
-<button id="resetButton" class="btn btn-primary mt-8">Reset</button>
+<!-- Apply Button Section -->
+<div class="mt-8 flex items-start justify-between space-x-3">
+    <button id="resetButton" class="btn btn-primary mt-8">Reset</button>
+</div>
 {% endblock %}
 
 {% block content %}
@@ -113,14 +139,14 @@
         <div class="dropdown">
             <div class="project-name-container">
                 <span class="project-name-text">{{ project.name }}</span>
-                <svg class="dropdown-arrow">
+                <svg class="dropdown-arrow" width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                     <rect width="8" height="8" fill="url(#pattern7)"/>
-                          <defs>
-                            <pattern id="pattern7" patternContentUnits="objectBoundingBox" width="1" height="1">
+                    <defs>
+                        <pattern id="pattern7" patternContentUnits="objectBoundingBox" width="1" height="1">
                               <use xlink:href="#image0_240_2" transform="scale(0.0625)"/>
-                            </pattern>
-                            <image id="image0_240_2" width="16" height="16" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAwgAAAMIBT4kc1wAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAACASURBVDiN1dOxDcIwEEDRf2QtOqgYIx0gyIgRsyCxA00+zVEgMIodGiy5839XWBcqS85qUf0LIIAtsG7sLwA3wMZ77YA7sGuYLjCQvzBUTp6AXgX1iZxr4xcgkVNN/AYkcpwbfwQSOcyJi0Ai+wyLsUp824WI2ACTOhbf/P8yPQAoP83ZkoVsJgAAAABJRU5ErkJggg=="/>
-                          </defs>
+                        </pattern>
+                        <image id="image0_240_2" width="16" height="16" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAwgAAAMIBT4kc1wAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAACASURBVDiN1dOxDcIwEEDRf2QtOqgYIx0gyIgRsyCxA00+zVEgMIodGiy5839XWBcqS85qUf0LIIAtsG7sLwA3wMZ77YA7sGuYLjCQvzBUTp6AXgX1iZxr4xcgkVNN/AYkcpwbfwQSOcyJi0Ai+wyLsUp824WI2ACTOhbf/P8yPQAoP83ZkoVsJgAAAABJRU5ErkJggg=="/>
+                    </defs>
                 </svg>
             </div> 
             <div class="dropdown-content">
@@ -134,7 +160,8 @@
         {% if user == project.project_manager or user in project.project_editors.all %}
         <div class="dropdown">
             <button class="btn btn-icon">
-                <svg>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                    stroke="currentColor" class="w-5 h-5">
                     <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M9 3.75H6.912a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 00-2.15-1.588H15M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859M12 3v8.25m0 0l-3-3m3 3l3-3" />
                 </svg>
@@ -146,21 +173,23 @@
             </div>
         </div>
         {% endif %}
-        <button id="addItemBtn" class="btn btn-primary">
-            <svg>
+        <!-- Add Item Button -->
+        <button id="addItemBtn" class="lg:hidden bg-gray-50 p-2 text-gray-600 rounded hover:bg-gray-300 focus:text-primary outline-none focus:drop-shadow">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
                 <path fill-rule="evenodd"
-                                d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"
-                                clip-rule="evenodd" />
+                    d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"
+                    clip-rule="evenodd" />
             </svg>
             <span>Add Reagent</span>
         </button>
+        <!--
         <button class="lg:hidden btn btn-icon" @click="showMenu = !showMenu">
             <svg>
                 <path fill-rule="evenodd"
                                 d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm7 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
                                 clip-rule="evenodd" />
             </svg>
-        </button>
+        </button> -->
     </div>
 </div>
 

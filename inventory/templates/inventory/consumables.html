@@ -60,17 +60,17 @@
         <span>Date Created</span>
     </div>
     <div class="quantity-filter-container">
-        <div class="mt-1  text-gray-500 text-sm ">
-            <label id="minDateCreatedFilterInputLabel" for="minDateCreatedFilterInput">Min:</label>
+        <div class="mt-1  text-gray-500 text-sm">
+            <label id="minDateCreatedFilterInputLabel" for="minDateCreatedFilterInput">From:</label>
         </div>
-    <div>
-        <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
-            type="date" id="minDateCreatedFilterInput">
+        <div>
+            <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
+                type="date" id="minDateCreatedFilterInput">
+        </div>
     </div>
-
     <div class="quantity-filter-container">
-        <div class="mt-1  text-gray-500 text-sm ">
-            <label id="maxDateCreatedFilterInputLabel" for="maxDateCreatedFilterInput">Max:</label>
+        <div class="mt-1  text-gray-500 text-sm">
+            <label id="maxDateCreatedFilterInputLabel" for="maxDateCreatedFilterInput">To:</label>
         </div>
         <div>
             <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
@@ -84,8 +84,8 @@
         <span>Expiry Date</span>
     </div>
     <div class="quantity-filter-container">
-        <div class="mt-1  text-gray-500 text-sm ">
-            <label id="minDateExpiredFilterInputLabel" for="minDateExpiredFilterInput">Min:</label>
+        <div class="mt-1  text-gray-500 text-sm">
+            <label id="minDateExpiredFilterInputLabel" for="minDateExpiredFilterInput">From:</label>
         </div>
         <div>
             <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
@@ -93,8 +93,8 @@
         </div>
     </div>
     <div class="quantity-filter-container">
-        <div class="mt-1  text-gray-500 text-sm ">
-            <label id="maxDateExpiredFilterInputLabel" for="maxDateExpiredFilterInput">Max:</label>
+        <div class="mt-1  text-gray-500 text-sm">
+            <label id="maxDateExpiredFilterInputLabel" for="maxDateExpiredFilterInput">To:</label>
         </div>
         <div>
             <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
@@ -107,8 +107,10 @@
     <div class="text-gray-700 flex items-center justify-between mb-3">
         <span>Storage Location</span>
     </div>
+    <div>
         <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" type="text"
             id="storageLocationFilterInput" placeholder="Filter by storage location">
+    </div>
 </div>
 
 <div class="border-b mt-5 pb-3">
@@ -127,7 +129,9 @@
 </div>
 
 <!-- Apply Button Section -->
-<button id="resetButton" class="btn btn-primary mt-8">Reset</button>
+<div class="mt-8 flex items-start justify-between space-x-3">
+    <button id="resetButton" class="btn btn-primary mt-8">Reset</button>
+</div>
 {% endblock %}
 
 {% block content %}
@@ -174,7 +178,7 @@
         </div>
         {% endif %}
         <!--Add Item Button -->
-        <button id="addItemBtn" class="btn btn-primary">
+        <button id="addItemBtn" class="lg:hidden bg-gray-50 p-2 text-gray-600 rounded hover:bg-gray-300 focus:text-primary outline-none focus:drop-shadow">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
                 <path fill-rule="evenodd"
                     d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"
@@ -208,7 +212,7 @@
     <table class="w-full table-auto">
         <thead>
             <tr>
-                <th">Name</th>
+                <th>Name</th>
                 <th>Product Code</th>
                 <th>Pack Size</th>
                 <th>Quantity</th>

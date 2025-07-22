@@ -22,14 +22,15 @@
     <div class="text-gray-700 flex items-center justify-between mb-3">
         <span>Sample ID</span>
     </div>
-    <input type="text" id="sampleIDFilterInput" placeholder="Filter by sample ID" class="filter-input">
+    <input type="text" id="sampleIDFilterInput" placeholder="Filter by sample ID"
+        class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2">
 </div>
 
 <div class="border-b mt-5 pb-3">
     <div class="text-gray-700 flex items-center justify-between mb-3">
         <span>Type</span>
     </div>
-    <select id="sampleTypeFilterInput" class="filter-input">
+    <select id="sortColumnDropdown" class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
         <option value="All">All</option>
         <option value="Bacteria">Bacteria</option>
         <option value="Fungi">Fungi</option>
@@ -40,8 +41,11 @@
 
 <!-- Country Filter -->
 <div class="border-b mt-5 pb-3">
-    <label for="countryFilterInput">Country</label>
-    <input type="text" id="countryFilterInput" placeholder="Filter by country" class="filter-input">
+    <div class="text-gray-700 flex items-center justify-between mb-3">
+        <span for="countryFilterInput">Country</span>
+    </div>
+    <input type="text" id="countryFilterInput" placeholder="Filter by country"
+        class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-500 rounded mt-2">
 </div>
 
 <!-- Volume Range Filter -->
@@ -49,14 +53,20 @@
     <div class="text-gray-700 flex items-center justify-between mb-3">
         <span>Volume (ml)</span>
     </div>
-    <div class="filter-range">
-        <div class="range-input">
+    <div class="quantity-filter-container">
+        <div class="mt-1 text-gray-500 text-sm">
             <label for="minVolumeFilterInput">Min:</label>
-            <input type="number" id="minVolumeFilterInput" class="filter-input" min="0" step="0.1">
         </div>
-        <div class="range-input">
+        <div>
+            <input type="number" id="minVolumeFilterInput" class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-500 rounded mt-2"
+                min="0" step="0.1">
+        </div>
+        <div class="mt-1 text-gray-500 text-sm">
             <label for="maxVolumeFilterInput">Max:</label>
-            <input type="number" id="maxVolumeFilterInput" class="filter-input" min="0" step="0.1">
+        </div>
+        <div>
+            <input type="number" id="maxVolumeFilterInput" class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-500 rounded mt-2"
+                min="0" step="0.1">
         </div>
     </div>
 </div>
@@ -66,22 +76,33 @@
     <div class="text-gray-700 flex items-center justify-between mb-3">
         <span>Date Recorded</span>
     </div>
-    <div class="filter-range">
-        <div class="range-input">
+    <div class="quantity-filter-container">
+        <div class="mt-1 text-gray-500 text-sm">
             <label for="minDateCreatedFilterInput">From:</label>
-            <input type="date" id="minDateCreatedFilterInput" class="filter-input">
         </div>
-        <div class="range-input">
-            <label for="maxDateCreatedFilterInput">To:</label>
-            <input type="date" id="maxDateCreatedFilterInput" class="filter-input">
+        <div>
+            <input type="date" id="minDateCreatedFilterInput"
+                class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-500 rounded mt-2">
+        </div>
+        <div class="quantity-filter-container">
+            <div class="mt-1 text-gray-500 text-sm">
+                <label for="maxDateCreatedFilterInput">To:</label>
+            </div>
+            <div>
+                <input type="date" id="maxDateCreatedFilterInput" 
+                    class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-500 rounded mt-2">
+            </div>
         </div>
     </div>
 </div>
 
 <!-- Storage Location Filter -->
 <div class="border-b mt-5 pb-3">
-        <label for="storageLocationFilterInput">Storage Location</label>
-        <input type="text" id="storageLocationFilterInput" placeholder="Filter by storage location" class="filter-input">
+    <div class="text-gray-700 flex items-center justify-between mb-3">
+        <span>Storage Location</span>
+    </div>
+        <input type="text" id="storageLocationFilterInput" placeholder="Filter by storage location"
+            class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-500 rounded mt-2">
 </div>
 
 <!-- Sort Dropdown -->
@@ -100,7 +121,10 @@
     </select>
 </div>
 
-<button id="resetButton" class="btn btn-primary mt-8">Reset</button>
+<!-- Apply Button Section -->
+<div class="mt-8 flex items-start justify-between space-x-3">
+    <button id="resetButton" class="btn btn-primary mt-8">Reset</button>
+</div>
 {% endblock %}
 
 {% block content %}

@@ -3,33 +3,6 @@
 
 {% block title %}Equipment{% endblock %}
 
-{% block export_options %}
-    <a href="{% url 'export_equipment_csv' project_name=project.name %}">CSV</a>
-    <a href="{% url 'export_equipment_excel' project_name=project.name %}">XLS</a>
-    <a href="{% url 'export_equipment_txt' project_name=project.name %}">TXT</a>
-{% endblock %}
-
-{% block add_button_text %}Add Equipment{% endblock %}
-
-{% block navigation_links %}
-    <a href="{% url 'consumables' project_name=project.name %}"
-        class="flex items-center space-x-1 pb-3 border-b-2 border-transparent hover:border-b-primary hover:text-gray-600">
-        <span>Consumables</span>
-    </a>
-    <a href="{% url 'reagents' project_name=project.name %}"
-        class="flex items-center space-x-1 pb-3 border-b-2 border-transparent hover:border-b-primary hover:text-gray-600">
-        <span>Reagents</span>
-    </a>
-    <a href="{% url 'equipment_' project_name=project.name %}"
-        class="flex items-center space-x-1 text-gray-600 border-b-2 border-b-primary pb-3">
-        <span>Equipment</span>
-    </a>
-    <a href="{% url 'samples' project_name=project.name %}"
-        class="flex items-center space-x-1 pb-3 border-b-2 border-transparent hover:border-b-primary hover:text-gray-600">
-        <span>Samples</span>
-    </a>
-{% endblock %}
-
 {% block filters %}
 <!-- Equipment-specific filters -->
 <!-- Logo on small screens -->
@@ -49,14 +22,16 @@
     <div class="text-gray-700 flex items-center justify-between mb-3">
         <span>Name</span>
     </div>
-        <input class="fitler-input" type="text" id="nameFilterInput" placeholder="Filter by name">
+        <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
+            type="text" id="nameFilterInput" placeholder="Filter by name">
 </div>
 
 <div class="border-b mt-5 pb-3">
     <div class="text-gray-700 flex items-center justify-between mb-3">
         <span>Serial Number</span>
     </div>
-    <input class="filter-input" type="text" id="serialNumFilterInput" placeholder="Filter by serial number">
+    <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
+        type="text" id="serialNumFilterInput" placeholder="Filter by serial number">
 </div>
 
 <div class="border-b mt-5 pb-3">
@@ -72,7 +47,7 @@
             <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
                 type="number" id="minQuantityFilterInput">
         </div>
-        <div class="mt-1  text-gray-500 text-sm ">
+        <div class="mt-1 text-gray-500 text-sm ">
             <label id="maxQuantityFilterInputLabel" for="maxQuantityFilterInput">Max:</label>
         </div>
         <div>
@@ -89,7 +64,7 @@
 
     <div class="quantity-filter-container">
         <div class="mt-1  text-gray-500 text-sm ">
-            <label id="minServiceContractStartFilterInputLabel" for="minServiceContractStartFilterInput">Min:</label>
+            <label id="minServiceContractStartFilterInputLabel" for="minServiceContractStartFilterInput">From:</label>
         </div>
         <div>
             <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
@@ -98,7 +73,7 @@
     </div>
     <div class="quantity-filter-container">
         <div class="mt-1  text-gray-500 text-sm ">
-            <label id="maxServiceContractStartFilterInputLabel" for="maxServiceContractStartFilterInput">Max:</label>
+            <label id="maxServiceContractStartFilterInputLabel" for="maxServiceContractStartFilterInput">To:</label>
         </div>
         <div>
             <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
@@ -114,7 +89,7 @@
 
     <div class="quantity-filter-container">
         <div class="mt-1  text-gray-500 text-sm ">
-            <label id="minServiceContractEndFilterInputLabel" for="minServiceContractEndFilterInput">Min:</label>
+            <label id="minServiceContractEndFilterInputLabel" for="minServiceContractEndFilterInput">From:</label>
         </div>
         <div>
             <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
@@ -123,7 +98,7 @@
     </div>
     <div class="quantity-filter-container">
         <div class="mt-1  text-gray-500 text-sm ">
-            <label id="maxServiceContractEndFilterInputLabel" for="maxServiceContractEndFilterInput">Max:</label>
+            <label id="maxServiceContractEndFilterInputLabel" for="maxServiceContractEndFilterInput">To:</label>
         </div>
         <div>
             <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
@@ -165,10 +140,12 @@
 </div>
 
 <!-- Apply Button Section -->
-<button id="resetButton" class="btn btn-primary mt-8">Reset</button>
+<div class="mt-8 flex items-start justify-between space-x-3">
+    <button id="resetButton" class="btn btn-primary mt-8">Reset</button>
+</div>
 {% endblock %}
 
-{% block table_content %}
+{% block content %}
 <!-- Header -->
 <div class="flex items-center justify-between">
     <div>
@@ -210,13 +187,14 @@
             </div>
         </div>
         {% endif %}
+        <!-- Add Item Button -->
         <button id="addItemBtn" class="btn btn-primary">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
                 <path fill-rule="evenodd"
                     d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"
                     clip-rule="evenodd" />
             </svg>
-            <span>Add Sample</span>
+            <span>Add Equipment</span>
         </button>
         <!-- <button class="lg:hidden btn btn-icon" @click="showMenu = !showMenu">
             <svg>
@@ -254,7 +232,7 @@
                 <th></th>
             </tr>
         </thead>
-        <tbody id="equipment_Table">
+        <tbody id="equipmentTable">
             {% for equipment in equipment_ %}
             <tr data-id="{{ equipment.id }}"
                 data-name="{{ equipment.name }}"
