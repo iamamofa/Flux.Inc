@@ -47,7 +47,7 @@
                         </div>
                         <div class="dropdown-content">
                             {% for project in projects %}
-                            <a href="{% url 'trash_'|add:item_type|add:'s' project_name=project.name %}">{{ project.name }}</a>
+                            <a href="{% url 'trash_'|add:item_type project_name=project.name %}">{{ project.name }}</a>
                             {% endfor %}   
                         </div>
                     </div>
