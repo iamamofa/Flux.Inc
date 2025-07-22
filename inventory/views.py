@@ -521,7 +521,8 @@ def trash_consumables(request, project_name):
     context = {
             'project': project,
             'projects': projects,
-            'trash_consumables': trash_consumables
+            'trash_consumables': trash_consumables,
+            'item_type': 'consumables'
     }
     return render(request, 'inventory/trash_consumables.html', context)
 
@@ -1064,7 +1065,8 @@ def trash_reagents(request, project_name):
     context = {
             'project': project,
             'projects': projects,
-            'trash_reagents': trash_reagents
+            'trash_reagents': trash_reagents,
+            'item_type': 'reagents'
     }
     return render(request, 'inventory/trash_reagents.html', context)
 
@@ -1597,7 +1599,8 @@ def trash_equipment_(request, project_name):
     context = {
             'project': project,
             'projects': projects,
-            'trash_equipment_': trash_equipment_
+            'trash_equipment_': trash_equipment_,
+            'item_type': 'equipment_'
     }
     return render(request, 'inventory/trash_equipment_.html', context)
 
@@ -2075,7 +2078,8 @@ def trash_samples(request, project_name):
     context = {
             'project': project,
             'projects': projects,
-            'trash_samples': trash_samples
+            'trash_samples': trash_samples,
+            'item_type': 'samples'
     }
     return render(request, 'inventory/trash_samples.html', context)
 

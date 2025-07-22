@@ -54,14 +54,14 @@
         <span>Volume (ml)</span>
     </div>
     <div class="quantity-filter-container">
-        <div class="mt-1 text-gray-500 text-sm">
+        <div class="mt-1 text-gray-500 text-sm ">
             <label for="minVolumeFilterInput">Min:</label>
         </div>
         <div>
             <input type="number" id="minVolumeFilterInput" class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-500 rounded mt-2"
                 min="0" step="0.1">
         </div>
-        <div class="mt-1 text-gray-500 text-sm">
+        <div class="mt-1 text-gray-500 text-sm ">
             <label for="maxVolumeFilterInput">Max:</label>
         </div>
         <div>
@@ -84,14 +84,14 @@
             <input type="date" id="minDateCreatedFilterInput"
                 class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-500 rounded mt-2">
         </div>
-        <div class="quantity-filter-container">
-            <div class="mt-1 text-gray-500 text-sm">
-                <label for="maxDateCreatedFilterInput">To:</label>
-            </div>
-            <div>
-                <input type="date" id="maxDateCreatedFilterInput" 
-                    class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-500 rounded mt-2">
-            </div>
+    </div>
+    <div class="quantity-filter-container">
+        <div class="mt-1 text-gray-500 text-sm">
+            <label for="maxDateCreatedFilterInput">To:</label>
+        </div>
+        <div>
+            <input type="date" id="maxDateCreatedFilterInput" 
+                class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-500 rounded mt-2">
         </div>
     </div>
 </div>
@@ -122,9 +122,7 @@
 </div>
 
 <!-- Apply Button Section -->
-<div class="mt-8 flex items-start justify-between space-x-3">
-    <button id="resetButton" class="btn btn-primary mt-8">Reset</button>
-</div>
+<button id="resetButton" class="btn btn-primary mt-8">Reset</button>
 {% endblock %}
 
 {% block content %}

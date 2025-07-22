@@ -184,6 +184,19 @@
             animation: fadeOut 0.5s ease-out;
         }
 
+        .nav-link {
+            padding: 0.5rem 1rem;
+            transition: color 0.3s ease;
+        }
+        .nav-link:hover {
+            color: #3b82f6; /* blue-500 */
+        }
+
+        .nav-link.active {
+            color: #000; /* black */
+            border-bottom: 2px solid #3b82f6; /* blue-500 */
+        }
+
         @keyframes slideIn {
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
