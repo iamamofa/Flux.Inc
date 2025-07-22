@@ -15,7 +15,7 @@
         <div class="mt-12">
             <div class="flex flex-col space-y-2 text-base font-medium">
                 <a class="rounded-md px-3 py-3 text-gray-300 flex items-center hover:bg-gray-700 hover:text-white transition ease-in-out justify-between space-x-2"
-                    href="{% block dashboard_url %}{% endblock %}">
+                    href="#">
                     <span>
                         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <rect width="22" height="22" fill="url(#pattern0)" />
@@ -31,7 +31,7 @@
                     <span class="flex-1 pl-2">Dashboard</span>
                 </a>
                 <a class="bg-gray-700 rounded-md px-3 py-3 text-white flex items-center justify-between space-x-2"
-                    href="#">
+                    href="{% block dashboard_url %}{% endblock %} project_name=project.name">
                     <span>
                         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <rect width="22" height="22" fill="url(#pattern1)" />

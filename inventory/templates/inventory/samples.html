@@ -3,6 +3,10 @@
 
 {% block title %}Samples{% endblock %}
 
+{% block dashboard_url %}
+{% url 'samples' project_name=project.name %}
+{% endblock %}
+
 {% block filters %}
 <!-- Filters Side-->
 <!-- Logo on small screens -->
@@ -53,6 +57,7 @@
     <div class="text-gray-700 flex items-center justify-between mb-3">
         <span>Volume (ml)</span>
     </div>
+
     <div class="quantity-filter-container">
         <div class="mt-1 text-gray-500 text-sm ">
             <label for="minVolumeFilterInput">Min:</label>

@@ -3,6 +3,10 @@
 
 {% block title %}Reagents{% endblock %}
 
+{% block dashboard_url %}
+{% url 'reagents' project_name=project.name %}
+{% endblock %}
+
 {% block filters %}
 <!-- Filters Side-->
 <!-- Logo on small screens -->
@@ -38,16 +42,17 @@
     <div class="text-gray-700 flex items-center justify-between mb-3">
         <span>Quantity</span>
     </div>
+
     <div class="quantity-filter-container">
-        <div class="mt-1 text-gray-500 text-sm">
+        <div class="mt-1 text-gray-500 text-sm ">
             <label for="minQuantityFilterInput">Min:</label>
         </div>
         <div>
             <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
                 type="number" id="minQuantityFilterInput">
         </div>
-        <div class="mt-1 text-gray-500 text-sm">
-            <label for="maxQuantityFilterInput">Max:</label>
+        <div class="mt-1 text-gray-500 text-sm ">
+            <label id="maxQuantityFilterInputLabel" for="maxQuantityFilterInput">Max:</label>
         </div>
         <div>
             <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
@@ -61,15 +66,15 @@
         <span>Date Created</span>
     </div>
     <div class="quantity-filter-container">
-        <div class="mt-1 text-gray-500 text-sm">
-            <label for="minDateCreatedFilterInput">From:</label>
+        <div class="mt-1 text-gray-500 text-sm ">
+            <label id="minDateCreatedFilterInputLabel" for="minDateCreatedFilterInput">From:</label>
         </div>
         <div>
             <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
                 type="date" id="minDateCreatedFilterInput">
         </div>
         <div class="quantity-filter-container">
-            <div class="mt-1 text-gray-500 text-sm">
+            <div class="mt-1 text-gray-500 text-sm ">
                 <label id="maxDateCreatedFilterInputLabel" for="maxDateCreatedFilterInput">To:</label>
         </div>
         <div>

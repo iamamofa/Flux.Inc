@@ -3,6 +3,10 @@
  
 {% block title %}Consumables{% endblock %}
 
+{% block dashboard_url %}
+{% url 'consumables' project_name=project.name %}
+{% endblock %}
+
 {% block filters %}
 <!-- Logo on small screens -->
 <div class="sm:flex lg:hidden font-semibold text-lg justify-center items-center space-x-1 mb-8">
