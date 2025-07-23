@@ -273,6 +273,18 @@
 
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script>
+        function showAddPopup() {
+            const popup = document.getElementById('addPopup');
+            popup.style.display = 'flex';
+            document.getElementById('projectNameInput').focus();
+        }
+
+        function closeAddPopup() {
+            const popup = document.getElementById('addPopup');
+            popup.style.display = 'none';
+            document.getElementById('errorContainer').textContent = '';
+        }
+        
         // Improved JavaScript with better error handling
         document.addEventListener('DOMContentLoaded', function() {
             const modalContainer1 = document.querySelector(".popup-container1");
@@ -283,17 +295,6 @@
                 }
             });
 
-            function showAddPopup() {
-                const popup = document.getElementById('addPopup');
-                popup.style.display = 'flex';
-                document.getElementById('projectNameInput').focus();
-            }
-
-            function closeAddPopup() {
-                const popup = document.getElementById('addPopup');
-                popup.style.display = 'none';
-                document.getElementById('errorContainer').textContent = '';
-            }
             
             const form = document.getElementById('add-form');
             if (form) {
@@ -339,6 +340,12 @@
 
         function initializeChart() {
             try {
+                const plotContainer = document.getElementById('plotContainer');
+                if (!plotContainer) {
+                    console.error('plotContainer element not found');
+                    return;
+                }
+
                 const plotData = JSON.parse('{{ plot_data|escapejs }}') || {};
                 const names = plotData.names || [];
                 const quantities = plotData.quantities || [];

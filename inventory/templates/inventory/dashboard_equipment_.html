@@ -269,9 +269,27 @@
         <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
         <script>
+            function showAddPopup() {
+                const popup = document.getElementById('addPopup');
+                popup.style.display = 'flex';
+                document.getElementById('projectNameInput').focus();
+            }
+
+            function closeAddPopup() {
+                const popup = document.getElementById('addPopup');
+                popup.style.display = 'none';
+                document.getElementById('errorContainer').textContent = '';
+            }
+
             // Equipment-specific chart initialization
             function initializeChart() {
                 try {
+                    const plotContainer = document.getElementById('plotContainer');
+                    if (!plotContainer) {
+                        console.error('plotContainer element not found');
+                        return;
+                    }
+
                     const plotData = JSON.parse('{{ plot_data|escapejs }}') || {};
                     const names = plotData.names || [];
                     const quantities = plotData.quantities || [];
@@ -312,17 +330,6 @@
                     }
                 });
 
-                function showAddPopup() {
-                    const popup = document.getElementById('addPopup');
-                    popup.style.display = 'flex';
-                    document.getElementById('projectNameInput').focus();
-                }
-
-                function closeAddPopup() {
-                    const popup = document.getElementById('addPopup');
-                    popup.style.display = 'none';
-                    document.getElementById('errorContainer').textContent = '';
-                }
             
                 const form = document.getElementById('add-form');
                 if (form) {

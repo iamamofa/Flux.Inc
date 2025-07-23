@@ -226,6 +226,20 @@
                     <span>Samples</span>
                 </a>
             </nav>
+
+            <!-- Chart Container -->
+            <div class="container mt-6">
+                <div class="card plot-card">
+                    <div class="card-body">
+                        <div id="plotContainer" aria-live="polite">
+                            <!-- Loading spinner -->
+                            <div id="chartLoading" class="flex justify-center items-center py-12">
+                                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Add Project Popup -->
@@ -259,11 +273,28 @@
         <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
         <script>
+            function showAddPopup() {
+                const popup = document.getElementById('addPopup');
+                popup.style.display = 'flex';
+                document.getElementById('projectNameInput').focus();
+            }
+
+            function closeAddPopup() {
+                const popup = document.getElementById('addPopup');
+                if (popup) popup.style.display = 'none';
+                document.getElementById('errorContainer').textContent = '';
+            }
+
             // Reagents-specific chart initialization
             function initializeChart() {
                 try {
+                    const plotContainer = document.getElementById('plotContainer');
+                    if (!plotContainer) {
+                        console.error('plotContainer element not found')
+                        return;
+                    }
+
                     const plotData = JSON.parse('{{ plot_data|escapejs }}') || {};
-                    console.log('Reagents plotData:', plotData);
                     const names = plotData.names || [];
                     const quantities = plotData.quantities || [];
                     
@@ -297,22 +328,12 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const modalContainer1 = document.querySelector(".popup-container1");
             
-                modalContainer1.addEventListener("click", (event) => {
-                    if (event.target === modalContainer1) {
-                        closeAddPopup();
-                    }
-                });
-
-                function showAddPopup() {
-                    const popup = document.getElementById('addPopup');
-                    popup.style.display = 'flex';
-                    document.getElementById('projectNameInput').focus();
-                }
-
-                function closeAddPopup() {
-                    const popup = document.getElementById('addPopup');
-                    popup.style.display = 'none';
-                    document.getElementById('errorContainer').textContent = '';
+                if (modalContainer1) {
+                    modalContainer1.addEventListener("click", (event) => {
+                        if (event.target === modalContainer1) {
+                            closeAddPopup();
+                        }
+                    });
                 }
             
                 const form = document.getElementById('add-form');
