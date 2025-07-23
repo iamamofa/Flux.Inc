@@ -82,7 +82,7 @@
                 <div class="mt-8 text-gray-500">
                     {% if user == project.project_manager %}
                     <table class="w-full table-auto" aria-labelledby="teamTableTitle">
-                        <caption id="teamTableTitle" class="sr-only">Project Team Members</caption>
+                        <caption id="teamTableTitle" class="sr-only mb-4 py-2">Project Team Members</caption>
                         <thead class="uppercase tracking-wider border-b h-7 align-top text-xs font-semibold">
                             <tr>
                                 <th scope="col" class="text-left min-w-fit w-3/5 md:w-1/2 lg:w-fit">Name</th>
@@ -226,5 +226,25 @@
     </main>
 
     <script src="{% static 'js/team.js' %}"></script>
+
+    <!-- Notification System -->
+    <div id="notification-container" 
+        class="fixed bottom-4 right-4 z-50 w-full max-w-xs space-y-4">
+        <!-- Notifications will be inserted here dynamically -->
+    </div>
+
+    <!-- Notification Template (hidden by default) -->
+    <template id="notification-template">
+        <div class="notification p-4 rounded-lg shadow-lg border-l-4 flex items-start">
+            <div class="notification-icon mr-3 mt-0.5"></div>
+            <div class="notification-content flex-1">
+                <h3 class="notification-title font-medium"></h3>
+                <p class="notification-message text-sm mt-1"></p>
+            </div>
+            <button class="notification-close ml-2 text-gray-500 hover:text-gray-700">
+                &times;
+            </button>
+        </div>
+    </template>
 </body>
 </html>

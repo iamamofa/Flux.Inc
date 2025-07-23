@@ -1,8 +1,4 @@
-{% extends "inventory/base_inventory.html" %}
 {% load static %}
-
-{% block title %}Logs{% endblock%}
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,7 +6,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="{% static '/images/Icon.png' %}">
-    <title>Logs - Flux</title>
+    <title>Flux - Logs</title>
     <style>
         :root {
             --primary-color: #6464e6;
@@ -144,7 +140,7 @@
 
     {% include "inventory/partials/sidebar.html" %}
 
-    <main class="main-content">
+    <main class="bg-white min-h-screen lg:ml-60 flex w-full">
         <!-- Screen Overlay shows on small screen showMenu -->
         <div class="absolute lg:hidden left-0 top-0 h-full w-full bg-black/30 z-[15]" @click="showMenu = false"
             x-show="showMenu" x-transition.opacity.duration.500ms>

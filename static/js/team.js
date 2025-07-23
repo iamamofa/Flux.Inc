@@ -240,9 +240,88 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function showError(message) {
-        // Implement a proper error notification system
-        alert(message); // Temporary - replace with a proper notification system
+
+    // Notification System
+    function showNotification({ type = 'info', title = '', message = '', duration = 5000 }) {
+        const container = document.getElementById('notification-container');
+        const template = document.getElementById('notification-template');
+        const clone = template.content.cloneNode(true);
+        const notification = clone.querySelector('.notification');
+        const icon = clone.querySelector('.notification-icon');
+        const titleEl = clone.querySelector('.notification-title');
+        const messageEl = clone.querySelector('.notification-message');
+        const closeBtn = clone.querySelector('.notification-close');
+
+        // Set notification content and style
+        notification.classList.add(type);
+        titleEl.textContent = title;
+        messageEl.textContent = message;
+    
+        // Set icon based on type
+        const icons = {
+            success: '✓',
+            error: '⚠',
+            warning: '⚠',
+            info: 'i'
+        };
+        icon.textContent = icons[type] || 'i';
+
+        // Close button handler
+        closeBtn.addEventListener('click', () => {
+            notification.classList.add('notification-exit');
+            setTimeout(() => notification.remove(), 300);
+        });
+
+        // Auto-dismiss after duration
+        if (duration > 0) {
+            setTimeout(() => {
+                notification.classList.add('notification-exit');
+                setTimeout(() => notification.remove(), 300);
+            }, duration);
+        }
+
+        // Add to DOM
+        container.appendChild(clone);
+    }
+
+    // Updated error handling function
+    function showError(message, title = 'Error') {
+        showNotification({
+            type: 'error',
+            title: title,
+            message: message,
+            duration: 8000
+        });
+    }
+
+    // Success notification
+    function showSuccess(message, title = 'Success') {
+        showNotification({
+            type: 'success',
+            title: title,
+            message: message,
+            duration: 5000
+        });
+    }
+
+    // Info notification
+    function showInfo(message, title = 'Info') {
+        showNotification({
+            type: 'info',
+            title: title,
+            message: message,
+            duration: 5000
+        });
+    }
+
+    // Warning notification
+    function showWarning(message, title = 'Warning') {
+        showNotification({
+            type: 'warning',
+            title: title,
+            message: message,
+            duration: 6000
+        });
     }
 
     // Make functions available globally
