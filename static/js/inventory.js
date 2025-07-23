@@ -351,7 +351,7 @@ class FormHandler {
             if (data.success) {
                 InventoryUtils.showNotification(`${inventoryType.charAt(0).toUpperCase() + inventoryType.slice(1)} added successfully`);
                 this.addTableRow(data.new_item, inventoryType);
-                document.getElementById('addPopup'.style.display = 'none';
+                document.getElementById('addPopup').style.display = 'none';
                 form.reset();
             } else {
                 this.showFormErrors(form, data.errors);
