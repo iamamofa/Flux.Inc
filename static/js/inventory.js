@@ -543,6 +543,31 @@ class FormHandler {
 document.addEventListener('DOMContentLoaded', () => {
     window.inventoryManager = new InventoryManager();
 
+    // Debugging - log when manager is initialized
+    console.log('InventoryManager initialized', window.inventoryManager);
+    
+    // Manually attach click handlers if they're not working
+    const addButton = document.getElementById('addItemBtn');
+    if (addButton && !addButton.onclick) {
+        addButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('Add button clicked');
+            window.inventoryManager.modalManager.showAddPopup();
+        });
+    }
+    
+    const resetButton = document.getElementById('resetButton');
+    if (resetButton && !resetButton.onclick) {
+        resetButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('Reset button clicked');
+            document.querySelectorAll('input.filter-input').forEach(input => {
+                input.value = '';
+            });
+            window.inventoryManager.applyFilters();
+        });
+    }
+
     // Set up form submissions
     document.getElementById('add-form')?.addEventListener('submit', (e) => {
         e.preventDefault();

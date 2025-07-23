@@ -1764,7 +1764,7 @@ video {
 }
 
 .quantity-filter-container > div {
-    display: felx;
+    display: flex;
     align-items: center;
     gap: 0.5rem;
 }

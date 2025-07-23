@@ -30,7 +30,7 @@
                     </span>
                     <span class="flex-1 pl-2">Dashboard</span>
                 </a>
-                <a class="rounded-md px-3 py-3 text-gray-300 flex items-center hover:bg-gray-700 hover:text-white transition ease-in-out justify-between space-x-2"
+                <a class="rounded-md px-3 py-3 text-gray-300 flex items-center hover:bg-gray-700 hover:text-white transition ease-in-out justify-between space-x-2 {% if request.path == inventory_url %}bg-gray-700 text-white{% endif %}"
                     href="{% url 'consumables' project_name=project.name %}">
                     <span>
                         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -46,7 +46,7 @@
                     </span>
                     <span class="flex-1 pl-2">Inventory</span>
                 </a>
-                <a class=" rounded-md px-3 py-3 text-gray-300 flex items-center hover:bg-gray-700 hover:text-white  transition ease-in-out justify-between space-x-2"
+                <a class=" rounded-md px-3 py-3 text-gray-300 flex items-center hover:bg-gray-700 hover:text-white  transition ease-in-out justify-between space-x-2 {% if request.path == logs_url %}bg-gray-700 text-white{% endif %}"
                         href="{% url 'log' project_name=project.name %}">
                         <span>
                             <svg width="22" height="22" viewBox="0 0 22 22" fill="none"
@@ -65,7 +65,7 @@
                         <span class="flex-1 pl-2 ">Logs</span>
                     </a>
                     {% if user == project.project_manager or user in project.project_editors.all %}
-                    <a class=" rounded-md px-3 py-3 text-gray-300 flex items-center hover:bg-gray-700 hover:text-white  transition ease-in-out justify-between space-x-2"
+                    <a class=" rounded-md px-3 py-3 text-gray-300 flex items-center hover:bg-gray-700 hover:text-white  transition ease-in-out justify-between space-x-2 {% if request.path == trash_url %}bg-gray-700 text-white{% endif %}"
                         href="{% url 'trash_consumables' project_name=project.name %}">
                         <span>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -84,7 +84,7 @@
                     </a>
                     {% endif %}
                     {% if user == project.project_manager %}
-                    <a class=" rounded-md px-3 py-3 text-gray-300 flex items-center hover:bg-gray-700 hover:text-white  transition ease-in-out justify-between space-x-2"
+                    <a class=" rounded-md px-3 py-3 text-gray-300 flex items-center hover:bg-gray-700 hover:text-white  transition ease-in-out justify-between space-x-2 {% if request.path == team_url %}bg-gray-700 text-white{% endif %}"
                         href="{% url 'team' project_name=project.name %}">
                         <span>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -103,7 +103,7 @@
                         <span class="flex-1 pl-2 ">Team</span>
                     </a>
                     {% endif %}
-                    <a class=" rounded-md px-3 py-3 text-gray-300 flex items-center hover:bg-gray-700 hover:text-white  transition ease-in-out justify-between space-x-2"
+                    <a class=" rounded-md px-3 py-3 text-gray-300 flex items-center hover:bg-gray-700 hover:text-white  transition ease-in-out justify-between space-x-2 {% if request.path == security_url %}bg-gray-700 text-white{% endif %}"
                         href="{% url 'change_password' %}">
                         <span>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
