@@ -1915,3 +1915,18 @@ input[type="number"] {
     background-color: #dc2626;
     border-color: #dc2626;
 }
+
+/* Add to inventory_style.css */
+#addItemBtn, #resetButton {
+    position: relative;
+    z-index: 9999 !important;
+    outline: 2px solid red !important; /* Visual debug */
+}
+
+/* Kill potential overlays */
+body > *:not(header):not(main):not(.popup-overlay) {
+    pointer-events: none !important;
+}
+body header, body main, body .popup-overlay {
+    pointer-events: auto !important;
+}
