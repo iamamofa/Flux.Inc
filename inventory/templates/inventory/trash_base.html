@@ -56,8 +56,14 @@
                     {% if user == project.project_manager or user in project.project_editors.all %}
                     <button id="addItemBtn" onclick="showDeleteAllPopup('{{ project.name }}')"
                         class="bg-primary hover:bg-primary/90 py-1.5 px-4 rounded flex items-center text-white space-x-1">
-                        <svg style="margin-right: 10px;" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
                             <rect width="24" height="24" fill="url(#pattern6)"/>
+                            <defs>
+                                <pattern id="pattern6" patternContentUnits="objectBoundingBox" width="1" height="1">
+                                    <use xlink:href="#image0_236_27" transform="scale(0.0416667)"/>
+                                </pattern>
+                                <image id="image0_236_27" width="24" height="24" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYEAQAAAAa7ikwAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAACYktHRAAAqo0jMgAAAAlwSFlzAAAAYAAAAGAA8GtCzwAAAAd0SU1FB+cGDg8YDV/8oNAAAADJSURBVEjH7VRLDoMgFHySnkFZi8fXGE08gXIfDdEl0wVpUonI85N20c4KCDPz5vEh+jYArRFE38f4SdwA2BVIkl2NBzeJLxQzfkHE2vEuyFn32ybWftZyE+019brGNX+tObfjNM/vMd9gmyd45HV1Z1MGKwndnNsSXMHf4AcMmL/pMKz/GH9+AB94yctCRASbpmxxm2VuMM+MSrrO1VKWgJTx/VLCVpXjtC3DQClgmnAY4wjkOTNyUQBNAxgTFzYGqGtAqaPndgueF49W6DHhOMEAAAAASUVORK5CYII="/>
+                            </defs>
                         </svg>
                         <span>Delete All</span>
                     </button>
@@ -93,8 +99,11 @@
                 <br>
                 <p>Are you sure you want to restore this item?</p>
                 <div class="buttons">
-                    <button class="border border-gray-300 font-medium text-sm w-1/3 text-gray-500 tracking-wide py-2 rounded-md hover:border-gray-400" style="margin-right: 10px;" onclick="closeRestorePopup()">Cancel</button>
-                    <button class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" onclick="restoreItem()">Confirm</button>
+                    <button class="border border-gray-300 font-medium text-sm w-1/3 text-gray-500 tracking-wide py-2 rounded-md hover:border-gray-400"
+                        style="margin-right: 10px;"
+                        onclick="closeRestorePopup()">Cancel</button>
+                    <button class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90"
+                        onclick="restoreItem()">Confirm</button>
                 </div>
             </div>
         </div>
@@ -105,8 +114,10 @@
                 <br>
                 <p>Are you sure you want to delete this item?</p>
                 <div class="buttons">
-                    <button class="border border-gray-300 font-medium text-sm w-1/3 text-gray-500 tracking-wide py-2 rounded-md hover:border-gray-400" style="margin-right: 10px;" onclick="closeDeletePopup()">Cancel</button>
-                    <button class="delete-bg-primary border delete-border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:delete-bg-primary/90" onclick="deleteItem()">Confirm</button>
+                    <button class="border border-gray-300 font-medium text-sm w-1/3 text-gray-500 tracking-wide py-2 rounded-md hover:border-gray-400" style="margin-right: 10px;"
+                        onclick="closeDeletePopup()">Cancel</button>
+                    <button class="delete-bg-primary border delete-border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:delete-bg-primary/90"
+                        onclick="deleteItem()">Confirm</button>
                 </div>
             </div>
         </div>
@@ -117,8 +128,10 @@
                 <br>
                 <p>Are you sure you want to delete all the items</p>
                 <div class="buttons">
-                    <button class="border border-gray-300 font-medium text-sm w-1/3 text-gray-500 tracking-wide py-2 rounded-md hover:border-gray-400" style="margin-right: 10px;" onclick="closeDeleteAllPopup()">Cancel</button>
-                    <button class="delete-bg-primary border delete-border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:delete-bg-primary/90" onclick="deleteAllItems()">Confirm</button>
+                    <button class="border border-gray-300 font-medium text-sm w-1/3 text-gray-500 tracking-wide py-2 rounded-md hover:border-gray-400" style="margin-right: 10px;"
+                        onclick="closeDeleteAllPopup()">Cancel</button>
+                    <button class="delete-bg-primary border delete-border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:delete-bg-primary/90"
+                        onclick="deleteAllItems()">Confirm</button>
                 </div>
             </div>
         </div>

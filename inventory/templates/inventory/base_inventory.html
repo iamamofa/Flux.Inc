@@ -303,7 +303,6 @@
 
     </style>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script src="{% static 'js/inventory.js' %}" defer></script>
     <title>Flux - {% block title %}{% endblock %}</title>
 </head>
 <body class="relative min-h-screen font-poppins antialiased text-sm bg-white flex text-gray-800 h-full 2xl:max-w-[1920px] 2xl:mx-auto 2xl:border-r-2"
@@ -332,6 +331,6 @@
         {% include 'inventory/partials/popups.html' %}
     </main>
 
-    {% block scripts %}{% endblock %}
+    <script scr="{% static 'js/inventory.js' %}"></script>
 </body>
 </html>
