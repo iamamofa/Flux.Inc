@@ -214,9 +214,8 @@ tr:hover {
 }
 
 #teamTableTitle {
-    margin-bottom: 1.5rem; /* Increased spacing */
     display: block;       /* Makes margin work more reliably */
-    padding-top: 0.5rem;  /* Space above the caption */
+    padding-bottom: 0.5rem;  /* Space above the caption */
 }
 
 /* Notification System Styles */

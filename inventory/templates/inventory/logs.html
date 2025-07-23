@@ -142,103 +142,109 @@
 
     <main class="bg-white min-h-screen lg:ml-60 flex w-full">
         <!-- Screen Overlay shows on small screen showMenu -->
-        <div class="absolute lg:hidden left-0 top-0 h-full w-full bg-black/30 z-[15]" @click="showMenu = false"
-            x-show="showMenu" x-transition.opacity.duration.500ms>
+        <div class="absolute lg:hidden left-0 top-0 h-full w-full bg-black/30 z-[15]"
+            @click="showMenu = false"
+            x-show="showMenu"
+            x-transition.opacity.duration.500ms
+            aria-hidden="true">
         </div>
 
-        <!-- Header -->
-        <div class="flex items-center justify-between">
-        <div>
-            <div class="text-gray-700 flex items-center justify-between mb-3">
-                <span>PROJECT</span>
-            </div>
-            <div class="dropdown">
-                <div class="project-name-container">
-                    <span class="project-name-text text-gray-900 text-xl font-semibold">{{ project.name }}</span>
-                    <svg class="dropdown-arrow" width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                        <rect width="8" height="8" fill="url(#pattern7)"/>
-                        <defs>
-                            <pattern id="pattern7" patternContentUnits="objectBoundingBox" width="1" height="1">
-                              <use xlink:href="#image0_240_2" transform="scale(0.0625)"/>
-                            </pattern>
-                            <image id="image0_240_2" width="16" height="16" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAwgAAAMIBT4kc1wAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAACASURBVDiN1dOxDcIwEEDRf2QtOqgYIx0gyIgRsyCxA00+zVEgMIodGiy5839XWBcqS85qUf0LIIAtsG7sLwA3wMZ77YA7sGuYLjCQvzBUTp6AXgX1iZxr4xcgkVNN/AYkcpwbfwQSOcyJi0Ai+wyLsUp824WI2ACTOhbf/P8yPQAoP83ZkoVsJgAAAABJRU5ErkJggg=="/>
-                        </defs>
-                    </svg>
-                </div> 
-                <div class="dropdown-content">
-                      {% for project in projects %}
-                      <a href="{% url 'log' project_name=project.name %}">{{ project.name }}</a>
-                      {% endfor %}   
+        <!-- Main Content -->
+        <section class="flex-1 py-6 px-4 md:px-4 lg:px-8">
+            <!-- Header -->
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-gray-700 flex items-center justify-between mb-3">
+                        <span>PROJECT</span>
+                    </div>
+                    <div class="dropdown">
+                        <div class="project-name-container">
+                            <span class="project-name-text text-gray-900 text-xl font-semibold">{{ project.name }}</span>
+                            <svg class="dropdown-arrow" width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                                <rect width="8" height="8" fill="url(#pattern7)"/>
+                                <defs>
+                                    <pattern id="pattern7" patternContentUnits="objectBoundingBox" width="1" height="1">
+                                        <use xlink:href="#image0_240_2" transform="scale(0.0625)"/>
+                                    </pattern>
+                                    <image id="image0_240_2" width="16" height="16" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAwgAAAMIBT4kc1wAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAACASURBVDiN1dOxDcIwEEDRf2QtOqgYIx0gyIgRsyCxA00+zVEgMIodGiy5839XWBcqS85qUf0LIIAtsG7sLwA3wMZ77YA7sGuYLjCQvzBUTp6AXgX1iZxr4xcgkVNN/AYkcpwbfwQSOcyJi0Ai+wyLsUp824WI2ACTOhbf/P8yPQAoP83ZkoVsJgAAAABJRU5ErkJggg=="/>
+                                </defs>
+                            </svg>
+                        </div> 
+                        <div class="dropdown-content">
+                            {% for project in projects %}
+                            <a href="{% url 'log' project_name=project.name %}">{{ project.name }}</a>
+                            {% endfor %}   
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4 ">
+                    <!-- Menu button on small screen -->
+                    <button
+                        class="lg:hidden bg-gray-50 p-2 text-gray-600 rounded hover:bg-gray-300 focus:text-primary outline-none focus:drop-shadow"
+                        @click="showMenu = !showMenu">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                            <path fill-rule="evenodd"
+                                d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm7 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </button>
                 </div>
             </div>
-        </div>
-            <div class="flex items-center space-x-4 ">
-                <!-- Menu button on small screen -->
-                <button
-                    class="lg:hidden bg-gray-50 p-2 text-gray-600 rounded hover:bg-gray-300 focus:text-primary outline-none focus:drop-shadow"
-                    @click="showMenu = !showMenu">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
-                        <path fill-rule="evenodd"
-                            d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm7 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
-                            clip-rule="evenodd" />
-                    </svg>
-                </button>
-            </div>
-        </div>
         
-        <div class="table-container">
-            {% if user == project.project_manager %}
-            <div class="logs-table-wrapper">
-                <table class="logs-table" aria-describedby="logsTableDescription">
-                    <caption id="logsTableDescription" class="sr-only">Project activity logs</caption>
-                    <thead>
-                        <tr>
-                            <th scope="col">Action</th>
-                            <th scope="col">User</th>
-                            <th scope="col">Timestamp</th>
-                        </tr>
-                    </thead>
-                    <tbody id="logsTable">
-                        {% for log in logs %}
-                        <tr>
-                            <td>{{ log.action }}</td>
-                            <td>{{ log.user.first_name }} {{ log.user.last_name }}</td>
-                            <td><time datetime="{{ log.timestamp|date:'c' }}">{{ log.timestamp }}</time></td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="3">No logs available</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="table-container">
+                {% if user == project.project_manager %}
+                <div class="logs-table-wrapper">
+                    <table class="logs-table" aria-describedby="logsTableDescription">
+                        <caption id="logsTableDescription" class="sr-only">Project activity logs</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Action</th>
+                                <th scope="col">User</th>
+                                <th scope="col">Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logsTable">
+                            {% for log in logs %}
+                            <tr>
+                                <td>{{ log.action }}</td>
+                                <td>{{ log.user.first_name }} {{ log.user.last_name }}</td>
+                                <td><time datetime="{{ log.timestamp|date:'c' }}">{{ log.timestamp }}</time></td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3">No logs available</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 
-                {% if logs.has_other_pages %}
-                <div class="pagination">
-                    {% if logs.has_previous %}
-                        <a href="?page={{ logs.previous_page_number }}">Previous</a>
-                    {% endif %}
-                    
-                    {% for i in logs.paginator.page_range %}
-                        {% if logs.number == i %}
-                            <span class="current">{{ i }}</span>
-                        {% else %}
-                            <a href="?page={{ i }}">{{ i }}</a>
+                    {% if logs.has_other_pages %}
+                    <div class="pagination">
+                        {% if logs.has_previous %}
+                            <a href="?page={{ logs.previous_page_number }}">Previous</a>
                         {% endif %}
-                    {% endfor %}
                     
-                    {% if logs.has_next %}
-                        <a href="?page={{ logs.next_page_number }}">Next</a>
+                        {% for i in logs.paginator.page_range %}
+                            {% if logs.number == i %}
+                                <span class="current">{{ i }}</span>
+                            {% else %}
+                                <a href="?page={{ i }}">{{ i }}</a>
+                            {% endif %}
+                        {% endfor %}
+                    
+                        {% if logs.has_next %}
+                            <a href="?page={{ logs.next_page_number }}">Next</a>
+                        {% endif %}
+                    </div>
                     {% endif %}
+                </div>
+                {% else %}
+                <div class="access-message">
+                    <p>Logs information is not available for you to view for this project.</p>
                 </div>
                 {% endif %}
             </div>
-            {% else %}
-            <div class="access-message">
-                <p>Logs information is not available for you to view for this project.</p>
-            </div>
-            {% endif %}
-        </div>
+        </section>
     </main>
 
     <footer>
