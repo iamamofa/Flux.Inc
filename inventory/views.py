@@ -1,5 +1,6 @@
 from django.forms import ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
@@ -27,6 +28,20 @@ import bleach
 
 
 static_img_path = os.path.join(settings.BASE_DIR, 'static')
+
+
+def get_sidebar_urls(project_name):
+    return {
+        'dashboard_url': reverse('dashboard_consumables',
+                                 kwargs={'project_name': project_name}),
+        'inventory_url': reverse('consumables',
+                                 kwargs={'project_name': project_name}),
+        'logs_url': reverse('log', kwargs={'project_name': project_name}),
+        'trash_url': reverse('trash_reagents',
+                             kwargs={'project_name': project_name}),
+        'team_url': reverse('team', kwargs={'project_name': project_name}),
+        'security_url': reverse('change_password'),
+    }
 
 
 def clean_text_field(value):
@@ -57,7 +72,15 @@ def change_password(request):
             messages.error(request, 'Try again')
     else:
         form = PasswordChangeForm(request.user)
-    return render(request, 'inventory/change_password.html', {'form': form})
+
+    user_profile = UserProfile.objects.get(user=request.user)
+    project = user_profile.managed_projects.first()
+
+    return render(request, 'inventory/change_password.html',
+                  {
+                      'form': form,
+                      **get_sidebar_urls(project.name if project else '')
+                  })
 
 
 @csrf_protect
@@ -220,7 +243,8 @@ def team(request, project_name):
     context = {
             'project': project,
             'projects': projects,
-            'team_members': team_members
+            'team_members': team_members,
+            **get_sidebar_urls(project_name)
     }
     return render(request, 'inventory/team.html', context)
 
@@ -234,7 +258,8 @@ def log(request, project_name):
     context = {
             'project': project,
             'projects': projects,
-            'logs': logs
+            'logs': logs,
+            **get_sidebar_urls(project_name)
     }
     return render(request, 'inventory/logs.html', context)
 
@@ -437,7 +462,8 @@ def consumables(request, project_name):
                 'project': project,
                 'projects': projects,
                 'consumables': consumables,
-                'user': user
+                'user': user,
+                **get_sidebar_urls(project_name)
         }
         return render(request, 'inventory/consumables.html', context)
 
@@ -507,7 +533,8 @@ def dashboard_consumables(request, project_name):
                 'plot_data': plot_data,
                 'project': project,
                 'projects': projects,
-                'consumables': consumables
+                'consumables': consumables,
+                **get_sidebar_urls(project_name)
             }
     )
 
@@ -522,7 +549,8 @@ def trash_consumables(request, project_name):
             'project': project,
             'projects': projects,
             'trash_consumables': trash_consumables,
-            'item_type': 'consumables'
+            'item_type': 'consumables',
+            **get_sidebar_urls(project_name)
     }
     return render(request, 'inventory/trash_consumables.html', context)
 

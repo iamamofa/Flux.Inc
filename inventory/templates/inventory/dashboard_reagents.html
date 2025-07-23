@@ -256,12 +256,14 @@
             </div>
         </div>
 
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
         <script>
             // Reagents-specific chart initialization
             function initializeChart() {
                 try {
-                    const plotData = JSON.parse('{{ plot_data|escapejs }}');
+                    const plotData = JSON.parse('{{ plot_data|escapejs }}') || {};
+                    console.log('Reagents plotData:', plotData);
                     const names = plotData.names || [];
                     const quantities = plotData.quantities || [];
                     

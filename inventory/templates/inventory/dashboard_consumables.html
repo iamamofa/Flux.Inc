@@ -339,7 +339,7 @@
 
         function initializeChart() {
             try {
-                const plotData = JSON.parse('{{ plot_data|escapejs }}');
+                const plotData = JSON.parse('{{ plot_data|escapejs }}') || {};
                 const names = plotData.names || [];
                 const quantities = plotData.quantities || [];
                 

@@ -193,9 +193,25 @@ class InventoryManager {
 
     setupEventListeners() {
         // Add item button
-        document.getElementById('addItemBtn')?.addEventListener('click', () => {
-            this.modalManager.showAddPopup();
-        });
+        const addItemBtn = document.getElementById('addItemBtn');
+        if (addItemBtn) {
+            addItemBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.modalManager.showAddPopup();
+            });
+        }
+
+        // Reset button
+        const resetButton = document.getElementById('resetButton');
+        if (resetButton) {
+            resetButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.filter-input').forEach(input => {
+                    input.value = '';
+                });
+                this.applyFilters();
+            });
+        }
 
         // Export buttons
         document.querySelectorAll('.export-btn').forEach(btn => {
@@ -320,21 +336,22 @@ class FormHandler {
         InventoryUtils.showLoading(submitButton);
 
         try {
-            const response = await fetch(form.action, {
+            const formData = new FormData(form);
+            const response = await fetch(`/add_${inventoryType}`, {
                 method: 'POST',
-                body: new FormData(form),
+                body: formData,
                 headers: {
                     'X-CSRFToken': InventoryUtils.getCSRFToken(),
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             });
 
-            const data = await InventoryUtils.handleResponse(response);
+            const data = await response.json();
             
             if (data.success) {
                 InventoryUtils.showNotification(`${inventoryType.charAt(0).toUpperCase() + inventoryType.slice(1)} added successfully`);
                 this.addTableRow(data.new_item, inventoryType);
-                document.querySelector(`#${inventoryType}Popup`).style.display = 'none';
+                document.getElementById('addPopup'.style.display = 'none';
                 form.reset();
             } else {
                 this.showFormErrors(form, data.errors);
@@ -525,6 +542,12 @@ class FormHandler {
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.inventoryManager = new InventoryManager();
+
+    // Set up form submissions
+    document.getElementById('add-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        FormHandler.handleAddForm(e.target, inventoryManager.currentType);
+    });
     
     // Global functions for HTML onclick attributes
     window.showAddPopup = () => inventoryManager.modalManager.showAddPopup();

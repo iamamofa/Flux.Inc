@@ -267,11 +267,14 @@
         </div>
     </div>
 
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
     <script>
         // Samples-specific chart initialization
         function initializeChart() {
             try {
-                const plotData = JSON.parse('{{ plot_data|escapejs }}');
+                const plotData = JSON.parse('{{ plot_data|escapejs }}') || {};
+                console.log('Samples plotData:', plotData);
                 const ids = plotData.ids || [];
                 const volumes = plotData.volumes || [];
                     
