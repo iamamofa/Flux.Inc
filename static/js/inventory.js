@@ -247,9 +247,17 @@ class ModalManager {
         Object.values(this.modals).forEach(modal => {
             if (modal) {
                 modal.addEventListener('click', (e) => {
-                    if (e.target === modal) this.hide(modal.id.replace('Popup', ''));
+                    if (e.target === modal || e.target.classList.contains('popup-close')) {
+                        this.hide(modal.id.replace('Popup', ''));
+                    }
                 });
             }
+        });
+
+        // Set up form submissions
+        document.getElementById('add-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            FormHandler.handleAddForm(e.target, this.inventoryType);
         });
 
         // Keyboard navigation
@@ -541,29 +549,23 @@ class FormHandler {
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.inventoryManager = new InventoryManager();
+    console.log("DOM fully loaded");
 
-    // Debugging - log when manager is initialized
-    console.log('InventoryManager initialized', window.inventoryManager);
-    
-    // Manually attach click handlers if they're not working
-    const addButton = document.getElementById('addItemBtn');
-    if (addButton && !addButton.onclick) {
-        addButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            console.log('Add button clicked');
-            window.inventoryManager.modalManager.showAddPopup();
-        });
-    }
+    // Initialize InventoryManager
+    window.inventoryManager = new InventoryManager();
+    console.log("InventoryManager initialized", window.inventoryManager);
+
+    // Debugging - Check if elements exist
+    console.log('Add button exists:', document.getElementById('addItemBtn') !== null);
+    console.log('Reset button exists:', document.getElementById('resetButton') !== null);
+    console.log('Add form:', document.getElementById('add-form'));
+    console.log('Inventory table:', document.getElementById('consumableTable'));
     
     const resetButton = document.getElementById('resetButton');
-    if (resetButton && !resetButton.onclick) {
+    if (resetButton) {
         resetButton.addEventListener('click', (e) => {
             e.preventDefault();
             console.log('Reset button clicked');
-            document.querySelectorAll('input.filter-input').forEach(input => {
-                input.value = '';
-            });
             window.inventoryManager.applyFilters();
         });
     }
