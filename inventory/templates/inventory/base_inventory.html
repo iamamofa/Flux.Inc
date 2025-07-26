@@ -331,6 +331,48 @@
         {% include 'inventory/partials/popups.html' %}
     </main>
 
+    <!-- Load component library -->
     <script src="{% static 'js/inventory.js' %}"></script>
+
+    <!-- Initialization script -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+    // 1. Initialize main manager
+    window.inventoryManager = new InventoryManager();
+  
+    // 2. Set up global functions for HTML onclick handlers
+    window.showAddPopup = () => inventoryManager.modalManager.showAddPopup();
+    window.showEditPopup = (id) => inventoryManager.modalManager.showEditPopup(id);
+    window.showRetrievePopup = (id) => inventoryManager.modalManager.showRetrievePopup(id);
+    window.showReturnPopup = (id) => inventoryManager.modalManager.showReturnPopup(id);
+    window.showDeletePopup = (project, id) => inventoryManager.modalManager.showDeletePopup(project, id);
+  
+    window.deleteItem = () => {
+        FormHandler.handleDelete(
+        inventoryManager.currentType,
+        inventoryManager.currentProject,
+        inventoryManager.currentItemId
+        );
+    };
+
+    document.getElementById('resetButton')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.inventoryManager.resetFilters();
+    });
+
+    // 3. Debugging checks (remove in production)
+    console.log('Inventory initialized', {
+        manager: window.inventoryManager,
+        modals: window.inventoryManager.modalManager,
+        currentType: window.inventoryManager.currentType
+    });
+
+    // 4. Optional: Direct event binding for critical elements
+    document.getElementById('addItemBtn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.inventoryManager.modalManager.showAddPopup();
+    });
+    });
+    </script>
 </body>
 </html>
