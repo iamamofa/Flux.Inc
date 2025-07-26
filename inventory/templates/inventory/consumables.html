@@ -178,7 +178,7 @@
         </div>
         {% endif %}
         <!--Add Item Button -->
-        <button id="addItemBtn" class="btn btn-primary flex items-center">
+        <button id="showAddPopupBtn" class="btn btn-primary flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 mr-2">
                 <path fill-rule="evenodd"
                     d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"
@@ -243,14 +243,14 @@
                     <div class="dropdown">
                         <button class="dropbtn">. . .</button>
                         <div class="dropdown-content">
-                            <a href="#" onclick="showRetrievePopup('{{ consumable.id }}')">Retrieve</a>
-                            <a href="#" onclick="showReturnPopup('{{ consumable.id }}')">Return</a>
+                            <a href="#" class="retrieve-action" data-id="{{ consumable.id }}">Retrieve</a>
+                            <a href="#" class="return-action" data-id="{{ consumable.id }}">Return</a>
                                             
                             {% if user == project.project_manager or user in project.project_editors.all %}
                                             
                             <hr>
-                            <a href="#" onclick="showEditPopup('{{ consumable.id }}')">Edit</a>
-                            <a href="#" onclick="showDeletePopup('{{ project.name }}','{{ consumable.id }}')">Delete</a>
+                            <a href="#" class="edit-action" data-id="{{ consumable.id }}">Edit</a>
+                            <a href="#" class="delete-action" data-project="{{ project.name }}" data-id="{{ consumable.id }}">Delete</a>
                                 
                             {% endif %}
                         </div>
@@ -261,4 +261,8 @@
         </tbody>
     </table>
 </div>
+{% endblock %}
+
+{% block inventory_scripts %}
+<script src="{% static 'js/consumables.js' %}"></script>
 {% endblock %}
