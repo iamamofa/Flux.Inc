@@ -206,20 +206,20 @@
     <a href="{% url 'equipment_' project_name=project.name %}" class="nav-link">Equipment</a>
     <a href="{% url 'samples' project_name=project.name %}" class="nav-link">Samples</a>
 </nav>
-            
+
 <!-- Table -->
 <div class="table-container mt-8">
-    <table class="w-full table-auto">
+    <table class="w-full table-auto" aria-label="Consumables inventory">
         <thead>
             <tr>
-                <th>Name</th>
-                <th>Product Code</th>
-                <th>Pack Size</th>
-                <th>Quantity</th>
-                <th>Date Created</th>
-                <th>Expiry Date</th>
-                <th>Storage Location</th>
-                <th></th>
+                <th scope="col">Name</th>
+                <th scope="col">Product Code</th>
+                <th scope="col">Pack Size</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Date Created</th>
+                <th scope="col">Expiry Date</th>
+                <th scope="col">Storage Location</th>
+                <th scope="col">Actions</th>
             </tr>
         </thead>
         <tbody id="consumablesTable">
@@ -240,17 +240,17 @@
                 <td>{{ consumable.expiry_date|date:"Y-m-d" }}</td>
                 <td>{{ consumable.storage_location }}</td>
                 <td>
-                    <div class="dropdown">
-                        <button class="dropbtn">. . .</button>
-                        <div class="dropdown-content">
-                            <a href="#" class="retrieve-action" data-id="{{ consumable.id }}">Retrieve</a>
-                            <a href="#" class="return-action" data-id="{{ consumable.id }}">Return</a>
+                    <div class="dropdown" aria-haspopup="true">
+                        <button class="dropbtn" aria-expanded="false" aria-label="Actions menu">⋮</button>
+                        <div class="dropdown-content" role="menu">
+                            <a href="#" class="retrieve-action" data-id="{{ consumable.id }}" role="menuitem">Retrieve</a>
+                            <a href="#" class="return-action" data-id="{{ consumable.id }}" role="menuitem">Return</a>
                                             
                             {% if user == project.project_manager or user in project.project_editors.all %}
                                             
-                            <hr>
-                            <a href="#" class="edit-action" data-id="{{ consumable.id }}">Edit</a>
-                            <a href="#" class="delete-action" data-project="{{ project.name }}" data-id="{{ consumable.id }}">Delete</a>
+                            <hr role="separator">
+                            <a href="#" class="edit-action" data-id="{{ consumable.id }}" role="menuitem">Edit</a>
+                            <a href="#" class="delete-action" data-project="{{ project.name }}" data-id="{{ consumable.id }}" role="menuitem">Delete</a>
                                 
                             {% endif %}
                         </div>

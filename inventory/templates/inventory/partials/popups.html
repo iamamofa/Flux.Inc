@@ -1,5 +1,5 @@
 {% load static %}
-<!-- Base Popup Structure -->
+<!-- Base Popup Structure (not used in current JS implementation) -->
 <div class="popup-overlay" id="basePopup" style="display: none;">
     <div class="popup-container">
         <div class="popup-header">
@@ -16,126 +16,37 @@
     </div>
 </div>
 
-<!-- Add Item Popup (will be populated dynamically) -->
-<div class="popup-overlay" id="addPopup" style="display: none;">
+<!-- Popup containers that match the JS in consumables.html -->
+<div class="popup-overlay popup-container1" style="display: none;">
     <div class="popup-container">
-        <div class="popup-header">
-            <h2>Add <span class="item-type"></span></h2>
-            <button class="popup-close" onclick="closePopup(this)">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-                    <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
-                </svg>
-            </button>
-        </div>
-        <div class="popup-body">
-            <form id="add-form" class="popup-form">
-                <!-- Form fields will be injected here -->
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Add</button>
-                </div>
-            </form>
-        </div>
+        <!-- Add Item Popup content will be injected here by JS -->
     </div>
 </div>
 
-<!-- Edit Item Popup -->
-<div class="popup-overlay" id="editPopup" style="display: none;">
+<div class="popup-overlay popup-container2" style="display: none;">
     <div class="popup-container">
-        <div class="popup-header">
-            <h2>Edit <span class="item-type"></span></h2>
-            <button class="popup-close" onclick="closePopup(this)">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-                    <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
-                </svg>
-            </button>
-        </div>
-        <div class="popup-body">
-            <form id="edit-form" class="popup-form">
-                <!-- Form fields will be injected here -->
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
-                </div>
-            </form>
-        </div>
+        <!-- Edit Item Popup content will be injected here by JS -->
     </div>
 </div>
 
-<!-- Retrieve Item Popup -->
-<div class="popup-overlay" id="retrievePopup" style="display: none;">
+<div class="popup-overlay popup-container3" style="display: none;">
     <div class="popup-container">
-        <div class="popup-header">
-            <h2>Retrieve <span class="item-type"></span></h2>
-            <button class="popup-close" onclick="closePopup(this)">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-                    <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
-                </svg>
-            </button>
-        </div>
-        <div class="popup-body">
-            <form id="retrieve-form" class="popup-form">
-                <div class="form-group">
-                    <label for="retrieve-by">Retrieve By</label>
-                    <select id="retrieve-by" name="retrieve_by" class="form-control" required>
-                        <option value="quantity">Quantity</option>
-                        <option value="pack_size">Pack Size</option>
-                        {% if item_type == 'sample' %}
-                        <option value="volume">Volume</option>
-                        {% endif %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="retrieve-amount">Amount</label>
-                    <input type="number" id="retrieve-amount" name="amount" class="form-control" required min="0" step="0.01">
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Retrieve</button>
-                </div>
-            </form>
-        </div>
+        <!-- Retrieve Item Popup content will be injected here by JS -->
     </div>
 </div>
 
-<!-- Return Item Popup -->
-<div class="popup-overlay" id="returnPopup" style="display: none;">
+<div class="popup-overlay popup-container4" style="display: none;">
     <div class="popup-container">
-        <div class="popup-header">
-            <h2>Return <span class="item-type"></span></h2>
-            <button class="popup-close" onclick="closePopup(this)">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-                    <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
-                </svg>
-            </button>
-        </div>
-        <div class="popup-body">
-            <form id="return-form" class="popup-form">
-                <div class="form-group">
-                    <label for="return-by">Return By</label>
-                    <select id="return-by" name="return_by" class="form-control" required>
-                        <option value="quantity">Quantity</option>
-                        <option value="pack_size">Pack Size</option>
-                        {% if item_type == 'sample' %}
-                        <option value="volume">Volume</option>
-                        {% endif %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="return-amount">Amount</label>
-                    <input type="number" id="return-amount" name="amount" class="form-control" required min="0" step="0.01">
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Return</button>
-                </div>
-            </form>
-        </div>
+        <!-- Return Item Popup content will be injected here by JS -->
     </div>
 </div>
 
-<!-- Delete Confirmation Popup -->
+<!-- Delete Confirmation Popup (kept as is since JS references it directly) -->
 <div class="popup-overlay" id="deletePopup" style="display: none;">
     <div class="popup-container">
         <div class="popup-header">
             <h2>Confirm Deletion</h2>
-            <button class="popup-close" onclick="closePopup(this)">
+            <button class="popup-close" onclick="closePopup(this.parentElement.parentElement.parentElement)">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
                     <path fill-rule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clip-rule="evenodd" />
                 </svg>
