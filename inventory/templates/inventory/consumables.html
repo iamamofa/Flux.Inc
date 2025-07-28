@@ -274,7 +274,7 @@
     
     // Cache DOM elements (NEW: Better performance by caching)
     const elements = {
-        modals: {
+        mods: {
             add: document.getElementById('addPopup'),
             edit: document.getElementById('editPopup'),
             retrieve: document.getElementById('retrievePopup'),
@@ -400,12 +400,17 @@
         });
 
         // Add aria attributes for accessibility (NEW)
-        Object.values(elements.mods).forEach(modal => {
-            if (modal) {
-                modal.setAttribute('aria-hidden', 'true');
-                modal.setAttribute('role', 'dialog');
-            }
-        });
+        if (elements.mods != null) {
+            Object.values(elements.mods).forEach(modal => {
+                if (modal) {
+                    modal.setAttribute('aria-hidden', 'true');
+                    modal.setAttribute('role', 'dialog');
+                }
+            });
+        } else {
+            // Handle the case where potentialObject is null or undefined
+            console.warn("Attempted to call Object.values on null or undefined in initModalListeners");
+        }
     }
 
     // Modal show/hide functions (MODIFIED: Added accessibility support)
