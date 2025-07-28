@@ -170,7 +170,7 @@
             </div>
         </div>
         {% endif %}
-        <button id="addItemBtn" class="btn btn-primary">
+        <button id="addItemBtn" class="btn btn-primary flex items-center" onclick="showAddPopup()">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
                 <path fill-rule="evenodd"
                     d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"
@@ -238,3 +238,186 @@
     </table>
 </div>
 {% endblock %}
+
+{% block popups_block %}
+<!-- Add Sample Popup -->
+<div class="popup-container1" id="addPopup">
+    <div class="popup-card">
+        <h2>Add Item</h2>
+        <div class="box">
+            <form id="sample-form" method="POST" action="{% url 'add_sample' project_name=project.name %}">
+                {% csrf_token %}
+                <div class="inputBox">
+                    <input type="text" name="sample_id" id="sample_id" required
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.sample_id }}">
+                    <label>Sample ID</label>
+                </div>
+                <div class="quantity-filter-container">
+                    <label for="sample_type">Type</label>
+                    <div class="inputBox">
+                        <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" id="sample_type" name="sample_type" required
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.sample_type }}">
+                            <option value="Bacteria">Bacteria</option>
+                            <option value="Fungi">Fungi</option>
+                            <option value="Parasite">Parasite</option>
+                            <option value="Virus">Virus</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="description" id="description" required
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.description }}">
+                    <label>Description</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="country" id="country" required
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.country }}">
+                    <label>Country</label>
+                </div>
+                <div class="inputBox">
+                    <input type="number" name="volume" id="volume" required
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.volume }}">
+                    <label>Volume in ml</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="well_id" id="well_id" required
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.well_id }}">
+                    <label>Well ID</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="storage_location" id="storage_location" required
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.storage_location }}">
+                    <label>Storage Location</label>
+                </div>
+                <div class="inputBox">
+                    <input type="number" name="threshold_value" id="threshold_value" required
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.threshold_value }}">
+                    <label>Threshold in ml</label>
+                </div>
+                <div class="inputBox button">
+                    <button class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="submit">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Sample Popup -->
+<div class="popup-container2" id="editPopup">
+    <div class="popup-card">
+        <h2>Edit Item</h2>
+        <div class="box">
+            <form id="edit-form" method="POST">
+                {% csrf_token %}
+                <div class="inputBox">
+                    <input type="text" name="sample_id" id="edit_sample_id" required
+                        onkeyup="this.setAttribute('value', this.value);">
+                    <label>Sample ID</label>
+                </div>
+                <div class="quantity-filter-container">
+                    <label for="edit_sample_type">Type</label>
+                    <div class="inputBox">
+                        <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" id="edit_sample_type" name="sample_type" required
+                        onkeyup="this.setAttribute('value', this.value);">
+                            <option value="Bacteria">Bacteria</option>
+                            <option value="Fungi">Fungi</option>
+                            <option value="Parasite">Parasite</option>
+                            <option value="Virus">Virus</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="description" id="edit_description" required
+                        onkeyup="this.setAttribute('value', this.value);">
+                    <label>Description</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="country" id="edit_country" required
+                        onkeyup="this.setAttribute('value', this.value);">
+                    <label>Country</label>
+                </div>
+                <div class="inputBox">
+                    <input type="number" name="volume" id="edit_volume" required
+                        onkeyup="this.setAttribute('value', this.value);">
+                    <label>Volume in ml</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="well_id" id="edit_well_id" required
+                        onkeyup="this.setAttribute('value', this.value);">
+                    <label>Well ID</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="storage_location" id="edit_storage_location" required
+                        onkeyup="this.setAttribute('value', this.value);">
+                    <label>Storage Location</label>
+                </div>
+                <div class="inputBox">
+                    <input type="number" name="threshold_value" id="edit_threshold_value" required
+                        onkeyup="this.setAttribute('value', this.value);">
+                    <label>Threshold in ml</label>
+                </div>
+                <div class="inputBox button">
+                    <button class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="submit">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Retrieve Sample Popup -->
+<div class="popup-container3" id="retrievePopup">
+    <div class="popup-card">
+        <h2>Retrieve Item</h2>
+        <br>
+        <form id="retrieve-form" method="POST">
+            {% csrf_token %}
+            <div class="quantity-filter-container">
+                <h3>Volume</h3>
+                <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" type="number" name="amount" id="retrieveFilterInput" required
+                    onkeyup="this.setAttribute('value', this.value);">
+            </div>
+            <br>
+            <div class="inputBox button">
+                <button class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="submit">OK</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Return Sample Popup -->
+<div class="popup-container4" id="returnPopup">
+    <div class="popup-card">
+        <h2>Return Item</h2>
+        <br>
+        <form id="return-form" method="POST">
+            {% csrf_token %}
+            <div class="quantity-filter-container">
+                <h3>Volume</h3>
+                <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" type="number" name="amount" id="returnFilterInput" required
+                    onkeyup="this.setAttribute('value', this.value);">
+            </div>
+            <br>
+            <div class="inputBox button">
+                <button class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="submit">OK</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Popup -->
+<div class="popup-container1" id="deletePopup">
+    <div class="popup-card">
+        <h2>Confirm Deletion</h2>
+        <br>
+        <p>Are you sure you want to delete this item?</p>
+        <div class="buttons">
+            <button class="border border-gray-300 font-medium text-sm w-1/3 text-gray-500 tracking-wide py-2 rounded-md hover:border-gray-400" style="margin-right: 10px;" onclick="closeDeletePopup()">Cancel</button>
+            <button class="delete-bg-primary border delete-border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:delete-bg-primary/90" onclick="deleteItem()">Confirm</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block inventory_scripts %}
+<script src="{% static 'js/samples.js' %}"></script>
+{%endblock %}

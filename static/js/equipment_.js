@@ -26,7 +26,7 @@ let currentProject = null;
 
 // DOM Elements
 const elements = {
-  table: document.getElementById('equipment_Table'),
+  table: document.getElementById('equipmentTable'),
   nameFilter: document.getElementById('nameFilterInput'),
   serialNumFilter: document.getElementById('serialNumFilterInput'),
   minQuantityFilter: document.getElementById('minQuantityFilterInput'),

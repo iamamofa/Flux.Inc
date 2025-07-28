@@ -73,6 +73,8 @@
             <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
                 type="date" id="minServiceContractStartFilterInput">
         </div>
+    </div>
+    <div class="quantity-filter-container">
         <div class="mt-1  text-gray-500 text-sm ">
             <label for="maxServiceContractStartFilterInput">To:</label>
         </div>
@@ -213,7 +215,7 @@
 
 <!-- Table -->
 <div class="table-container mt-8">
-    <table class="w-full table-auto">
+    <table class="w-full table-auto" aria-label="Equipment inventory" id="equipmentTable">
         <thead>
             <tr>
                 <th>Name</th>
@@ -229,7 +231,7 @@
                 <th></th>
             </tr>
         </thead>
-        <tbody id="equipmentTable">
+        <tbody>
             {% for equipment in equipment_ %}
             <tr data-id="{{ equipment.id }}"
                 data-name="{{ equipment.name }}"

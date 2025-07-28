@@ -526,4 +526,4 @@ class ConsumablesManager {
 }
 
 // Initialize the manager
-new ConsumablesManager();
+// new ConsumablesManager();
