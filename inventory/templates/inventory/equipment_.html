@@ -185,7 +185,7 @@
         </div>
         {% endif %}
         <!-- Add Item Button -->
-        <button id="addItemBtn" class="btn btn-primary">
+        <button id="addItemBtn" class="btn btn-primary" onclick="showAddPopup()">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
                 <path fill-rule="evenodd"
                     d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"
@@ -259,4 +259,196 @@
         </tbody>
     </table>
 </div>
+{% endblock %}
+
+{% block popups_block %}
+<div class="popup-container1" id="addPopup">
+    <div class="popup-card">
+        <h2>Add Item</h2>
+        <div class="box">
+            <form id="equipment-form" method="POST" action="{% url 'add_equipment' project_name=project.name %}">
+                {% csrf_token %}
+                <div class="inputBox">
+                    <input type="text" name="name" id="name" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.name }}">
+                    <label>Name</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="equip_id" id="equip_id" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.equip_id }}">
+                    <label>ID</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="serial_num" id="serial_num" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.serial_num }}">
+                    <label>Serial Number</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="quantity" id="quantity" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.quantity }}">
+                    <label>Quantity</label>
+                </div>
+                <div class="quantity-filter-container">
+                    <label for="status">Status</label>
+                    <div class="inputBox">
+                        <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" id="status" name="status" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.status }}">
+                            <option value="Functional">Functional</option>
+                            <option value="Faulty">Faulty</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label for="service_contract_start">Service Contract Start</label>
+                    <div class="inputBox">
+                        <input type="date" name="service_contract_start" id="service_contract_start" required=""
+                            value="{{ form.service_contract_start }}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label for="service_contract_end">Service Contract End</label>
+                    <div class="inputBox">
+                        <input type="date" name="service_contract_end" id="service_contract_end" required=""
+                            value="{{ form.service_contract_end }}">
+                    </div>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="donated_by" id="donated_by" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.donated_by }}">
+                    <label>Donated By</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="storage_location" id="storage_location" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.storage_location }}">
+                    <label>Storage Location</label>
+                </div>
+                <div class="inputBox button">
+                    <button class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="Submit">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="popup-container2" id="editPopup">
+    <div class="popup-card">
+        <h2>Edit Item</h2>
+        <div class="box">
+            <form id="edit-form" method="POST" action="">
+                {% csrf_token %}
+                <div class="inputBox">
+                    <input type="text" name="name" id="name" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.name }}">
+                    <label>Name</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="equip_id" id="equip_id" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.equip_id }}">
+                    <label>ID</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="serial_num" id="serial_num" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.serial_num }}">
+                    <label>Serial Number</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="quantity" id="quantity" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.quantity }}">
+                    <label>Quantity</label>
+                </div>
+                <div class="quantity-filter-container">
+                    <label for="status">Status</label>
+                    <div class="inputBox">
+                        <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" id="status" name="status" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.status }}">
+                            <option value="Functional">Functional</option>
+                            <option value="Faulty">Faulty</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label for="service_contract_start">Service Contract Start</label>
+                    <div class="inputBox">
+                        <input type="date" name="service_contract_start" id="service_contract_start" required=""
+                            value="{{ form.service_contract_start }}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label for="service_contract_end">Service Contract End</label>
+                    <div class="inputBox">
+                        <input type="date" name="service_contract_end" id="service_contract_end" required=""
+                            value="{{ form.service_contract_end }}">
+                    </div>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="donated_by" id="donated_by" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.donated_by }}">
+                    <label>Donated By</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="storage_location" id="storage_location" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.storage_location }}">
+                    <label>Storage Location</label>
+                </div>
+                <div class="inputBox button">
+                    <button class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="Submit">Edit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="popup-container3" id="retrievePopup">
+    <div class="popup-card">
+        <h2>Retrieve Item</h2>
+        <br>
+        <form id="retrieve-form" method="POST" action="">
+            {% csrf_token %}
+            <div class="quantity-filter-container">
+                <h3>Amount</h3>
+                <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" type="number" name="amount" id="retrieveFilterInput" required=""
+                    onkeyup="this.setAttribute('value', this.value);" value="">
+            </div>
+            <br>
+            <div class="inputBox button">
+                <button class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="Submit">OK</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="popup-container4" id="returnPopup">
+    <div class="popup-card">
+        <h2>Return Item</h2>
+        <br>
+        <form id="return-form" method="POST" action="">
+            {% csrf_token %}
+            <div class="quantity-filter-container">
+                <h3>Amount</h3>
+                <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" type="number" name="amount" id="returnFilterInput" required=""
+                    onkeyup="this.setAttribute('value', this.value);" value="">
+            </div>
+            <br>
+            <div class="inputBox button">
+                <button class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="Submit">OK</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="popup-container1" id="deletePopup">
+    <div class="popup-card">
+        <h2>Confirm Deletion</h2>
+        <br>
+        <p>Are you sure you want to delete this item?</p>
+        <div class="buttons">
+            <button class="border border-gray-300 font-medium text-sm w-1/3 text-gray-500 tracking-wide py-2 rounded-md hover:border-gray-400" style="margin-right: 10px;" onclick="closeDeletePopup()">Cancel</button>
+            <button class="delete-bg-primary border delete-border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:delete-bg-primary/90" onclick="deleteItem()">Confirm</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block inventory_scripts %}
+<script src="{% static 'js/equipment_.js' %}"></script>
 {% endblock %}
