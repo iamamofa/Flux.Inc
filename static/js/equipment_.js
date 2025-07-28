@@ -285,18 +285,19 @@ function refreshTableRow(id, data) {
   const row = elements.table.querySelector(`tr[data-id="${id}"]`);
   if (!row) return;
 
-  const columns = row.querySelectorAll('td');
-  columns[0].textContent = data.name;
-  columns[1].textContent = data.equip_id;
-  columns[2].textContent = data.serial_num;
-  columns[3].textContent = data.quantity;
-  columns[4].textContent = data.status;
-  columns[5].textContent = data.service_contract_start;
-  columns[6].textContent = data.service_contract_end;
-  columns[8].textContent = data.donated_by;
-  columns[9].textContent = data.storage_location;
-}
+  const cells = row.querySelectorAll('td');
+  if (cells.length < 10) return;
 
+  cells[0].textContent = data.name;
+    cells[1].textContent = data.equip_id;
+    cells[2].textContent = data.serial_num;
+    cells[3].textContent = data.quantity;
+    cells[4].textContent = data.status;
+    cells[5].textContent = data.service_contract_start;
+    cells[6].textContent = data.service_contract_end;
+    cells[8].textContent = data.donated_by;
+    cells[9].textContent = data.storage_location;
+}
 // Success handlers
 function handleAddSuccess(data) {
   showNotification('Equipment added successfully', 'success');
@@ -337,30 +338,39 @@ function filterTable() {
   const maxServiceEndFilterValue = elements.maxServiceEndFilter.value || '9999-12-31';
   const storageLocationFilterValue = elements.storageLocationFilter.value.toLowerCase();
 
-  const tableRows = elements.table.querySelectorAll('tr');
+  const tableRows = elements.table.querySelectorAll('tbody tr');
 
   tableRows.forEach((row) => {
-    const name = row.querySelector('td:first-child').textContent.toLowerCase();
-    const serialNum = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-    const quantity = parseInt(row.querySelector('td:nth-child(4)').textContent);
-    const startDate = row.querySelector('td:nth-child(6)').textContent;
-    const endDate = row.querySelector('td:nth-child(7)').textContent;
-    const storageLocation = row.querySelector('td:nth-child(10)').textContent.toLowerCase();
+      const cells = row.querySelectorAll('td');
 
-    const matchesFilters = (
-      name.includes(nameFilterValue) &&
-      serialNum.includes(serialNumFilterValue) &&
-      quantity >= minQuantityFilterValue &&
-      quantity <= maxQuantityFilterValue &&
-      isDateInRange(startDate, minServiceStartFilterValue, maxServiceStartFilterValue) &&
-      isDateInRange(endDate, minServiceEndFilterValue, maxServiceEndFilterValue) &&
-      storageLocation.includes(storageLocationFilterValue)
-    );
+      // Skip if not enough cells
+      if (cells.length < 10) {
+          console.warn('Row missing required cells:', row);
+          row.style.display = 'none';
+          return;
+      }
 
-    row.style.display = matchesFilters ? '' : 'none';
-  });
+      // Now access cells by their correct positions
+      const name = cells[0].textContent.toLowerCase();
+      const serialNum = cells[2].textContent.toLowerCase(); // 3rd column (index 2)
+        const quantity = parseInt(cells[3].textContent) || 0; // 4th column (index 3)
+        const startDate = cells[5].textContent; // 6th column (index 5)
+        const endDate = cells[6].textContent;   // 7th column (index 6)
+        const storageLocation = cells[9].textContent.toLowerCase(); // 10th column (index 9)
+
+        const matchesFilters = (
+            name.includes(nameFilterValue) &&
+            serialNum.includes(serialNumFilterValue) &&
+            quantity >= minQuantityFilterValue &&
+            quantity <= maxQuantityFilterValue &&
+            isDateInRange(startDate, minServiceStartFilterValue, maxServiceStartFilterValue) &&
+            isDateInRange(endDate, minServiceEndFilterValue, maxServiceEndFilterValue) &&
+            storageLocation.includes(storageLocationFilterValue)
+        );
+
+        row.style.display = matchesFilters ? '' : 'none';
+    });
 }
-
 function filterTableByDate() {
   filterTable();
 }

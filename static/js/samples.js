@@ -368,79 +368,99 @@ function resetFilters() {
 
 // Event Listeners
 function initializeEventListeners() {
-    // Filter events
-    domElements.filters.sampleID.addEventListener('input', debounce(filterTable, 300));
-    domElements.filters.sampleType.addEventListener('input', debounce(filterTable, 300));
-    domElements.filters.country.addEventListener('input', debounce(filterTable, 300));
-    domElements.filters.minVolume.addEventListener('input', debounce(filterTable, 300));
-    domElements.filters.maxVolume.addEventListener('input', debounce(filterTable, 300));
-    domElements.filters.minDate.addEventListener('change', debounce(filterTable, 300));
-    domElements.filters.maxDate.addEventListener('change', debounce(filterTable, 300));
-    domElements.filters.storageLocation.addEventListener('input', debounce(filterTable, 300));
-    domElements.filters.sortColumn.addEventListener('change', sortTable);
-    
-    // Button events
-    domElements.buttons.reset.addEventListener('click', resetFilters);
-    domElements.buttons.addItem.addEventListener('click', showAddPopup);
-    
-    // Form submissions
-    setupFormHandler(
-        domElements.forms.edit, 
-        '/edit_sample', 
-        'PUT', 
-        (data) => {
-            refreshTableRow(currentState.currentItemId, data);
-            closeEditPopup();
-        }
-    );
-    
-    setupFormHandler(
-        domElements.forms.retrieve, 
-        '/retrieve_sample', 
-        'PUT', 
-        (data) => {
-            refreshTableRow(currentState.currentItemId, data);
-            closeRetrievePopup();
-            domElements.filters.retrieveFilterInput.value = '';
-        }
-    );
-    
-    setupFormHandler(
-        domElements.forms.return, 
-        '/return_sample', 
-        'PUT', 
-        (data) => {
-            refreshTableRow(currentState.currentItemId, data);
-            closeReturnPopup();
-            domElements.filters.returnFilterInput.value = '';
-        }
-    );
-    
-    // Add form needs special handling since it creates a new item
-    domElements.forms.add.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        
-        const formData = new FormData(domElements.forms.add);
-        const jsonData = {};
-        formData.forEach((value, key) => {
-            jsonData[key] = value;
-        });
+    // Event types for each filter input
+    const filterEvents = [
+        { key: 'sampleID', event: 'input' },
+        { key: 'sampleType', event: 'input' },
+        { key: 'country', event: 'input' },
+        { key: 'minVolume', event: 'input' },
+        { key: 'maxVolume', event: 'input' },
+        { key: 'minDate', event: 'change' },
+        { key: 'maxDate', event: 'change' },
+        { key: 'storageLocation', event: 'input' },
+        { key: 'sortColumn', event: 'change', handler: sortTable }, // special handler
+    ];
 
-        try {
-            const data = await makeRequest(
-                domElements.forms.add.action, 
-                'POST', 
-                jsonData
-            );
-            
-            // Add new row to table
-            addNewRowToTable(data);
-            showToast('Sample added successfully');
-            closeAddPopup();
-        } catch (error) {
-            console.error('Error adding sample:', error);
+    filterEvents.forEach(({ key, event, handler }) => {
+        const el = domElements.filters[key];
+        if (el) {
+            el.addEventListener(event, handler || debounce(filterTable, 300));
         }
     });
+
+    // Button handlers
+    const buttonHandlers = {
+        reset: resetFilters,
+        addItem: showAddPopup
+    };
+
+    for (const [key, handler] of Object.entries(buttonHandlers)) {
+        const btn = domElements.buttons[key];
+        if (btn) btn.addEventListener('click', handler);
+    }
+
+    // Form handlers
+    const formConfigs = [
+        {
+            form: domElements.forms.edit,
+            url: '/edit_sample',
+            method: 'PUT',
+            onSuccess: (data) => {
+                refreshTableRow(currentState.currentItemId, data);
+                closeEditPopup();
+            }
+        },
+        {
+            form: domElements.forms.retrieve,
+            url: '/retrieve_sample',
+            method: 'PUT',
+            onSuccess: (data) => {
+                refreshTableRow(currentState.currentItemId, data);
+                closeRetrievePopup();
+                if (domElements.filters.retrieveFilterInput) {
+                    domElements.filters.retrieveFilterInput.value = '';
+                }
+            }
+        },
+        {
+            form: domElements.forms.return,
+            url: '/return_sample',
+            method: 'PUT',
+            onSuccess: (data) => {
+                refreshTableRow(currentState.currentItemId, data);
+                closeReturnPopup();
+                if (domElements.filters.returnFilterInput) {
+                    domElements.filters.returnFilterInput.value = '';
+                }
+            }
+        }
+    ];
+
+    formConfigs.forEach(({ form, url, method, onSuccess }) => {
+        if (form) {
+            setupFormHandler(form, url, method, onSuccess);
+        }
+    });
+
+    // Add form (special case)
+    const addForm = domElements.forms.add;
+    if (addForm) {
+        addForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(addForm);
+            const jsonData = Object.fromEntries(formData.entries());
+
+            try {
+                const data = await makeRequest(addForm.action, 'POST', jsonData);
+                addNewRowToTable(data);
+                showToast('Sample added successfully');
+                closeAddPopup();
+            } catch (error) {
+                console.error('Error adding sample:', error);
+            }
+        });
+    }
 }
 
 function addNewRowToTable(sampleData) {
