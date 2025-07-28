@@ -328,7 +328,9 @@
             {% block content %}{% endblock %}
         </section>
 
-        {% include 'inventory/partials/popups.html' %}
+        {% block popups_block %}
+
+        {% endblock %}
     </main>
 
     {% block inventory_scripts %}

@@ -263,6 +263,180 @@
 </div>
 {% endblock %}
 
+{% block popups_block %}
+<div class="popup-container1" id="addPopup">
+    <div class="popup-card">
+        <h2>Add Item</h2>
+        <div class="box">
+            <form id="consumable-form" method="POST" action="{% url 'add_consumable' project_name=project.name %}">
+                {% csrf_token %}
+                <div class="inputBox">
+                    <input type="text" name="name" id="name" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.name }}">
+                    <label>Name</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="product_code" id="product_code" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.product_code }}">
+                    <label>Product Code</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="pack_size" id="pack_size" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.pack_size }}">
+                    <label>Pack Size</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="quantity" id="quantity" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.quantity }}">
+                    <label>Quantity</label>
+                </div>
+                <div class="form-row">
+                    <label for="expiry_date">Expiry Date</label>
+                    <div class="inputBox">
+                        <input type="date" name="expiry_date" id="expiry_date" required=""
+                            value="{{ form.expiry_date }}">
+                    </div>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="storage_location" id="storage_location" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.storage_location }}">
+                    <label>Storage Location</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="threshold_value" id="threshold_value" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.threshold_value }}">
+                    <label>Threshold</label>
+                </div>
+                <div class="inputBox button">
+                    <button class = "bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="Submit">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="popup-container2" id="editPopup">
+    <div class="popup-card">
+        <h2>Edit Item</h2>
+        <div class="box">
+            <form id="edit-form" method="POST" action="">
+                {% csrf_token %}
+                <div class="inputBox">
+                    <input type="text" name="name" id="name" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.name }}">
+                    <label>Name</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="product_code" id="product_code" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.product_code }}">
+                    <label>Product Code</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="pack_size" id="pack_size" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.pack_size }}">
+                    <label>Pack Size</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="quantity" id="quantity" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.quantity }}">
+                    <label>Quantity</label>
+                </div>
+                <div class="form-row">
+                    <label for="expiry_date">Expiry Date</label>
+                    <div class="inputBox">
+                        <input type="date" name="expiry_date" id="expiry_date" required=""
+                            value="{{ form.expiry_date }}">
+                    </div>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="storage_location" id="storage_location" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.storage_location }}">
+                    <label>Storage Location</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="threshold_value" id="threshold_value" required=""
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.threshold_value }}">
+                    <label>Threshold</label>
+                </div>
+                <div class="inputBox button">
+                    <button class = "bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="Submit" onclick="">Edit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="popup-container3" id="retrievePopup">
+    <div class="popup-card">
+        <h2>Retrieve Item</h2>
+        <br>
+        <form id="retrieve-form" method="POST" action="">
+            {% csrf_token %}
+            <div class="quantity-filter-container">
+                <label for="retrieve_by">Retrieve By</label>
+                <div class="inputBox">
+                    <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" id="retrieve_by" name="retrieve_by" required=""
+                    onkeyup="this.setAttribute('value', this.value);" value="">
+                        <option value="Pack size">Pack size</option>
+                        <option value="Quantity">Quantity</option>
+                      </select>
+                </div>
+            </div>
+            <div class="quantity-filter-container">
+            <h3>Amount</h3>
+            <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" type="number" name="amount" id="retrieveFilterInput" required=""
+                onkeyup="this.setAttribute('value', this.value);" value="">
+            </div>
+            <br>
+            <div class="inputBox button">
+                <button class = "bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="Submit" onclick="">OK</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="popup-container4" id="returnPopup">
+    <div class="popup-card">
+        <h2>Return Item</h2>
+        <br>
+        <form id="return-form" method="POST" action="">
+            {% csrf_token %}
+            <div class="quantity-filter-container">
+                <label for="return_by">Return By</label>
+                <div class="inputBox">
+                    <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" id="return_by" name="return_by" required=""
+                    onkeyup="this.setAttribute('value', this.value);" value="">
+                        <option value="Pack size">Pack size</option>
+                        <option value="Quantity">Quantity</option>
+                      </select>
+                </div>
+            </div>
+            <div class="quantity-filter-container">
+            <h3>Amount</h3>
+            <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" type="number" name="amount" id="returnFilterInput" required=""
+                onkeyup="this.setAttribute('value', this.value);" value="">
+            </div>
+            <br>
+            <div class="inputBox button">
+                <button class = "bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="Submit" onclick="">OK</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="popup-container1" id="deletePopup">
+    <div class="popup-card">
+        <h2>Confirm Deletion</h2>
+        <br>
+        <p>Are you sure you want to delete this item?</p>
+        <div class="buttons">
+            <button class="border border-gray-300 font-medium text-sm w-1/3 text-gray-500 tracking-wide py-2 rounded-md hover:border-gray-400" style="margin-right: 10px;" onclick="closeDeletePopup()">Cancel</button>
+            <button class="delete-bg-primary border delete-border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:delete-bg-primary/90" onclick="deleteItem()">Confirm</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
 {% block inventory_scripts %}
 <script>
     // ==============================================
