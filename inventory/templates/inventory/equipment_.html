@@ -233,7 +233,7 @@
             {% for equipment in equipment_ %}
             <tr data-id="{{ equipment.id }}"
                 data-name="{{ equipment.name }}"
-                data-quip-id="{{ equipment.equip_id }}"
+                data-equip-id="{{ equipment.equip_id }}"
                 data-serial-num="{{ equipment.serial_num }}"
                 data-quantity="{{ equipment.quantity }}"
                 data-status="{{ equipment.status }}"
@@ -242,7 +242,6 @@
                 data-date-recorded="{{ equipment.date_recorded|date:"Y-m-d" }}"
                 data-donated-by="{{ equipment.donated_by }}"
                 data-storage-location="{{ equipment.storage_location }}"
-                <td>{{ equipment.id }}</td>
                 <td>{{ equipment.name }}</td>
                 <td>{{ equipment.equip_id }}</td>
                 <td>{{ equipment.serial_num }}</td>
