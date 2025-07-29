@@ -1680,11 +1680,11 @@ video {
 }
 
 /* For the Add button */
-#showAddPopupBtn {
+/*#showAddPopupBtn {
     position: relative;
     z-index: 10; /* Higher than modal's z-index */
-    margin-bottom: 20px;
-}
+   /* margin-bottom: 20px;
+}*/
 
 .popup-container1, 
 .popup-container2,
@@ -1692,8 +1692,15 @@ video {
 .popup-container4,
 .popup-overlay {
     position: fixed;
-    z-index: 1000; /* Above everything */
-    display: none; /* Hidden by default */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    display: flex;
 }
 
 /* When modal is active */
