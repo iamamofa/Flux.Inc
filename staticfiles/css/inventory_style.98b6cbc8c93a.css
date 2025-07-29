@@ -1952,7 +1952,7 @@ input[type="number"] {
 .dropdown-arrow {
     width: 8px;
     height: 8px;
-    fill: url(#pattern7);
+    fill: url("#pattern7");
     cursor: pointer;
 }
 

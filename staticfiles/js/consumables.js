@@ -512,6 +512,57 @@ function initConsumablesManager() {
         filterTable();
     }
 
+    function sortTableByColumn() {
+        const dropdown = document.getElementById('sortColumnDropdown');
+        if (!dropdown) return;
+
+        const columnNum = dropdown.value;
+        if (!columnNum || columnNum === '0') {
+            resetFilters();
+            return;
+        }
+
+        const tbody = DOM.table?.querySelector('tbody');
+        if (!tbody) return;
+
+        const rows = Array.from(tbody.querySelectorAll('tr[data-id]'));
+        if (rows.length === 0) return;
+
+        // Toggle sort direction if clicking same column
+        if (STATE.activeSort.column === columnNum) {
+            STATE.activeSort.direction = STATE.activeSort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            STATE.activeSort.column = columnNum;
+            STATE.activeSort.direction = 'asc';
+        }
+
+        rows.sort((a, b) => {
+            const aValue = getColumnValue(a, columnNum);
+            const bValue = getColumnValue(b, columnNum);
+
+            if (columnNum === '4') { // Quantity column
+                return STATE.activeSort.direction === 'asc' 
+                    ? aValue - bValue 
+                    : bValue - aValue;
+            }
+        
+            return STATE.activeSort.direction === 'asc' 
+                ? aValue.localeCompare(bValue) 
+                : bValue.localeCompare(aValue);
+        });
+
+        // Reattach sorted rows
+        rows.forEach(row => tbody.appendChild(row));
+    }
+
+    function getColumnValue(row, columnNum) {
+        const cell = row.querySelector(`td:nth-child(${columnNum})`);
+        if (!cell) return '';
+        const value = cell.textContent.trim();
+        return columnNum === '4' ? parseFloat(value) || 0 : value.toLowerCase();
+    }
+
+
     // ==============================================
     // UTILITY FUNCTIONS
     // ==============================================

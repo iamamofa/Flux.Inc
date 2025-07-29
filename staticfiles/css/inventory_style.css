@@ -1740,6 +1740,8 @@ video {
     /* Enable vertical scrollbar */
     overflow-x: hidden;
     width: 100%;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
 }
 
 /* Make the table header sticky */
@@ -1748,31 +1750,57 @@ video {
     top: 0;
     background-color: #ffffff;
     /* Set the background color for the sticky header */
-    z-index: 1;
+    z-index: 2;
     /* Ensure the header appears above the table content */
-    box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.table-auto thead th {
+    padding: 16px 15px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75em;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    border-bottom: 2px solid #e5e7eb;
 }
 
 /* Cell styles */
 .table-auto td {
-    padding: 12px 15px;
+    padding: 14px 15px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    border-bottom: 1px solid #e5e7eb;
-    color: #4b5563;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    vertical-align: middle;
 }
 
-/* Column Widths - Adjust as needed for each table type */
-/* Consumables */
-#consumablesTable th:nth-child(1) { width: 15%; } /* Name */
-#consumablesTable th:nth-child(2) { width: 10%; } /* Product Code */
-#consumablesTable th:nth-child(3) { width: 10%; } /* Pack Size */
-#consumablesTable th:nth-child(4) { width: 8%; }  /* Quantity */
-#consumablesTable th:nth-child(5) { width: 10%; } /* Date Created */
-#consumablesTable th:nth-child(6) { width: 10%; } /* Expiry Date */
-#consumablesTable th:nth-child(7) { width: 15%; } /* Storage Location */
-#consumablesTable th:nth-child(8) { width: 5%; }  /* Actions */
+/* Column Spacing */
+.table-auto th:not(:last-child),
+.table-auto td:not(:last-child) {
+    padding-right: 25px;
+}
+
+/* Hover & Striping */
+.table-auto tbody tr:hover td {
+    background-color: #f8fafc;
+}
+
+.table-auto tbody tr:nth-child(even) td {
+    background-color: #f9fafb;
+}
+
+/* Action Buttons */
+#consumablesTable td.actions {
+    display: flex;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+/* Column Widths */
+#consumablesTable th:nth-child(1) { width: 18%; } /* Slightly wider name */
+#consumablesTable th:nth-child(8) { width: 12%; } /* More space for actions */
 
 /* Equipment */
 #equipmentTable th:nth-child(1) { width: 15%; } /* Name */
