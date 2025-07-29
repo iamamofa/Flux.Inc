@@ -1746,10 +1746,10 @@ video {
 }
 
 /* Column Spacing */
-.table-auto th:not(:last-child),
+/*.table-auto th:not(:last-child),
 .table-auto td:not(:last-child) {
     padding-right: 25px;
-}
+}*/
 
 /* Hover & Striping */
 .table-auto tbody tr:hover td {
