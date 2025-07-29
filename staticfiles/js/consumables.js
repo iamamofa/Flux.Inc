@@ -53,6 +53,8 @@ function initConsumablesManager() {
     setupEventListeners();
     setupAccessibility();
     initialFilter();
+
+    document.getElementById('showAddPopupBtn')?.addEventListener('click', showAddPopup);
 }
 
 // ==============================================
@@ -141,16 +143,48 @@ function initConsumablesManager() {
         document.getElementById('sortColumnDropdown')?.addEventListener('change', sortTableByColumn);
     }
 
+// ==============================================
+// ACCESSIBILITY FUNCTIONS
+// ==============================================
+function setupAccessibility() {
+    // Add aria attributes to modals
+    Object.values(DOM.modals).forEach(modal => {
+        if (modal) {
+            modal.setAttribute('aria-hidden', 'true');
+            modal.setAttribute('role', 'dialog');
+            modal.setAttribute('aria-modal', 'true');
+        }
+    });
+
+    // Ensure buttons have proper labels
+    document.querySelectorAll('.edit-btn, .retrieve-btn, .return-btn, .delete-btn').forEach(btn => {
+        btn.setAttribute('aria-label', btn.textContent.trim() ||
+        btn.querySelector('span')?.textContent ||
+            btn.closest('[aria-label]')?.getAttribute('aria-label') ||
+            'Action button');
+    });
+
+    const addButton = document.getElementById('showAddPopupBtn');
+    if (addButton) {
+        addButton.setAttribute('aria-label', 'Add new consumable');
+        addButton.setAttribute('aria-haspopup', 'dialog');
+    }
+}
+
     // ==============================================
     // MODAL FUNCTIONS
     // ==============================================
     function showAddPopup() {
-        showModal(DOM.modals.add);
+        document.getElementById('addPopup').classList.add('popup-active');
+        document.body.style.overflow = 'hidden';
+        // showModal(DOM.modals.add);
     }
 
     function closeAddPopup() {
-        closeModal(DOM.modals.add);
-        DOM.forms.add?.reset();
+        document.getElementById('addPopup').classList.remove('popup-active');
+        document.body.style.overflow = '';
+        // closeModal(DOM.modals.add);
+        // DOM.forms.add?.reset();
     }
 
     function showEditPopup(id) {

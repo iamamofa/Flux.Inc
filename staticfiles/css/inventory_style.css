@@ -1634,59 +1634,6 @@ video {
     background: #0e4bf1;
 }
 
-
-.popup-container1 {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 999;
-}
-
-.popup-container2 {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 999;
-}
-
-.popup-container3 {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 999;
-}
-
-.popup-container4 {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 999;
-}
-
 .popup-card {
     background-color: #fff;
     padding: 20px;
@@ -1732,6 +1679,28 @@ video {
     display: none;
 }
 
+/* For the Add button */
+#showAddPopupBtn {
+    position: relative;
+    z-index: 10; /* Higher than modal's z-index */
+    margin-bottom: 20px;
+}
+
+.popup-container1, 
+.popup-container2,
+.popup-container3,
+.popup-container4,
+.popup-overlay {
+    position: fixed;
+    z-index: 1000; /* Above everything */
+    display: none; /* Hidden by default */
+}
+
+/* When modal is active */
+.popup-active {
+    display: flex !important;
+}
+
 .table-container {
     height: 700px;
     max-height: 700px;
@@ -1750,7 +1719,7 @@ video {
     top: 0;
     background-color: #ffffff;
     /* Set the background color for the sticky header */
-    z-index: 2;
+    z-index: 1;
     /* Ensure the header appears above the table content */
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
@@ -1784,7 +1753,8 @@ video {
 
 /* Hover & Striping */
 .table-auto tbody tr:hover td {
-    background-color: #f8fafc;
+    background-color: #e2e8f0 !important;
+    transition: background-color 0.2s ease;
 }
 
 .table-auto tbody tr:nth-child(even) td {
