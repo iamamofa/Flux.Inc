@@ -499,6 +499,19 @@ function initConsumablesManager() {
         );
     }
 
+    function resetFilters() {
+        // Reset all filter inputs
+        Object.values(DOM.filterInputs).forEach(input => {
+            if (input) input.value = '';
+        });
+    
+        // Reset sorting dropdown
+        document.getElementById('sortColumnDropdown').value = '0';
+    
+        // Reapply filters (which will now show all rows)
+        filterTable();
+    }
+
     // ==============================================
     // UTILITY FUNCTIONS
     // ==============================================
