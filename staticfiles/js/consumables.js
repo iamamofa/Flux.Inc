@@ -321,7 +321,115 @@ function initConsumablesManager() {
         }
     }
 
-    // Similar handlers for retrieve/return/delete...
+    async function handleRetrieveSubmit(e) {
+        e.preventDefault();
+        if (!STATE.currentItemId || !DOM.forms.retrieve) return;
+
+        showLoading(DOM.modals.retrieve);
+
+        try {
+            const formData = new FormData(DOM.forms.retrieve);
+            const jsonData = Object.fromEntries(formData.entries());
+
+            const response = await fetch(`/retrieve_consumable/${STATE.currentItemId}`, {
+                method: 'PUT',
+                headers: {
+                    'X-CSRFToken': CSRF_TOKEN,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(jsonData),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to retrieve item');
+            }
+            
+            updateTableRow(STATE.currentItemId, data);
+            showNotification('Item retrieved successfully', 'success');
+            closeRetrievePopup();
+        } catch (error) {
+            console.error('Error retrieving item:', error);
+            showNotification(error.message || 'Failed to retrieve item', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    async function handleReturnSubmit(e) {
+        e.preventDefault();
+        if (!STATE.currentItemId || !DOM.forms.return) return;
+
+        showLoading(DOM.modals.return);
+
+        try {
+            const formData = new FormData(DOM.forms.return);
+            const jsonData = Object.fromEntries(formData.entries());
+
+            const response = await fetch(`/return_consumable/${STATE.currentItemId}`, {
+                method: 'PUT',
+                headers: {
+                    'X-CSRFToken': CSRF_TOKEN,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(jsonData),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to return item');
+            }
+            
+            updateTableRow(STATE.currentItemId, data);
+            showNotification('Item returned successfully', 'success');
+            closeReturnPopup();
+        } catch (error) {
+            console.error('Error returning item:', error);
+            showNotification(error.message || 'Failed to return item', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    async function handleDeleteConfirm() {
+        if (!STATE.currentItemId || !STATE.currentProject) return;
+
+        showLoading(DOM.modals.delete);
+
+        try {
+            const response = await fetch(`/delete_consumable/${STATE.currentProject}/${STATE.currentItemId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': CSRF_TOKEN,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete item');
+            }
+
+            const data = await response.json();
+            showNotification('Item deleted successfully', 'success');
+            removeTableRow(STATE.currentItemId);
+            closeDeletePopup();
+        } catch (error) {
+            console.error('Delete error:', error);
+            showNotification(error.message || 'Failed to delete item', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    function removeTableRow(id) {
+        const row = DOM.table?.querySelector(`tr[data-id="${id}"]`);
+        if (row) {
+            row.classList.add('fade-out');
+            setTimeout(() => row.remove(), 300);
+        }
+    }
 
     // ==============================================
     // TABLE OPERATIONS
@@ -403,19 +511,52 @@ function initConsumablesManager() {
     }
 
     function showLoading(container) {
-        // Implement loading indicator
+        if (!container) return;
+    
+        const loader = document.createElement('div');
+        loader.className = 'loading-overlay';
+        loader.innerHTML = `
+            <div class="spinner"></div>
+            <p>Processing...</p>
+        `;
+        container.appendChild(loader);
+        container.style.position = 'relative';
     }
 
     function hideLoading() {
-        // Hide loading indicator
+        const loaders = document.querySelectorAll('.loading-overlay');
+        loaders.forEach(loader => {
+            loader.parentNode?.removeChild(loader);
+        });
     }
 
     function showNotification(message, type = 'success') {
-        // Implement notification system
+        if (!DOM.notificationContainer) return;
+    
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`;
+        notification.textContent = message;
+        DOM.notificationContainer.appendChild(notification);
+    
+        setTimeout(() => {
+            notification.classList.add('fade-out');
+            setTimeout(() => notification.remove(), 500);
+        }, 3000);
     }
 
     function isDateInRange(dateString, minDateString, maxDateString) {
-        // Date range validation
+        if (!dateString) return true;
+    
+        try {
+            const date = new Date(dateString);
+            const minDate = minDateString ? new Date(minDateString) : new Date(0);
+            const maxDate = maxDateString ? new Date(maxDateString) : new Date(8640000000000000);
+        
+            return date >= minDate && date <= maxDate;
+        } catch (e) {
+            console.error('Date parsing error:', e);
+            return true;
+        }
     }
 
 // Initialize when DOM is ready
