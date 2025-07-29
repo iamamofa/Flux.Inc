@@ -16,7 +16,7 @@ const POPUP_CONTAINERS = {
   EDIT: '.popup-container2',
   RETRIEVE: '.popup-container3',
   RETURN: '.popup-container4',
-  DELETE: '.popup-overlay'
+  DELETE: '.popup-container5'
 };
 
 // Get CSRF token from meta tag
@@ -301,6 +301,22 @@ function handleEditSuccess(data) {
   updateTableRow(STATE.currentItemId, data);
   showNotification('Item updated successfully', 'success');
   closeEditPopup();
+
+    const row = document.querySelector(`tr[data-id="${data.id}"]`);
+  if (row) {
+    // Update dataset attributes
+    row.dataset.name = data.name;
+    row.dataset.storageLocation = data.storage_location;
+    
+    // Update visible cells with truncation
+    const nameCell = row.querySelector('td:nth-child(1)');
+    nameCell.setAttribute('data-fulltext', data.name);
+    nameCell.textContent = truncateText(data.name, 20);
+    
+    const locationCell = row.querySelector('td:nth-child(7)');
+    locationCell.setAttribute('data-fulltext', data.storage_location);
+    locationCell.textContent = truncateText(data.storage_location, 15);
+  }
 }
 
 function handleRetrieveSuccess(data) {
@@ -395,7 +411,27 @@ function filterTable() {
   rows.forEach(row => {
     const isVisible = checkRowAgainstFilters(row, filters);
     row.style.display = isVisible ? '' : 'none';
+
+      const nameCell = row.querySelector('td:nth-child(1)');
+    if (nameCell) {
+      const fullName = row.dataset.name || '';
+      nameCell.setAttribute('data-fulltext', fullName);
+      nameCell.textContent = truncateText(fullName, 20); // Truncate to 20 chars
+    }
+
+    const locationCell = row.querySelector('td:nth-child(7)');
+    if (locationCell) {
+      const fullLocation = row.dataset.storageLocation || '';
+      locationCell.setAttribute('data-fulltext', fullLocation);
+      locationCell.textContent = truncateText(fullLocation, 15);
+    }
   });
+}
+
+function truncateText(text, maxLength) {
+  return text.length > maxLength 
+    ? text.substring(0, maxLength - 3) + '...' 
+    : text;
 }
 
 function checkRowAgainstFilters(row, filters) {

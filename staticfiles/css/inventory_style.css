@@ -1690,7 +1690,7 @@ video {
 .popup-container2,
 .popup-container3,
 .popup-container4,
-.popup-overlay {
+.popup-container5 {
     position: fixed;
     top: 0;
     left: 0;
@@ -1769,15 +1769,125 @@ video {
 }
 
 /* Action Buttons */
-#consumablesTable td.actions {
+/* #consumablesTable td.actions {
     display: flex;
     gap: 8px;
     white-space: nowrap;
+}*/
+
+#consumablesTable {
+  width: 100%;
+  border-collapse: collapse; /* critical for alignment */
 }
 
-/* Column Widths */
-#consumablesTable th:nth-child(1) { width: 18%; } /* Slightly wider name */
-#consumablesTable th:nth-child(8) { width: 12%; } /* More space for actions */
+#consumablesTable th, 
+#consumablesTable td {
+  text-align: left; /* or center based on your preference */
+  vertical-align: middle;
+  padding: 12px 15px; /* uniform padding */
+  border-bottom: 1px solid #e5e7eb; /* subtle divider */
+}
+
+/* Strict column widths for perfect header-cell alignment */
+#consumablesTable th:nth-child(1),
+#consumablesTable td:nth-child(1) { 
+  width: 18%; /* Name */
+  min-width: 150px; /* Prevents collapse on small data */
+}
+
+#consumablesTable th:nth-child(2),
+#consumablesTable td:nth-child(2) { 
+  width: 12%; /* Product Code */
+  min-width: 100px;
+}
+
+#consumablesTable th:nth-child(3),
+#consumablesTable td:nth-child(3) { 
+  width: 10%; /* Pack Size */
+  min-width: 90px;
+}
+
+#consumablesTable th:nth-child(4),
+#consumablesTable td:nth-child(4) { 
+  width: 10%; /* Quantity */
+  min-width: 80px;
+  text-align: center; /* Numbers look better centered */
+}
+
+#consumablesTable th:nth-child(5),
+#consumablesTable td:nth-child(5) { 
+  width: 12%; /* Date Created */
+  min-width: 110px;
+}
+
+#consumablesTable th:nth-child(6),
+#consumablesTable td:nth-child(6) { 
+  width: 12%; /* Expiry Date */
+  min-width: 110px;
+}
+
+#consumablesTable th:nth-child(7),
+#consumablesTable td:nth-child(7) { 
+  width: 16%; /* Storage Location */
+  min-width: 120px;
+}
+
+#consumablesTable th:nth-child(8),
+#consumablesTable td:nth-child(8) { 
+  width: 10%; /* Actions */
+  min-width: 150px; /* Ensures buttons don't wrap */
+  text-align: right; /* Aligns actions to the right */
+}
+
+/* Sticky header alignment */
+#consumablesTable thead th {
+  position: sticky;
+  top: 0;
+  background: white; /* prevents transparent overlap */
+  z-index: 10;
+  box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
+}
+
+/* Apply to all cells except actions */
+#consumablesTable td:not(:last-child) {
+  white-space: nowrap;       /* Prevent text wrapping */
+  overflow: hidden;          /* Hide overflow */
+  text-overflow: ellipsis;   /* Show ... for clipped text */
+  max-width: 0;             /* Required for ellipsis to work */
+}
+
+/* Special handling for columns where wrapping is preferred */
+#consumablesTable td:nth-child(7) {  /* Storage Location */
+  white-space: normal;      /* Allow wrapping */
+  word-break: break-word;   /* Break long words */
+}
+
+/* Actions column (no truncation) */
+#consumablesTable td:nth-child(8) {
+  white-space: nowrap;
+  overflow: visible;
+}
+
+/* Show full text on hover */
+#consumablesTable td:not(:last-child):hover {
+  position: relative;
+}
+
+#consumablesTable td[data-fulltext]:hover::after {
+  content: attr(data-fulltext);
+  position: absolute;
+  left: 15px;
+  top: 100%;
+  background: #333;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  width: max-content;
+  max-width: 300px;
+}
 
 /* Equipment */
 #equipmentTable th:nth-child(1) { width: 15%; } /* Name */

@@ -233,13 +233,13 @@
                 data-date-created="{{ consumable.date_recorded|date:'Y-m-d' }}"
                 data-expiry-date="{{ consumable.expiry_date|date:'Y-m-d' }}"
                 data-storage-location="{{ consumable.storage_location }}">
-                <td>{{ consumable.name }}</td>
-                <td>{{ consumable.product_code }}</td>
+                <td data-fulltext="{{ consumable.name }}">{{ consumable.name }}</td>
+                <td data-fulltext="{{ consumable.product_code }}">{{ consumable.product_code }}</td>
                 <td>{{ consumable.pack_size_rem }} / {{ consumable.pack_size }}</td>
                 <td>{{ consumable.quantity }}</td>
                 <td>{{ consumable.date_recorded|date:"Y-m-d" }}</td>
                 <td>{{ consumable.expiry_date|date:"Y-m-d" }}</td>
-                <td>{{ consumable.storage_location }}</td>
+                <td data-fulltext="{{ consumable.storage_location }}">{{ consumable.storage_location|truncatechars:20 }}</td>
                 <td class="actions">
                     <button class="retrieve-btn" data-id="{{ consumable.id }}">Retrieve</button>
                     <button class="return-btn" data-id="{{ consumable.id }}">Return</button>
@@ -424,13 +424,18 @@
     </div>
 </div>
 
-<div class="popup-overlay" id="deletePopup">
-    <div class="popup-content">
+<div class="popup-container5" id="deletePopup">
+    <div class="popup-card">
         <h2>Confirm Deletion</h2>
         <br>
         <p>Are you sure you want to delete this item?</p>
-        <button id="confirmDeleteBtn">Confirm Delete</button>
-        <button class="cancel-btn">Cancel</button>
+        <div class="buttons">
+            <button class="border border-gray-300 font-medium text-sm w-1/3 text-gray-500 tracking-wide py-2 rounded-md hover:border-gray-400" 
+                    style="margin-right: 10px;" 
+                    onclick="closeDeletePopup()">Cancel</button>
+            <button class="delete-bg-primary border delete-border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:delete-bg-primary/90" 
+                    onclick="handleDeleteConfirm()">Confirm Delete</button>
+        </div>
     </div>
 </div>
 {% endblock %}
