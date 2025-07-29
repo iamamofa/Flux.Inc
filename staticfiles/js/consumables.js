@@ -7,9 +7,32 @@ const DOM = {
     modals: {
         add: document.getElementById('addPopup'),
         edit: document.getElementById('editPopup'),
-        // ... rest of modal elements
+        retrieve: document.getElementById('retrievePopup'),
+        return: document.getElementById('returnPopup'),
+        delete: document.getElementById('deletePopup')
     },
-    // ... rest of DOM definitions
+    forms: {
+        add: document.getElementById("consumable-form"),
+        edit: document.getElementById("edit-form"),
+        retrieve: document.getElementById("retrieve-form"),
+        return: document.getElementById("return-form")
+    },
+    filterInputs: {
+        name: document.getElementById('nameFilterInput'),
+        productCode: document.getElementById('productCodeFilterInput'),
+        minQuantity: document.getElementById('minQuantityFilterInput'),
+        maxQuantity: document.getElementById('maxQuantityFilterInput'),
+        minDateExpired: document.getElementById('minDateExpiredFilterInput'),
+        maxDateExpired: document.getElementById('maxDateExpiredFilterInput'),
+        minDateCreated: document.getElementById('minDateCreatedFilterInput'),
+        maxDateCreated: document.getElementById('maxDateCreatedFilterInput'),
+        storageLocation: document.getElementById('storageLocationFilterInput')
+    },
+    buttons: {
+        resetFilters: document.getElementById('resetButton')
+    },
+    table: document.getElementById('consumablesTable'),
+    notificationContainer: document.getElementById('notification-container')
 };
 
 const STATE = {

@@ -209,12 +209,13 @@
                 <th>Date Recorded</th>
                 <th>Well ID</th>
                 <th>Storage Location</th>
-                <th></th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody id="samplesTable">
             {% for sample in samples %}
             <tr data-id="{{ sample.id }}"
+                data-project="{{ project.name }}"
                 data-sample-id="{{ sample.sample_id }}"
                 data-sample-type="{{ sample.sample_type }}"
                 data-description="{{ sample.description }}"
@@ -232,6 +233,22 @@
                 <td>{{ sample.well_id }}</td>
                 <td>{{ sample.storage_location }}</td>
                 <td>
+                    <div class="dropdown" aria-haspopup="true">
+                        <button class="dropbtn" aria-expanded="false" aria-label="Actions menu">⋮</button>
+                        <div class="dropdown-content" role="menu">
+                            <a href="#" class="retrieve-action" onclick="showRetrievePopup()" data-id="{{ consumable.id }}" role="menuitem">Retrieve</a>
+                            <a href="#" class="return-action" onclick="showReturnPopup()" data-id="{{ consumable.id }}" role="menuitem">Return</a>
+                                            
+                            {% if user == project.project_manager or user in project.project_editors.all %}
+                                            
+                            <hr role="separator">
+                            <a href="#" class="edit-action" onclick="showEditPopup()" data-id="{{ consumable.id }}" role="menuitem">Edit</a>
+                            <a href="#" class="delete-action" onclick="showDeletePopup()" data-project="{{ project.name }}" data-id="{{ consumable.id }}" role="menuitem">Delete</a>
+                                
+                            {% endif %}
+                        </div>
+                    </div>
+                </td>
             </tr>
             {% endfor %}
         </tbody>

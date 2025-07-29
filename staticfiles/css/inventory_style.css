@@ -790,7 +790,9 @@ video {
 }
 
 .table-auto {
-    table-layout: auto;
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
 }
 
 .flex-col {
@@ -1381,6 +1383,26 @@ video {
         padding-left: 1rem;
         padding-right: 1rem;
     }
+    .table-container {
+        display: block;
+        overflow-x: auto;
+        max-height: none;
+        height: auto;
+    }
+    
+    .table-auto {
+        display: block;
+        white-space: nowrap;
+    }
+    
+    .table-auto thead {
+        position: static;
+    }
+    
+    .table-auto th,
+    .table-auto td {
+        white-space: normal;
+    }
 }
 
 @media (min-width: 1024px) {
@@ -1500,7 +1522,8 @@ video {
     display: none;
     position: absolute;
     background-color: #ffffff;
-    min-width: 80px;
+    min-width: 120px;
+    right: 0;
     box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
     z-index: 2;
     border-radius: 5px;
@@ -1716,6 +1739,7 @@ video {
     overflow-y: auto;
     /* Enable vertical scrollbar */
     overflow-x: hidden;
+    width: 100%;
 }
 
 /* Make the table header sticky */
@@ -1726,7 +1750,64 @@ video {
     /* Set the background color for the sticky header */
     z-index: 1;
     /* Ensure the header appears above the table content */
+    box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
 }
+
+/* Cell styles */
+.table-auto td {
+    padding: 12px 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-bottom: 1px solid #e5e7eb;
+    color: #4b5563;
+}
+
+/* Column Widths - Adjust as needed for each table type */
+/* Consumables */
+#consumablesTable th:nth-child(1) { width: 15%; } /* Name */
+#consumablesTable th:nth-child(2) { width: 10%; } /* Product Code */
+#consumablesTable th:nth-child(3) { width: 10%; } /* Pack Size */
+#consumablesTable th:nth-child(4) { width: 8%; }  /* Quantity */
+#consumablesTable th:nth-child(5) { width: 10%; } /* Date Created */
+#consumablesTable th:nth-child(6) { width: 10%; } /* Expiry Date */
+#consumablesTable th:nth-child(7) { width: 15%; } /* Storage Location */
+#consumablesTable th:nth-child(8) { width: 5%; }  /* Actions */
+
+/* Equipment */
+#equipmentTable th:nth-child(1) { width: 15%; } /* Name */
+#equipmentTable th:nth-child(2) { width: 8%; }  /* ID */
+#equipmentTable th:nth-child(3) { width: 10%; } /* Serial Number */
+#equipmentTable th:nth-child(4) { width: 8%; }  /* Quantity */
+#equipmentTable th:nth-child(5) { width: 10%; } /* Status */
+#equipmentTable th:nth-child(6) { width: 10%; } /* Service Contract Start */
+#equipmentTable th:nth-child(7) { width: 10%; } /* Service Contract End */
+#equipmentTable th:nth-child(8) { width: 10%; } /* Date Recorded */
+#equipmentTable th:nth-child(9) { width: 10%; } /* Donated By */
+#equipmentTable th:nth-child(10) { width: 10%; } /* Storage Location */
+#equipmentTable th:nth-child(11) { width: 5%; }  /* Actions */
+
+/* Samples */
+#samplesTable th:nth-child(1) { width: 10%; } /* Sample ID */
+#samplesTable th:nth-child(2) { width: 10%; } /* Type */
+#samplesTable th:nth-child(3) { width: 20%; } /* Description */
+#samplesTable th:nth-child(4) { width: 10%; } /* Country */
+#samplesTable th:nth-child(5) { width: 8%; }  /* Volume */
+#samplesTable th:nth-child(6) { width: 10%; } /* Date Recorded */
+#samplesTable th:nth-child(7) { width: 10%; } /* Well ID */
+#samplesTable th:nth-child(8) { width: 15%; } /* Storage Location */
+#samplesTable th:nth-child(9) { width: 5%; }  /* Actions */
+
+/* Reagents */
+#reagentsTable th:nth-child(1) { width: 15%; } /* Name */
+#reagentsTable th:nth-child(2) { width: 10%; } /* Product Code */
+#reagentsTable th:nth-child(3) { width: 10%; } /* Pack Size */
+#reagentsTable th:nth-child(4) { width: 8%; }  /* Quantity */
+#reagentsTable th:nth-child(5) { width: 10%; } /* Date Created */
+#reagentsTable th:nth-child(6) { width: 10%; } /* Expiry Date */
+#reagentsTable th:nth-child(7) { width: 15%; } /* Storage Location */
+#reagentsTable th:nth-child(8) { width: 5%; }  /* Actions */
+
 
 ::-webkit-scrollbar {
     width: 20px;

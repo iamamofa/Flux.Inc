@@ -225,6 +225,7 @@
         <tbody id="consumablesTable">
             {% for consumable in consumables %}
             <tr data-id="{{ consumable.id }}"
+                data-project="{{ project.name }}"
                 data-name="{{ consumable.name }}"
                 data-product-code="{{ consumable.product_code }}"
                 data-pack-size="{{ consumable.pack_size }}"
@@ -243,14 +244,14 @@
                     <div class="dropdown" aria-haspopup="true">
                         <button class="dropbtn" aria-expanded="false" aria-label="Actions menu">⋮</button>
                         <div class="dropdown-content" role="menu">
-                            <a href="#" class="retrieve-action" data-id="{{ consumable.id }}" role="menuitem">Retrieve</a>
-                            <a href="#" class="return-action" data-id="{{ consumable.id }}" role="menuitem">Return</a>
+                            <a href="#" class="retrieve-action" onclick="showRetrievePopup()" data-id="{{ consumable.id }}" role="menuitem">Retrieve</a>
+                            <a href="#" class="return-action" onclick="showReturnPopup()" data-id="{{ consumable.id }}" role="menuitem">Return</a>
                                             
                             {% if user == project.project_manager or user in project.project_editors.all %}
                                             
                             <hr role="separator">
-                            <a href="#" class="edit-action" data-id="{{ consumable.id }}" role="menuitem">Edit</a>
-                            <a href="#" class="delete-action" data-project="{{ project.name }}" data-id="{{ consumable.id }}" role="menuitem">Delete</a>
+                            <a href="#" class="edit-action" onclick="showEditPopup()" data-id="{{ consumable.id }}" role="menuitem">Edit</a>
+                            <a href="#" class="delete-action" onclick="showDeletePopup()" data-project="{{ project.name }}" data-id="{{ consumable.id }}" role="menuitem">Delete</a>
                                 
                             {% endif %}
                         </div>
@@ -319,7 +320,7 @@
     <div class="popup-card">
         <h2>Edit Item</h2>
         <div class="box">
-            <form id="edit-form" method="POST" action="">
+            <form id="edit-form" method="POST" action="{% url 'edit_consumable' project_name=project.name %}">
                 {% csrf_token %}
                 <div class="inputBox">
                     <input type="text" name="name" id="name" required=""
@@ -370,7 +371,7 @@
     <div class="popup-card">
         <h2>Retrieve Item</h2>
         <br>
-        <form id="retrieve-form" method="POST" action="">
+        <form id="retrieve-form" method="POST" action="{% url 'retrieve_consumable' project_name=project.name %}">
             {% csrf_token %}
             <div class="quantity-filter-container">
                 <label for="retrieve_by">Retrieve By</label>
@@ -399,7 +400,7 @@
     <div class="popup-card">
         <h2>Return Item</h2>
         <br>
-        <form id="return-form" method="POST" action="">
+        <form id="return-form" method="POST" action="{% url 'return_consumable' project_name=project.name %}">
             {% csrf_token %}
             <div class="quantity-filter-container">
                 <label for="return_by">Return By</label>
