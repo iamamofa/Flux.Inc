@@ -219,7 +219,7 @@
                 <th scope="col">Date Created</th>
                 <th scope="col">Expiry Date</th>
                 <th scope="col">Storage Location</th>
-                <th scope="col">Actions</th>
+                <th scope="col"></th>
             </tr>
         </thead>
         <tbody id="consumablesTable">
@@ -241,20 +241,33 @@
                 <td>{{ consumable.expiry_date|date:"Y-m-d" }}</td>
                 <td data-fulltext="{{ consumable.storage_location }}">{{ consumable.storage_location|truncatechars:20 }}</td>
                 <td class="actions">
-                    <button class="retrieve-btn" data-id="{{ consumable.id }}">Retrieve</button>
-                    <button class="return-btn" data-id="{{ consumable.id }}">Return</button>
+                    <div class="dropdown">
+                        <!-- Main trigger button -->
+                        <button class="dropdown-trigger" aria-label="Actions menu">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <circle cx="12" cy="12" r="1"></circle>
+                                <circle cx="12" cy="5" r="1"></circle>
+                                <circle cx="12" cy="19" r="1"></circle>
+                            </svg>
+                        </button>
+
+                        <!-- Hidden action buttons -->
+                        <div class="dropdown-actions">
+                            <button class="retrieve-btn" data-id="{{ consumable.id }}">Retrieve</button>
+                            <button class="return-btn" data-id="{{ consumable.id }}">Return</button>
                                             
-                    {% if user == project.project_manager or user in project.project_editors.all %}
+                            {% if user == project.project_manager or user in project.project_editors.all %}
                                             
-                    <hr role="separator">
-                    <button class="edit-btn" data-id="{{ consumable.id }}">Edit</button>
-                    <button class="delete-btn"
-                            data-project="{{ project.name }}"
-                            data-id="{{ consumable.id }}">
-                        Delete
-                    </button>
-                                
-                    {% endif %}
+                            <hr>
+                            <button class="edit-btn" data-id="{{ consumable.id }}">Edit</button>
+                            <button class="delete-btn"
+                                data-project="{{ project.name }}"
+                                data-id="{{ consumable.id }}">
+                                Delete
+                            </button>    
+                            {% endif %}
+                        </div>
+                    </div>
                 </td>
             </tr>
             {% endfor %}
@@ -315,7 +328,7 @@
     </div>
 </div>
 
-<div class="popup-container2" id="editPopup">
+<div class="popup-container1" id="editPopup">
     <div class="popup-card">
         <h2>Edit Item</h2>
         <div class="box">

@@ -99,6 +99,28 @@ function setupEventListeners() {
   
   // Form submissions
   setupFormSubmissions();
+
+  // Add dropdown toggle logic
+  setupDropdowns();
+}
+
+function setupDropdowns() {
+  // Toggle dropdown on click
+  document.querySelectorAll('.dropdown-trigger').forEach(trigger => {
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      trigger.closest('.dropdown').classList.toggle('active');
+    });
+  });
+
+  // Close when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.dropdown')) {
+      document.querySelectorAll('.dropdown').forEach(dropdown => {
+        dropdown.classList.remove('active');
+      });
+    }
+  });
 }
 
 // Setup form submissions
@@ -288,16 +310,25 @@ function refreshTableRow(id, data) {
   const cells = row.querySelectorAll('td');
   if (cells.length < 10) return;
 
-  cells[0].textContent = data.name;
-    cells[1].textContent = data.equip_id;
-    cells[2].textContent = data.serial_num;
-    cells[3].textContent = data.quantity;
-    cells[4].textContent = data.status;
-    cells[5].textContent = data.service_contract_start;
-    cells[6].textContent = data.service_contract_end;
-    cells[8].textContent = data.donated_by;
-    cells[9].textContent = data.storage_location;
+  cells[0].setAttribute('data-fulltext', data.name);
+  cells[0].textContent = truncateText(data.name, 20);
+  cells[1].textContent = data.equip_id;
+  cells[2].textContent = data.serial_num;
+  cells[3].textContent = data.quantity;
+  cells[4].textContent = data.status;
+  cells[5].textContent = data.service_contract_start;
+  cells[6].textContent = data.service_contract_end;
+  cells[8].textContent = data.donated_by;
+  cells[9].setAttribute('data-fulltext', data.storage_location);
+  cells[9].textContent = truncateText(data.storage_location, 15);
 }
+
+function truncateText(text, maxLength) {
+  return text.length > maxLength 
+    ? text.substring(0, maxLength - 3) + '...' 
+    : text;
+}
+
 // Success handlers
 function handleAddSuccess(data) {
   showNotification('Equipment added successfully', 'success');

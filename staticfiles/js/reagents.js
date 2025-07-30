@@ -177,13 +177,21 @@ class TableManager {
         if (!row) return;
         
         const columns = row.querySelectorAll('td');
-        columns[0].textContent = data.name;
+        columns[0].setAttribute('data-fulltext', data.name);
+        columns[0].textContent = truncateText(data.name, 20);
         columns[1].textContent = data.product_code;
         columns[2].textContent = `${data.pack_size_rem}/${data.pack_size}`;
         columns[3].textContent = data.quantity;
         columns[4].textContent = data.date_recorded;
         columns[5].textContent = data.expiry_date;
-        columns[6].textContent = data.storage_location;
+        columns[6].setAttribute('data-fulltext', data.storage_location);
+        columns[6].textContent = truncateText(data.storage_location, 15);
+    }
+
+    function truncateText(text, maxLength) {
+        return text.length > maxLength 
+            ? text.substring(0, maxLength - 3) + '...' 
+            : text;
     }
     
     removeTableRow(id) {
@@ -345,6 +353,35 @@ class FilterManager {
     }
 }
 
+
+// ========================
+// DROPDOWN MANAGER SECTION
+// ========================
+class DropdownManager {
+    constructor() {
+        this.setupDropdowns();
+    }
+    
+    setupDropdowns() {
+        // Toggle logic
+        document.querySelectorAll('.dropdown-trigger').forEach(trigger => {
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                trigger.closest('.dropdown').classList.toggle('active');
+            });
+        });
+
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dropdown')) {
+                document.querySelectorAll('.dropdown').forEach(dropdown => {
+                    dropdown.classList.remove('active');
+                });
+            }
+        });
+    }
+}
+
 // ========================
 // MAIN APPLICATION SECTION
 // ========================
@@ -354,6 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.formHandler = new FormHandler();
     window.tableManager = new TableManager();
     window.filterManager = new FilterManager(window.tableManager);
+    window.dropdownManager = new DropdownManager();
     
     // Register modals
     window.modalManager.registerModal('.popup-container1', 'addPopup');

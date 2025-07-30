@@ -1,28 +1,30 @@
-// samples.js - Improved JavaScript for samples management
+// samples.js - Optimized JavaScript for samples management
 
-// Utility Functions
+// ==============================================
+// UTILITY FUNCTIONS
+// ==============================================
+
 function getCSRFToken() {
-    const cookieValue = document.cookie
+    return document.cookie
         .split('; ')
         .find(row => row.startsWith('csrftoken='))
         ?.split('=')[1];
-    return cookieValue;
 }
 
-async function makeRequest(url, method, data) {
+async function makeRequest(url, method, data = null) {
     try {
-        const response = await fetch(url, {
+        const options = {
             method,
             headers: {
                 'X-CSRFToken': getCSRFToken(),
                 'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        });
+            }
+        };
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (data) options.body = JSON.stringify(data);
+        
+        const response = await fetch(url, options);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         return await response.json();
     } catch (error) {
         console.error('Request failed:', error);
@@ -43,8 +45,27 @@ function showToast(message, isSuccess = true) {
     }, 3000);
 }
 
-// DOM Elements
-const domElements = {
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+function isDateInRange(date, minDate, maxDate) {
+    if (!date) return true;
+    const currentDate = new Date(date);
+    const min = new Date(minDate);
+    const max = new Date(maxDate);
+    return currentDate >= min && currentDate <= max;
+}
+
+// ==============================================
+// DOM ELEMENTS & STATE MANAGEMENT
+// ==============================================
+
+const dom = {
     popups: {
         add: document.getElementById('addPopup'),
         edit: document.getElementById('editPopup'),
@@ -76,98 +97,61 @@ const domElements = {
     table: document.getElementById('samplesTable'),
 };
 
-// State Management
-let currentState = {
+const state = {
     currentItemId: null,
     currentProject: null,
     sortDirection: 'asc',
     currentSortColumn: null,
 };
 
-// Popup Management
-function setupPopup(containerClass, popupId, openFunc, closeFunc) {
+// ==============================================
+// POPUP MANAGEMENT
+// ==============================================
+
+function setupPopup(containerClass, popupId) {
     const container = document.querySelector(containerClass);
     const popup = document.getElementById(popupId);
     
-    container?.addEventListener("click", (e) => {
-        if (e.target === container) closeFunc();
-    });
+    if (!container || !popup) return;
     
-    return { open: openFunc, close: closeFunc };
+    container.addEventListener("click", (e) => {
+        if (e.target === container) hidePopup(popupId);
+    });
 }
 
-const popups = {
-    add: setupPopup('.popup-container1', 'addPopup', showAddPopup, closeAddPopup),
-    edit: setupPopup('.popup-container2', 'editPopup', showEditPopup, closeEditPopup),
-    retrieve: setupPopup('.popup-container3', 'retrievePopup', showRetrievePopup, closeRetrievePopup),
-    return: setupPopup('.popup-container4', 'returnPopup', showReturnPopup, closeReturnPopup),
-};
-
-// Sample CRUD Operations
-function showAddPopup() {
-    domElements.popups.add.style.display = 'flex';
+function showPopup(popupId) {
+    if (dom.popups[popupId]) {
+        dom.popups[popupId].style.display = 'flex';
+    }
 }
 
-function closeAddPopup() {
-    domElements.popups.add.style.display = 'none';
-    domElements.forms.add.reset();
+function hidePopup(popupId) {
+    if (dom.popups[popupId]) {
+        dom.popups[popupId].style.display = 'none';
+        if (dom.forms[popupId]) dom.forms[popupId].reset();
+    }
 }
 
-function showEditPopup(id) {
-    currentState.currentItemId = id;
-    domElements.popups.edit.style.display = 'flex';
-    getItemInfo();
-}
+// ==============================================
+// SAMPLE CRUD OPERATIONS
+// ==============================================
 
-function closeEditPopup() {
-    domElements.popups.edit.style.display = 'none';
-    domElements.forms.edit.reset();
-}
-
-function showRetrievePopup(id) {
-    currentState.currentItemId = id;
-    domElements.popups.retrieve.style.display = 'flex';
-}
-
-function closeRetrievePopup() {
-    domElements.popups.retrieve.style.display = 'none';
-    domElements.forms.retrieve.reset();
-}
-
-function showReturnPopup(id) {
-    currentState.currentItemId = id;
-    domElements.popups.return.style.display = 'flex';
-}
-
-function closeReturnPopup() {
-    domElements.popups.return.style.display = 'none';
-    domElements.forms.return.reset();
-}
-
-function showDeletePopup(projectName, id) {
-    currentState.currentItemId = id;
-    currentState.currentProject = projectName;
-    domElements.popups.delete.style.display = 'flex';
-}
-
-function closeDeletePopup() {
-    domElements.popups.delete.style.display = 'none';
-}
-
-// Update the getItemInfo function to fill the edit form
 async function getItemInfo() {
     try {
-        const data = await makeRequest(`/get_sample_info/${currentState.currentItemId}`, 'GET');
+        const data = await makeRequest(`/get_sample_info/${state.currentItemId}`, 'GET');
         
         // Fill the edit form with the retrieved data
-        document.getElementById('edit_sample_id').value = data.sample_id;
-        document.getElementById('edit_sample_type').value = data.sample_type;
-        document.getElementById('edit_description').value = data.description;
-        document.getElementById('edit_country').value = data.country;
-        document.getElementById('edit_volume').value = data.volume;
-        document.getElementById('edit_well_id').value = data.well_id;
-        document.getElementById('edit_storage_location').value = data.storage_location;
-        document.getElementById('edit_threshold_value').value = data.threshold_value;
+        const form = document.getElementById('edit-form');
+        if (!form) return;
+        
+        form.elements.sample_id.value = data.sample_id;
+        form.elements.sample_type.value = data.sample_type;
+        form.elements.description.value = data.description;
+        form.elements.country.value = data.country;
+        form.elements.volume.value = data.volume;
+        form.elements.well_id.value = data.well_id;
+        form.elements.storage_location.value = data.storage_location;
+        form.elements.threshold_value.value = data.threshold_value;
     } catch (error) {
         console.error('Error retrieving sample information:', error);
         showToast('Failed to load sample data', false);
@@ -177,54 +161,30 @@ async function getItemInfo() {
 async function deleteItem() {
     try {
         await makeRequest(
-            `/delete_sample/${currentState.currentProject}/${currentState.currentItemId}`, 
+            `/delete_sample/${state.currentProject}/${state.currentItemId}`, 
             'DELETE'
         );
-        removeTableRow(currentState.currentItemId);
+        removeTableRow(state.currentItemId);
         showToast('Sample deleted successfully');
-        closeDeletePopup();
+        hidePopup('delete');
     } catch (error) {
         console.error('Error deleting sample:', error);
     }
 }
 
+// ==============================================
+// TABLE OPERATIONS
+// ==============================================
+
 function removeTableRow(id) {
-    const row = domElements.table.querySelector(`tr[data-id="${id}"]`);
+    const row = dom.table.querySelector(`tr[data-id="${id}"]`);
     if (row) row.remove();
 }
 
-// Form Handlers
-function setupFormHandler(formElement, endpoint, method, successCallback) {
-    formElement.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        
-        const formData = new FormData(formElement);
-        const jsonData = {};
-        formData.forEach((value, key) => {
-            jsonData[key] = value;
-        });
-
-        try {
-            const data = await makeRequest(
-                `${endpoint}/${currentState.currentItemId}`, 
-                method, 
-                jsonData
-            );
-            
-            if (successCallback) successCallback(data);
-            showToast('Operation completed successfully');
-        } catch (error) {
-            console.error('Form submission error:', error);
-        }
-    });
-}
-
-// Table Operations
 function refreshTableRow(id, data) {
-    const row = domElements.table.querySelector(`tr[data-id="${id}"]`);
+    const row = dom.table.querySelector(`tr[data-id="${id}"]`);
     if (!row) return;
 
-    // Update data attributes
     row.dataset.sampleId = data.sample_id;
     row.dataset.sampleType = data.sample_type;
     row.dataset.description = data.description;
@@ -233,30 +193,72 @@ function refreshTableRow(id, data) {
     row.dataset.wellId = data.well_id;
     row.dataset.storageLocation = data.storage_location;
 
-    // Update visible cells
     const cells = row.querySelectorAll('td');
     cells[0].textContent = data.sample_id;
-    cells[1].textContent = data.sample_type;
-    cells[2].textContent = data.description;
+    cells[1].setAttribute('data-fulltext', data.sample_type);
+    cells[1].textContent = truncateText(data.sample_type, 15);
+    cells[2].setAttribute('data-fulltext', data.description);
+    cells[2].textContent = truncateText(data.description, 20);
     cells[3].textContent = data.country;
     cells[4].textContent = data.volume;
     cells[6].textContent = data.well_id;
-    cells[7].textContent = data.storage_location;
+    cells[7].setAttribute('data-fulltext', data.storage_location);
+    cells[7].textContent = truncateText(data.storage_location, 15);
 }
+
+function truncateText(text, maxLength) {
+  return text.length > maxLength 
+    ? text.substring(0, maxLength - 3) + '...' 
+    : text;
+}
+
+function addNewRowToTable(sampleData) {
+    const newRow = document.createElement('tr');
+    newRow.dataset.id = sampleData.id;
+    newRow.dataset.sampleId = sampleData.sample_id;
+    newRow.dataset.sampleType = sampleData.sample_type;
+    newRow.dataset.description = sampleData.description;
+    newRow.dataset.country = sampleData.country;
+    newRow.dataset.volume = sampleData.volume;
+    newRow.dataset.dateRecorded = sampleData.date_recorded;
+    newRow.dataset.wellId = sampleData.well_id;
+    newRow.dataset.storageLocation = sampleData.storage_location;
+
+    newRow.innerHTML = `
+        <td>${sampleData.sample_id}</td>
+        <td>${sampleData.sample_type}</td>
+        <td>${sampleData.description}</td>
+        <td>${sampleData.country}</td>
+        <td>${sampleData.volume}</td>
+        <td>${sampleData.date_recorded}</td>
+        <td>${sampleData.well_id}</td>
+        <td>${sampleData.storage_location}</td>
+        <td class="actions">
+            <button onclick="showEditPopup('${sampleData.id}')">Edit</button>
+            <button onclick="showDeletePopup('${sampleData.project}', '${sampleData.id}')">Delete</button>
+        </td>
+    `;
+
+    dom.table.appendChild(newRow);
+}
+
+// ==============================================
+// FILTERING & SORTING
+// ==============================================
 
 function filterTable() {
     const filters = {
-        sampleID: domElements.filters.sampleID.value.toLowerCase(),
-        sampleType: domElements.filters.sampleType.value.toLowerCase() === 'all' ? '' : domElements.filters.sampleType.value.toLowerCase(),
-        country: domElements.filters.country.value.toLowerCase(),
-        minVolume: domElements.filters.minVolume.value !== '' ? parseFloat(domElements.filters.minVolume.value) : 0,
-        maxVolume: domElements.filters.maxVolume.value !== '' ? parseFloat(domElements.filters.maxVolume.value) : Infinity,
-        minDate: domElements.filters.minDate.value || '1900-01-01',
-        maxDate: domElements.filters.maxDate.value || '9999-12-31',
-        storageLocation: domElements.filters.storageLocation.value.toLowerCase(),
+        sampleID: dom.filters.sampleID.value.toLowerCase(),
+        sampleType: dom.filters.sampleType.value.toLowerCase() === 'all' ? '' : dom.filters.sampleType.value.toLowerCase(),
+        country: dom.filters.country.value.toLowerCase(),
+        minVolume: dom.filters.minVolume.value ? parseFloat(dom.filters.minVolume.value) : 0,
+        maxVolume: dom.filters.maxVolume.value ? parseFloat(dom.filters.maxVolume.value) : Infinity,
+        minDate: dom.filters.minDate.value || '1900-01-01',
+        maxDate: dom.filters.maxDate.value || '9999-12-31',
+        storageLocation: dom.filters.storageLocation.value.toLowerCase(),
     };
 
-    const rows = domElements.table.querySelectorAll('tr');
+    const rows = dom.table.querySelectorAll('tr');
     
     rows.forEach((row) => {
         if (!row.dataset.id) return; // Skip header row
@@ -284,41 +286,31 @@ function filterTable() {
     });
 }
 
-function isDateInRange(date, minDate, maxDate) {
-    if (!date || !minDate || !maxDate) return true;
-    
-    const currentDate = new Date(date);
-    const min = new Date(minDate);
-    const max = new Date(maxDate);
-
-    return currentDate >= min && currentDate <= max;
-}
-
 function sortTable() {
-    const columnIndex = domElements.filters.sortColumn.value;
+    const columnIndex = dom.filters.sortColumn.value;
     if (columnIndex === '0') return; // "None" selected
     
-    const rows = Array.from(domElements.table.querySelectorAll('tr:not(:first-child)'));
+    const rows = Array.from(dom.table.querySelectorAll('tr:not(:first-child)'));
     
-    // Toggle sort direction if clicking the same column
-    if (currentState.currentSortColumn === columnIndex) {
-        currentState.sortDirection = currentState.sortDirection === 'asc' ? 'desc' : 'asc';
+    // Toggle sort direction if same column
+    if (state.currentSortColumn === columnIndex) {
+        state.sortDirection = state.sortDirection === 'asc' ? 'desc' : 'asc';
     } else {
-        currentState.currentSortColumn = columnIndex;
-        currentState.sortDirection = 'asc';
+        state.currentSortColumn = columnIndex;
+        state.sortDirection = 'asc';
     }
     
     rows.sort((a, b) => {
         const valA = getCellValue(a, columnIndex);
         const valB = getCellValue(b, columnIndex);
         
-        return currentState.sortDirection === 'asc' 
+        return state.sortDirection === 'asc' 
             ? compareValues(valA, valB)
             : compareValues(valB, valA);
     });
     
     // Reattach sorted rows
-    rows.forEach(row => domElements.table.appendChild(row));
+    rows.forEach(row => dom.table.appendChild(row));
 }
 
 function getCellValue(row, columnIndex) {
@@ -327,193 +319,191 @@ function getCellValue(row, columnIndex) {
     
     const value = column.textContent.trim();
     
-    // Special handling for numeric columns
-    if (columnIndex === '5') { // Volume column
-        return parseFloat(value) || 0;
-    }
+    // Numeric columns
+    if (columnIndex === '5') return parseFloat(value) || 0;
     
-    // Special handling for date columns
-    if (columnIndex === '6') { // Date Recorded column
-        return new Date(value).getTime();
-    }
+    // Date columns
+    if (columnIndex === '6') return new Date(value).getTime();
     
     return value.toLowerCase();
 }
 
 function compareValues(a, b) {
-    if (typeof a === 'number' && typeof b === 'number') {
-        return a - b;
-    }
+    if (typeof a === 'number' && typeof b === 'number') return a - b;
     return String(a).localeCompare(String(b));
 }
 
 function resetFilters() {
     // Clear all filter inputs
-    Object.values(domElements.filters).forEach(filter => {
-        if (filter.tagName === 'SELECT') {
-            filter.value = filter.querySelector('option[value="0"]') ? '0' : 'All';
-        } else {
-            filter.value = '';
-        }
+    Object.values(dom.filters).forEach(filter => {
+        if (filter) filter.value = filter.tagName === 'SELECT' ? '0' : '';
     });
     
     // Reset sort state
-    currentState.sortDirection = 'asc';
-    currentState.currentSortColumn = null;
+    state.sortDirection = 'asc';
+    state.currentSortColumn = null;
     
     // Show all rows
-    const rows = domElements.table.querySelectorAll('tr');
+    const rows = dom.table.querySelectorAll('tr');
     rows.forEach(row => row.style.display = '');
 }
 
-// Event Listeners
-function initializeEventListeners() {
-    // Event types for each filter input
-    const filterEvents = [
-        { key: 'sampleID', event: 'input' },
-        { key: 'sampleType', event: 'input' },
-        { key: 'country', event: 'input' },
-        { key: 'minVolume', event: 'input' },
-        { key: 'maxVolume', event: 'input' },
-        { key: 'minDate', event: 'change' },
-        { key: 'maxDate', event: 'change' },
-        { key: 'storageLocation', event: 'input' },
-        { key: 'sortColumn', event: 'change', handler: sortTable }, // special handler
-    ];
+// ==============================================
+// FORM HANDLERS
+// ==============================================
 
-    filterEvents.forEach(({ key, event, handler }) => {
-        const el = domElements.filters[key];
-        if (el) {
-            el.addEventListener(event, handler || debounce(filterTable, 300));
+function setupFormHandler(form, endpoint, method, onSuccess) {
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const jsonData = Object.fromEntries(formData.entries());
+
+        try {
+            const url = typeof endpoint === 'function' 
+                ? endpoint(state.currentItemId) 
+                : endpoint;
+            
+            const data = await makeRequest(url, method, jsonData);
+            if (onSuccess) onSuccess(data);
+            showToast('Operation completed successfully');
+        } catch (error) {
+            console.error('Form submission error:', error);
         }
     });
+}
 
-    // Button handlers
-    const buttonHandlers = {
-        reset: resetFilters,
-        addItem: showAddPopup
-    };
+// ==============================================
+// DROPDOWN FUNCTIONS (NEW SECTION)
+// ==============================================
 
-    for (const [key, handler] of Object.entries(buttonHandlers)) {
-        const btn = domElements.buttons[key];
-        if (btn) btn.addEventListener('click', handler);
+function setupDropdowns() {
+  // Toggle dropdowns when clicking triggers
+  document.querySelectorAll('.dropdown-trigger').forEach(trigger => {
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      trigger.closest('.dropdown').classList.toggle('active');
+    });
+  });
+
+  // Close all dropdowns when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.dropdown')) {
+      document.querySelectorAll('.dropdown').forEach(dropdown => {
+        dropdown.classList.remove('active');
+      });
     }
+  });
+}
+
+// ==============================================
+// INITIALIZATION
+// ==============================================
+
+function initialize() {
+    // Setup popups
+    setupPopup('.popup-container1', 'add');
+    setupPopup('.popup-container2', 'edit');
+    setupPopup('.popup-container3', 'retrieve');
+    setupPopup('.popup-container4', 'return');
+    setupPopup('.popup-container5', 'delete');
+
+    // Setup dropdowns
+    setupDropdowns();
 
     // Form handlers
-    const formConfigs = [
-        {
-            form: domElements.forms.edit,
-            url: '/edit_sample',
-            method: 'PUT',
-            onSuccess: (data) => {
-                refreshTableRow(currentState.currentItemId, data);
-                closeEditPopup();
-            }
-        },
-        {
-            form: domElements.forms.retrieve,
-            url: '/retrieve_sample',
-            method: 'PUT',
-            onSuccess: (data) => {
-                refreshTableRow(currentState.currentItemId, data);
-                closeRetrievePopup();
-                if (domElements.filters.retrieveFilterInput) {
-                    domElements.filters.retrieveFilterInput.value = '';
-                }
-            }
-        },
-        {
-            form: domElements.forms.return,
-            url: '/return_sample',
-            method: 'PUT',
-            onSuccess: (data) => {
-                refreshTableRow(currentState.currentItemId, data);
-                closeReturnPopup();
-                if (domElements.filters.returnFilterInput) {
-                    domElements.filters.returnFilterInput.value = '';
-                }
-            }
-        }
-    ];
-
-    formConfigs.forEach(({ form, url, method, onSuccess }) => {
-        if (form) {
-            setupFormHandler(form, url, method, onSuccess);
-        }
+    setupFormHandler(dom.forms.edit, id => `/edit_sample/${id}`, 'PUT', (data) => {
+        refreshTableRow(state.currentItemId, data);
+        hidePopup('edit');
+    });
+    
+    setupFormHandler(dom.forms.retrieve, id => `/retrieve_sample/${id}`, 'PUT', (data) => {
+        refreshTableRow(state.currentItemId, data);
+        hidePopup('retrieve');
+    });
+    
+    setupFormHandler(dom.forms.return, id => `/return_sample/${id}`, 'PUT', (data) => {
+        refreshTableRow(state.currentItemId, data);
+        hidePopup('return');
     });
 
     // Add form (special case)
-    const addForm = domElements.forms.add;
-    if (addForm) {
-        addForm.addEventListener('submit', async (event) => {
-            event.preventDefault();
-
-            const formData = new FormData(addForm);
+    if (dom.forms.add) {
+        dom.forms.add.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(dom.forms.add);
             const jsonData = Object.fromEntries(formData.entries());
 
             try {
-                const data = await makeRequest(addForm.action, 'POST', jsonData);
+                const data = await makeRequest(dom.forms.add.action, 'POST', jsonData);
                 addNewRowToTable(data);
                 showToast('Sample added successfully');
-                closeAddPopup();
+                hidePopup('add');
             } catch (error) {
                 console.error('Error adding sample:', error);
             }
         });
     }
-}
 
-function addNewRowToTable(sampleData) {
-    const newRow = document.createElement('tr');
-    newRow.dataset.id = sampleData.id;
-    newRow.dataset.sampleId = sampleData.sample_id;
-    newRow.dataset.sampleType = sampleData.sample_type;
-    newRow.dataset.description = sampleData.description;
-    newRow.dataset.country = sampleData.country;
-    newRow.dataset.volume = sampleData.volume;
-    newRow.dataset.dateRecorded = sampleData.date_recorded;
-    newRow.dataset.wellId = sampleData.well_id;
-    newRow.dataset.storageLocation = sampleData.storage_location;
+    // Filter events
+    const filterInputs = [
+        dom.filters.sampleID,
+        dom.filters.sampleType,
+        dom.filters.country,
+        dom.filters.minVolume,
+        dom.filters.maxVolume,
+        dom.filters.storageLocation
+    ];
+    
+    filterInputs.forEach(input => {
+        if (input) input.addEventListener('input', debounce(filterTable, 300));
+    });
 
-    newRow.innerHTML = `
-        <td>${sampleData.sample_id}</td>
-        <td>${sampleData.sample_type}</td>
-        <td>${sampleData.description}</td>
-        <td>${sampleData.country}</td>
-        <td>${sampleData.volume}</td>
-        <td>${sampleData.date_recorded}</td>
-        <td>${sampleData.well_id}</td>
-        <td>${sampleData.storage_location}</td>
-        <td>
-            <!-- Action buttons would go here -->
-        </td>
-    `;
+    // Date filter events
+    if (dom.filters.minDate) dom.filters.minDate.addEventListener('change', filterTable);
+    if (dom.filters.maxDate) dom.filters.maxDate.addEventListener('change', filterTable);
 
-    domElements.table.appendChild(newRow);
-}
+    // Sort event
+    if (dom.filters.sortColumn) {
+        dom.filters.sortColumn.addEventListener('change', sortTable);
+    }
 
-// Utility function to debounce rapid events
-function debounce(func, wait) {
-    let timeout;
-    return function(...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), wait);
-    };
-}
+    // Button events
+    if (dom.buttons.reset) dom.buttons.reset.addEventListener('click', resetFilters);
+    if (dom.buttons.addItem) dom.buttons.addItem.addEventListener('click', () => showPopup('add'));
 
-// Initialize the application when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    initializeEventListeners();
-
-    Object.values(domElements.popups).forEach(popup => {
+    // Hide all popups on load
+    Object.values(dom.popups).forEach(popup => {
         if (popup) popup.style.display = 'none';
     });
-    
-    // Make functions available globally if needed
-    window.showEditPopup = showEditPopup;
-    window.showRetrievePopup = showRetrievePopup;
-    window.showReturnPopup = showReturnPopup;
-    window.showDeletePopup = showDeletePopup;
-    window.deleteItem = deleteItem;
-    window.closeDeletePopup = closeDeletePopup;
-});
+}
+
+// Make functions available globally
+window.showEditPopup = (id) => {
+    state.currentItemId = id;
+    showPopup('edit');
+    getItemInfo();
+};
+
+window.showRetrievePopup = (id) => {
+    state.currentItemId = id;
+    showPopup('retrieve');
+};
+
+window.showReturnPopup = (id) => {
+    state.currentItemId = id;
+    showPopup('return');
+};
+
+window.showDeletePopup = (projectName, id) => {
+    state.currentItemId = id;
+    state.currentProject = projectName;
+    showPopup('delete');
+};
+
+window.deleteItem = deleteItem;
+window.closeDeletePopup = () => hidePopup('delete');
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', initialize);

@@ -1553,6 +1553,54 @@ video {
     background-color: #f5f5f5;
 }
 
+
+/* Trigger button (three dots) */
+.dropdown-trigger {
+    background: none;
+    border: none;
+    padding: 4px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.dropdown-trigger:hover {
+    background: #f0f0f0;
+}
+
+/* Hidden actions */
+.dropdown-actions {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: white;
+    min-width: 120px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    border-radius: 4px;
+    z-index: 100;
+    padding: 8px 0;
+}
+
+/* Show dropdown when active */
+.dropdown.active .dropdown-actions {
+    display: block;
+}
+
+/* Style the action buttons */
+.dropdown-actions button {
+    display: block;
+    width: 100%;
+    padding: 8px 16px;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+.dropdown-actions button:hover {
+    background: #f5f5f5;
+}
+
 .box form .inputBox {
     height: 52px;
     margin: 18px 0;
