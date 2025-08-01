@@ -1573,7 +1573,7 @@ video {
     position: absolute;
     right: 0;
     top: 100%;
-    background: white;
+    /* background: white; */
     min-width: 120px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     border-radius: 4px;
@@ -1938,38 +1938,367 @@ video {
 }
 
 /* Equipment */
-#equipmentTable th:nth-child(1) { width: 15%; } /* Name */
-#equipmentTable th:nth-child(2) { width: 8%; }  /* ID */
-#equipmentTable th:nth-child(3) { width: 10%; } /* Serial Number */
-#equipmentTable th:nth-child(4) { width: 8%; }  /* Quantity */
-#equipmentTable th:nth-child(5) { width: 10%; } /* Status */
-#equipmentTable th:nth-child(6) { width: 10%; } /* Service Contract Start */
-#equipmentTable th:nth-child(7) { width: 10%; } /* Service Contract End */
-#equipmentTable th:nth-child(8) { width: 10%; } /* Date Recorded */
-#equipmentTable th:nth-child(9) { width: 10%; } /* Donated By */
-#equipmentTable th:nth-child(10) { width: 10%; } /* Storage Location */
-#equipmentTable th:nth-child(11) { width: 5%; }  /* Actions */
+#equipmentTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#equipmentTable th,
+#equipmentTable td {
+    text-align: left;
+    vertical-align: middle;
+    padding: 12px 15px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+#equipmentTable th:nth-child(1),
+#equipmentTable td:nth-child(1) {
+    width: 18%;
+    min-width: 150px;
+} /* Name */
+
+
+#equipmentTable th:nth-child(2),
+#equipmentTable td:nth-child(2) {
+    width: 12%;
+    min-width: 100px;
+}  /* ID */
+
+#equipmentTable th:nth-child(3),
+#equipmentTable td:nth-child(3) {
+    width: 10%;
+    min-width: 90px
+} /* Serial Number */
+
+#equipmentTable th:nth-child(4),
+#equipmentTable td:nth-child(4) {
+    width: 10%;
+    min-width: 80px;
+    text-align: center;
+}  /* Quantity */
+
+#equipmentTable th:nth-child(5),
+#equipmentTable td:nth-child(5) {
+    width: 12%;
+    min-width: 90px;
+} /* Status */
+
+#equipmentTable th:nth-child(6),
+#equipmentTable td:nth-child(6) {
+    width: 12%;
+    min-width: 110px;
+} /* Service Contract Start */
+
+#equipmentTable th:nth-child(7),
+#equipmentTable td:nth-child(7) {
+    width: 12%;
+    min-width: 110px;
+} /* Service Contract End */
+
+#equipmentTable th:nth-child(8),
+#equipmentTable td:nth-child(8) {
+    width: 12%;
+    min-width: 110px;
+} /* Date Recorded */
+
+#equipmentTable th:nth-child(9),
+#equipmentTable td:nth-child(9) {
+    width: 12%;
+    min-width: 100px;
+} /* Donated By */
+
+#equipmentTable th:nth-child(10),
+#equipmentTable td:nth-child(10) {
+    width: 16%;
+    min-width: 120px;
+} /* Storage Location */
+
+#equipmentTable th:nth-child(11),
+#equipmentTable td:nth-child(11) {
+    width: 10%; 
+    min-width: 150px;
+    text-align: right;
+}  /* Actions */
+
+/* Sticky header alignment */
+#equipmentTable thead th {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+    box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
+}
+
+#equipmentTable td:not(:last-child) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 0;
+}
+
+#equipmentTable td:nth-child(10) { /* Storage location */
+    white-space: normal;
+    word-break: break-word;
+}
+
+#equipmentTable td:nth-child(11) {
+    white-space: nowrap;
+    overflow: visible;
+}
+
+#equipmentTable td:not(:last-child):hover {
+    position: relative;
+}
+
+#equipmentTable td[data-fulltext]:hover::after {
+    content: attr(data-fulltext);
+    position: absolute;
+    left: 15px;
+    top: 100%;
+    background: #333;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    width: max-content;
+    max-width: 300px;
+}
 
 /* Samples */
-#samplesTable th:nth-child(1) { width: 10%; } /* Sample ID */
-#samplesTable th:nth-child(2) { width: 10%; } /* Type */
-#samplesTable th:nth-child(3) { width: 20%; } /* Description */
-#samplesTable th:nth-child(4) { width: 10%; } /* Country */
-#samplesTable th:nth-child(5) { width: 8%; }  /* Volume */
-#samplesTable th:nth-child(6) { width: 10%; } /* Date Recorded */
-#samplesTable th:nth-child(7) { width: 10%; } /* Well ID */
-#samplesTable th:nth-child(8) { width: 15%; } /* Storage Location */
-#samplesTable th:nth-child(9) { width: 5%; }  /* Actions */
+#samplesTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#samplesTable th,
+#samplesTable td {
+    text-align: left;
+    vertical-align: middle;
+    padding: 12px 15px;
+    border-bottom 1px solid #e5e7eb;
+}
+
+#samplesTable th:nth-child(1),
+#samplesTable td:nth-child(1) {
+    width: 12%;
+    min-width: 100px;
+}
+
+#samplesTable th:nth-child(2),
+#samplesTable td:nth-child(2) {
+    width: 12%;
+    min-width: 100px;
+} /* Type */
+
+#samplesTable th:nth-child(3),
+#samplesTable td:nth-child(3) {
+    width: 20%;
+    min-width: 200px;
+} /* Description */
+
+#samplesTable th:nth-child(4),
+#samplesTable td:nth-child(4) {
+    width: 10%;
+    min-width: 90px;
+} /* Country */
+
+#samplesTable th:nth-child(5),
+#samplesTable td:nth-child(5) {
+    width: 10%;
+    min-width: 80px;
+    text-align: center;
+}  /* Volume */
+
+#samplesTable th:nth-child(6),
+#samplesTable td:nth-child(6) {
+    width: 12%;
+    min-width: 110px;
+} /* Date Recorded */
+
+#samplesTable th:nth-child(7),
+#samplesTable td:nth-child(7) {
+    width: 12%;
+    min-width: 100px;
+} /* Well ID */
+
+#samplesTable th:nth-child(8),
+#samplesTable td:nth-child(8) {
+    width: 16%;
+    min-width: 120px;
+} /* Storage Location */
+
+#samplesTable th:nth-child(9),
+#samplesTable td:nth-child(9) {
+    width: 10%;
+    min-width: 150px;
+    text-align: right;
+}  /* Actions */
+
+/* Sticky header alignment */
+#samplesTable thead th {
+  position: sticky;
+  top: 0;
+  background: white; /* prevents transparent overlap */
+  z-index: 10;
+  box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
+}
+
+/* Apply to all cells except actions */
+#samplesTable td:not(:last-child) {
+  white-space: nowrap;       /* Prevent text wrapping */
+  overflow: hidden;          /* Hide overflow */
+  text-overflow: ellipsis;   /* Show ... for clipped text */
+  max-width: 0;             /* Required for ellipsis to work */
+}
+
+/* Special handling for columns where wrapping is preferred */
+#samplesTable td:nth-child(8) {  /* Storage Location */
+  white-space: normal;      /* Allow wrapping */
+  word-break: break-word;   /* Break long words */
+}
+
+/* Actions column (no truncation) */
+#samplesTable td:nth-child(9) {
+  white-space: nowrap;
+  overflow: visible;
+}
+
+/* Show full text on hover */
+#samplesTable td:not(:last-child):hover {
+  position: relative;
+}
+
+#samplesTable td[data-fulltext]:hover::after {
+  content: attr(data-fulltext);
+  position: absolute;
+  left: 15px;
+  top: 100%;
+  background: #333;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  width: max-content;
+  max-width: 300px;
+}
 
 /* Reagents */
-#reagentsTable th:nth-child(1) { width: 15%; } /* Name */
-#reagentsTable th:nth-child(2) { width: 10%; } /* Product Code */
-#reagentsTable th:nth-child(3) { width: 10%; } /* Pack Size */
-#reagentsTable th:nth-child(4) { width: 8%; }  /* Quantity */
-#reagentsTable th:nth-child(5) { width: 10%; } /* Date Created */
-#reagentsTable th:nth-child(6) { width: 10%; } /* Expiry Date */
-#reagentsTable th:nth-child(7) { width: 15%; } /* Storage Location */
-#reagentsTable th:nth-child(8) { width: 5%; }  /* Actions */
+#reagentsTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#reagentsTable th,
+#reagentsTable td {
+    text-align: left;
+    vertical-align: middle;
+    padding: 12px 15px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+#reagentsTable th:nth-child(1),
+#reagentsTable td:nth-child(1) {
+    width: 18%;
+    min-width: 150px;
+} /* Name */
+
+#reagentsTable th:nth-child(2),
+#reagentsTable td:nth-child(2) {
+    width: 12%;
+    min-width: 100px;
+} /* Product Code */
+
+#reagentsTable th:nth-child(3),
+#reagentsTable td:nth-child(3) {
+    width: 10%;
+    min-width: 90px;
+} /* Pack Size */
+
+#reagentsTable th:nth-child(4),
+#reagentsTable td:nth-child(4) {
+    width: 10%;
+    min-width: 80px;
+    text-align: center;
+}  /* Quantity */
+
+#reagentsTable th:nth-child(5),
+#reagentsTable td:nth-child(5) {
+    width: 12%;
+    min-width: 110px;
+} /* Date Created */
+
+#reagentsTable th:nth-child(6),
+#reagentsTable td:nth-child(6) {
+    width: 12%;
+    min-width: 110px;
+} /* Expiry Date */
+
+#reagentsTable th:nth-child(7),
+#reagentsTable td:nth-child(7) {
+    width: 16%;
+    min-width: 120px;
+} /* Storage Location */
+
+#reagentsTable th:nth-child(8),
+#reagentsTable td:nth-child(8) {
+    width: 10%;
+    min-width: 150px;
+    text-align: right;
+}  /* Actions */
+
+/* Sticky header alignment */
+#reagentsTable thead th {
+  position: sticky;
+  top: 0;
+  background: white; /* prevents transparent overlap */
+  z-index: 10;
+  box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
+}
+
+/* Apply to all cells except actions */
+#reagentsTable td:not(:last-child) {
+  white-space: nowrap;       /* Prevent text wrapping */
+  overflow: hidden;          /* Hide overflow */
+  text-overflow: ellipsis;   /* Show ... for clipped text */
+  max-width: 0;             /* Required for ellipsis to work */
+}
+
+/* Special handling for columns where wrapping is preferred */
+#reagentsTable td:nth-child(7) {  /* Storage Location */
+  white-space: normal;      /* Allow wrapping */
+  word-break: break-word;   /* Break long words */
+}
+
+/* Actions column (no truncation) */
+#reagentsTable td:nth-child(8) {
+  white-space: nowrap;
+  overflow: visible;
+}
+
+/* Show full text on hover */
+#reagentsTable td:not(:last-child):hover {
+  position: relative;
+}
+
+#reagentsTable td[data-fulltext]:hover::after {
+  content: attr(data-fulltext);
+  position: absolute;
+  left: 15px;
+  top: 100%;
+  background: #333;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  width: max-content;
+  max-width: 300px;
+}
 
 
 ::-webkit-scrollbar {

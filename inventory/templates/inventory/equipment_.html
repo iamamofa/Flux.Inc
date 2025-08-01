@@ -216,17 +216,17 @@
     <table class="w-full table-auto" aria-label="Equipment inventory" id="equipmentTable">
         <thead>
             <tr>
-                <th>Name</th>
-                <th>ID</th>
-                <th>Serial Number</th>
-                <th>Quantity</th>
-                <th>Status</th>
-                <th>Service Contract Start Date</th>
-                <th>Service Contract End Date</th>
-                <th>Date Recorded</th>
-                <th>Donated By</th>
-                <th>Storage Location</th>
-                <th></th>
+                <th scope="col">Name</th>
+                <th scope="col">ID</th>
+                <th scope="col">Serial Number</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Status</th>
+                <th scope="col">Service Contract Start Date</th>
+                <th scope="col">Service Contract End Date</th>
+                <th scope="col">Date Recorded</th>
+                <th scope="col">Donated By</th>
+                <th scope="col">Storage Location</th>
+                <th scope="col"></th>
             </tr>
         </thead>
         <tbody id="equipmentTable">
@@ -252,7 +252,7 @@
                 <td>{{ equipment.service_contract_end|date:"Y-m-d" }}</td>
                 <td>{{ equipment.date_recorded }}</td>
                 <td>{{ equipment.donated_by }}</td>
-                <td data-fulltext="{{ equipment.storage_location }}">{{ equipment.storage_location }}</td>
+                <td data-fulltext="{{ equipment.storage_location }}">{{ equipment.storage_location|truncatechars:20 }}</td>
                 <td class="actions">
                     <div class="dropdown">
                         <!-- Main trigger button -->

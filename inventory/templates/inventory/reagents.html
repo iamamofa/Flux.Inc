@@ -204,17 +204,17 @@
 
 <!-- Table -->
 <div class="table-container mt-8">
-    <table class="w-full table-auto">
+    <table id="reagentsTable" class="w-full table-auto" aria-label="Reagents Inventory">
         <thead>
             <tr>
-                <th>Name</th>
-                <th>Product Code</th>
-                <th>Pack Size</th>
-                <th>Quantity</th>
-                <th>Date Created</th>
-                <th>Expiry Date</th>
-                <th>Storage Location</th>
-                <th></th>
+                <th scope="col">Name</th>
+                <th scope="col">Product Code</th>
+                <th scope="col">Pack Size</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Date Created</th>
+                <th scope="col">Expiry Date</th>
+                <th scope="col">Storage Location</th>
+                <th scope="col"></th>
             </tr>
         </thead>
         <tbody id="reagentsTable">
@@ -234,7 +234,7 @@
                 <td>{{ reagent.quantity }}</td>
                 <td>{{ reagent.date_recorded|date:"Y-m-d" }}</td>
                 <td>{{ reagent.expiry_date|date:"Y-m-d" }}</td>
-                <td data-fulltext="{{ reagent.storage_location }}">{{ reagent.storage_location }}</td>
+                <td data-fulltext="{{ reagent.storage_location }}">{{ reagent.storage_location|truncatechars:20 }}</td>
                 <td class="actions">
                     <div class="dropdown">
                         <!-- Main trigger button -->
