@@ -301,7 +301,10 @@ async function submitForm(formId, url, method, successCallback) {
       body: JSON.stringify(Object.fromEntries(formData)),
     });
 
-    if (!response.ok) throw new Error('Network response was not ok');
+    if (!response.ok) {
+        throw new Error(`Network response was not ok:
+            ${response.status} ${response.statusText}`);
+    }
     
     const data = await response.json();
     successCallback(data);

@@ -406,7 +406,7 @@ function removeTableRow(id) {
 function filterTable() {
   const filters = {
     sampleID: DOM.filterInputs.sampleID?.value.toLowerCase() || '',
-    sampleType: DOM.filterInputs.sampleType?.value.toLowerCase() === 'all' ? '' : DOM.filterInputs.sampleType.value.toLowerCase(),
+    sampleType: DOM.filterInputs.sampleType?.value.toLowerCase() === 'all' ? '' : DOM.filterInputs.sampleType?.value?.toLowerCase(),
     country: DOM.filterInputs.country?.value.toLowerCase() || '',
     minVolume: DOM.filterInputs.minVolume?.value ? parseFloat(DOM.filterInputs.minVolume.value) : 0,
     maxVolume: DOM.filterInputs.maxVolume?.value ? parseFloat(DOM.filterInputs.maxVolume.value) : Infinity,
