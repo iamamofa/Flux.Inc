@@ -1,439 +1,579 @@
-// ========================
-// REAGENTS MANAGEMENT SYSTEM
-// ========================
+// reagents.js
 
-// ========================
-// MODAL MANAGER SECTION
-// ========================
-class ModalManager {
-    constructor() {
-        this.modals = {};
-        this.currentItemId = null;
-        this.currentProject = null;
-    }
-    
-    registerModal(containerClass, popupId) {
-        const container = document.querySelector(containerClass);
-        const popup = document.getElementById(popupId);
-        
-        if (!container || !popup) return;
-        
-        this.modals[popupId] = { container, popup };
-        
-        container.addEventListener("click", (e) => {
-            if (e.target === container) this.hideModal(popupId);
-        });
-    }
-    
-    showModal(popupId, itemId = null, projectName = null) {
-        if (this.modals[popupId]) {
-            this.currentItemId = itemId;
-            this.currentProject = projectName;
-            this.modals[popupId].popup.style.display = 'flex';
-            
-            // If it's the edit modal, fetch item info
-            if (popupId === 'editPopup' && itemId) {
-                this.getItemInfo(itemId);
-            }
-        }
-    }
-    
-    hideModal(popupId) {
-        if (this.modals[popupId]) {
-            this.modals[popupId].popup.style.display = 'none';
-        }
-    }
-    
-    getItemInfo(id) {
-        fetch(`/get_reagent_info/${id}`, {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            const form = document.getElementById('edit-form');
-            if (!form) return;
-            
-            form.elements.name.value = data.name;
-            form.elements.product_code.value = data.product_code;
-            form.elements.pack_size.value = data.pack_size;
-            form.elements.quantity.value = data.quantity;
-            form.elements.expiry_date.value = data.expiry_date;
-            form.elements.storage_location.value = data.storage_location;
-            form.elements.threshold_value.value = data.threshold_value;
-        })
-        .catch(error => {
-            console.error(`Error retrieving reagent information:`, error);
-            // Show error to user
-        });
-    }
+// ==============================================
+// CONSTANTS AND CONFIGURATION
+// ==============================================
+const POPUP_IDS = {
+  ADD: 'addPopup',
+  EDIT: 'editPopup',
+  RETRIEVE: 'retrievePopup',
+  RETURN: 'returnPopup',
+  DELETE: 'deletePopup'
+};
+
+const POPUP_CONTAINERS = {
+  ADD: '.popup-container1',
+  EDIT: '.popup-container2',
+  RETRIEVE: '.popup-container3',
+  RETURN: '.popup-container4',
+  DELETE: '.popup-container5'
+};
+
+// Get CSRF token from meta tag
+const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+// Global state
+const STATE = {
+  currentItemId: null,
+  currentProject: null,
+  activeSort: {
+    column: null,
+    direction: 'asc'
+  }
+};
+
+// DOM Elements
+const DOM = {
+  table: document.getElementById('reagentsTable'),
+  forms: {
+    add: document.getElementById('reagent-form'),
+    edit: document.getElementById('edit-form'),
+    retrieve: document.getElementById('retrieve-form'),
+    return: document.getElementById('return-form')
+  },
+  filterInputs: {
+    name: document.getElementById('nameFilterInput'),
+    productCode: document.getElementById('productCodeFilterInput'),
+    minQuantity: document.getElementById('minQuantityFilterInput'),
+    maxQuantity: document.getElementById('maxQuantityFilterInput'),
+    minDateCreated: document.getElementById('minDateCreatedFilterInput'),
+    maxDateCreated: document.getElementById('maxDateCreatedFilterInput'),
+    minDateExpired: document.getElementById('minDateExpiredFilterInput'),
+    maxDateExpired: document.getElementById('maxDateExpiredFilterInput'),
+    storageLocation: document.getElementById('storageLocationFilterInput')
+  },
+  buttons: {
+    resetFilters: document.getElementById('resetButton'),
+    confirmDelete: document.getElementById('confirmDeleteBtn'),
+    addItem: document.getElementById('addItemBtn')
+  },
+  notificationContainer: document.getElementById('notification-container')
+};
+
+// ==============================================
+// INITIALIZATION
+// ==============================================
+function initReagentsManager() {
+  setupPopups();
+  setupEventListeners();
+  initialFilter();
 }
 
-// ========================
-// FORM HANDLER SECTION
-// ========================
-class FormHandler {
-    constructor() {
-        this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-        this.setupFormSubmissions();
-    }
-    
-    setupFormSubmissions() {
-        // Add form
-        this.setupForm('reagent-form', 'POST', '/add_reagent', this.handleAddResponse);
-        
-        // Edit form
-        this.setupForm('edit-form', 'PUT', (id) => `/edit_reagent/${id}`, this.handleEditResponse);
-        
-        // Retrieve form
-        this.setupForm('retrieve-form', 'PUT', (id) => `/retrieve_reagent/${id}`, this.handleRetrieveResponse);
-        
-        // Return form
-        this.setupForm('return-form', 'PUT', (id) => `/return_reagent/${id}`, this.handleReturnResponse);
-    }
-    
-    setupForm(formId, method, url, callback) {
-        const form = document.getElementById(formId);
-        if (!form) return;
-        
-        form.addEventListener('submit', (event) => {
-            event.preventDefault();
-            const formData = new FormData(form);
-            const jsonData = this.formDataToJson(formData);
-            
-            // Resolve URL (could be function or string)
-            const resolvedUrl = typeof url === 'function' 
-                ? url(window.modalManager?.currentItemId) 
-                : url;
-            
-            fetch(resolvedUrl, {
-                method: method,
-                headers: {
-                    'X-CSRFToken': this.csrfToken,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(jsonData),
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(data => callback(data))
-            .catch(error => {
-                console.error(`Error with ${formId} submission:`, error);
-                // Show error to user
-            });
-        });
-    }
-    
-    formDataToJson(formData) {
-        const jsonData = {};
-        formData.forEach((value, key) => {
-            jsonData[key] = value;
-        });
-        return jsonData;
-    }
-    
-    handleAddResponse(data) {
-        window.modalManager?.hideModal('addPopup');
-        window.tableManager?.refreshTable();
-    }
-    
-    handleEditResponse(data) {
-        window.modalManager?.hideModal('editPopup');
-        window.tableManager?.refreshTableRow(data.id, data);
-    }
-    
-    handleRetrieveResponse(data) {
-        window.modalManager?.hideModal('retrievePopup');
-        window.tableManager?.refreshTableRow(data.id, data);
-        document.getElementById('retrieveFilterInput').value = '';
-    }
-    
-    handleReturnResponse(data) {
-        window.modalManager?.hideModal('returnPopup');
-        window.tableManager?.refreshTableRow(data.id, data);
-        document.getElementById('returnFilterInput').value = '';
-    }
+// ==============================================
+// EVENT HANDLERS SETUP
+// ==============================================
+function setupEventListeners() {
+  // Modal triggers
+  DOM.buttons.addItem?.addEventListener('click', showAddPopup);
+  
+  // Table interactions
+  DOM.table?.addEventListener('click', handleTableClick);
+  
+  // Filter inputs
+  Object.values(DOM.filterInputs).forEach(input => {
+    if (input) input.addEventListener('input', debounce(filterTable, 300));
+  });
+  
+  // Sorting
+  document.getElementById('sortColumnDropdown')?.addEventListener('change', sortTableByColumn);
+  
+  // Reset filters
+  DOM.buttons.resetFilters?.addEventListener('click', resetFilters);
+  
+  // Form submissions
+  setupFormHandlers();
+  
+  // Delete confirmation
+  DOM.buttons.confirmDelete?.addEventListener('click', handleDeleteConfirm);
+
+  // Add dropdown toggle logic
+  setupDropdowns();
 }
 
-// ========================
-// TABLE MANAGER SECTION
-// ========================
-class TableManager {
-    constructor() {
-        this.table = document.getElementById('reagentsTable');
-    }
-    
-    refreshTable() {
-        console.log('Refreshing entire table');
-        location.reload(); // Simple implementation - could be optimized
-    }
-    
-    refreshTableRow(id, data) {
-        const row = this.table.querySelector(`tr[data-id="${id}"]`);
-        if (!row) return;
-        
-        const columns = row.querySelectorAll('td');
-        columns[0].setAttribute('data-fulltext', data.name);
-        columns[0].textContent = truncateText(data.name, 20);
-        columns[1].textContent = data.product_code;
-        columns[2].textContent = `${data.pack_size_rem}/${data.pack_size}`;
-        columns[3].textContent = data.quantity;
-        columns[4].textContent = data.date_recorded;
-        columns[5].textContent = data.expiry_date;
-        columns[6].setAttribute('data-fulltext', data.storage_location);
-        columns[6].textContent = truncateText(data.storage_location, 15);
-    }
-
-    function truncateText(text, maxLength) {
-        return text.length > maxLength 
-            ? text.substring(0, maxLength - 3) + '...' 
-            : text;
-    }
-    
-    removeTableRow(id) {
-        const row = this.table.querySelector(`tr[data-id="${id}"]`);
-        if (row) row.remove();
-    }
-    
-    sortTableByColumn(columnNum) {
-        if (columnNum === '0') {
-            this.resetSort();
-            return;
-        }
-        
-        const rows = Array.from(this.table.querySelectorAll('tr'));
-        
-        rows.sort((row1, row2) => {
-            const value1 = this.getColumnValue(row1, columnNum);
-            const value2 = this.getColumnValue(row2, columnNum);
-            
-            if (columnNum === '4') {
-                return value1 - value2;
-            }
-            
-            return value1.localeCompare(value2);
-        });
-        
-        rows.forEach(row => this.table.appendChild(row));
-    }
-    
-    resetSort() {
-        location.reload(); // Simple implementation - could be optimized
-    }
-    
-    getColumnValue(row, columnNum) {
-        const column = row.querySelector(`td:nth-child(${columnNum})`);
-        if (!column) return '';
-        
-        const value = column.textContent.trim();
-        return columnNum === '4' ? parseFloat(value) : value.toLowerCase();
-    }
-}
-
-// ========================
-// FILTER MANAGER SECTION
-// ========================
-class FilterManager {
-    constructor(tableManager) {
-        this.tableManager = tableManager;
-        this.setupFilters();
-    }
-    
-    setupFilters() {
-        // Text filters
-        this.setupTextFilter('nameFilterInput');
-        this.setupTextFilter('productCodeFilterInput');
-        this.setupTextFilter('storageLocationFilterInput');
-        
-        // Quantity filters
-        this.setupNumberFilter('minQuantityFilterInput');
-        this.setupNumberFilter('maxQuantityFilterInput');
-        
-        // Date filters
-        this.setupDateFilter('minDateCreatedFilterInput');
-        this.setupDateFilter('maxDateCreatedFilterInput');
-        this.setupDateFilter('minDateExpiredFilterInput');
-        this.setupDateFilter('maxDateExpiredFilterInput');
-    }
-    
-    setupTextFilter(inputId) {
-        const input = document.getElementById(inputId);
-        if (input) input.addEventListener('input', () => this.filterTable());
-    }
-    
-    setupNumberFilter(inputId) {
-        const input = document.getElementById(inputId);
-        if (input) input.addEventListener('input', () => this.filterTable());
-    }
-    
-    setupDateFilter(inputId) {
-        const input = document.getElementById(inputId);
-        if (input) input.addEventListener('change', () => this.filterTable());
-    }
-    
-    filterTable() {
-        const filters = this.getCurrentFilters();
-        const rows = this.tableManager.table.querySelectorAll('tr');
-        
-        rows.forEach(row => {
-            const rowData = this.getRowData(row);
-            const isVisible = this.applyFilters(rowData, filters);
-            row.style.display = isVisible ? '' : 'none';
-        });
-    }
-    
-    getCurrentFilters() {
-        return {
-            name: document.getElementById('nameFilterInput')?.value.toLowerCase() || '',
-            productCode: document.getElementById('productCodeFilterInput')?.value.toLowerCase() || '',
-            minQuantity: parseInt(document.getElementById('minQuantityFilterInput')?.value) || 0,
-            maxQuantity: parseInt(document.getElementById('maxQuantityFilterInput')?.value) || Infinity,
-            minDateCreated: document.getElementById('minDateCreatedFilterInput')?.value || '1900-01-01',
-            maxDateCreated: document.getElementById('maxDateCreatedFilterInput')?.value || '9999-12-31',
-            minDateExpired: document.getElementById('minDateExpiredFilterInput')?.value || '1900-01-01',
-            maxDateExpired: document.getElementById('maxDateExpiredFilterInput')?.value || '9999-12-31',
-            storageLocation: document.getElementById('storageLocationFilterInput')?.value.toLowerCase() || ''
-        };
-    }
-    
-    getRowData(row) {
-        return {
-            name: row.querySelector('td:first-child')?.textContent.toLowerCase() || '',
-            productCode: row.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '',
-            quantity: parseInt(row.querySelector('td:nth-child(4)')?.textContent) || 0,
-            dateCreated: row.querySelector('td:nth-child(5)')?.textContent || '',
-            expiryDate: row.querySelector('td:nth-child(6)')?.textContent || '',
-            storageLocation: row.querySelector('td:nth-child(7)')?.textContent.toLowerCase() || ''
-        };
-    }
-    
-    applyFilters(rowData, filters) {
-        return (
-            rowData.name.includes(filters.name) &&
-            rowData.productCode.includes(filters.productCode) &&
-            rowData.quantity >= filters.minQuantity &&
-            rowData.quantity <= filters.maxQuantity &&
-            this.isDateInRange(rowData.dateCreated, filters.minDateCreated, filters.maxDateCreated) &&
-            this.isDateInRange(rowData.expiryDate, filters.minDateExpired, filters.maxDateExpired) &&
-            rowData.storageLocation.includes(filters.storageLocation)
-        );
-    }
-    
-    isDateInRange(date, minDate, maxDate) {
-        if (!date) return true;
-        const currentDate = new Date(date);
-        const min = new Date(minDate);
-        const max = new Date(maxDate);
-        return currentDate >= min && currentDate <= max;
-    }
-    
-    resetFilters() {
-        // Clear all filter inputs
-        const inputs = [
-            'nameFilterInput', 'productCodeFilterInput', 'minQuantityFilterInput',
-            'maxQuantityFilterInput', 'minDateCreatedFilterInput', 'maxDateCreatedFilterInput',
-            'minDateExpiredFilterInput', 'maxDateExpiredFilterInput', 'storageLocationFilterInput'
-        ];
-        
-        inputs.forEach(id => {
-            const input = document.getElementById(id);
-            if (input) input.value = '';
-        });
-        
-        // Reset sort dropdown
-        const sortDropdown = document.getElementById('sortColumnDropdown');
-        if (sortDropdown) sortDropdown.value = '0';
-        
-        // Refresh the table
-        this.filterTable();
-    }
-}
-
-
-// ========================
-// DROPDOWN MANAGER SECTION
-// ========================
-class DropdownManager {
-    constructor() {
-        this.setupDropdowns();
-    }
-    
-    setupDropdowns() {
-        // Toggle logic
-        document.querySelectorAll('.dropdown-trigger').forEach(trigger => {
-            trigger.addEventListener('click', (e) => {
-                e.stopPropagation();
-                trigger.closest('.dropdown').classList.toggle('active');
-            });
-        });
-
-        // Close on outside click
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.dropdown')) {
-                document.querySelectorAll('.dropdown').forEach(dropdown => {
-                    dropdown.classList.remove('active');
-                });
-            }
-        });
-    }
-}
-
-// ========================
-// MAIN APPLICATION SECTION
-// ========================
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize all components
-    window.modalManager = new ModalManager();
-    window.formHandler = new FormHandler();
-    window.tableManager = new TableManager();
-    window.filterManager = new FilterManager(window.tableManager);
-    window.dropdownManager = new DropdownManager();
-    
-    // Register modals
-    window.modalManager.registerModal('.popup-container1', 'addPopup');
-    window.modalManager.registerModal('.popup-container2', 'editPopup');
-    window.modalManager.registerModal('.popup-container3', 'retrievePopup');
-    window.modalManager.registerModal('.popup-container4', 'returnPopup');
-    
-    // Set up event listeners
-    document.getElementById('addItemBtn')?.addEventListener('click', () => {
-        window.modalManager.showModal('addPopup');
+function setupDropdowns() {
+  // Toggle dropdown on click
+  document.querySelectorAll('.dropdown-trigger').forEach(trigger => {
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      trigger.closest('.dropdown').classList.toggle('active');
     });
-    
-    document.getElementById('resetButton')?.addEventListener('click', () => {
-        window.filterManager.resetFilters();
+  });
+
+  // Close when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.dropdown')) {
+      document.querySelectorAll('.dropdown').forEach(dropdown => {
+        dropdown.classList.remove('active');
+      });
+    }
+  });
+}
+
+function setupPopups() {
+  Object.entries(POPUP_CONTAINERS).forEach(([key, containerClass]) => {
+    const popupId = POPUP_IDS[key];
+    handlePopup(containerClass, popupId);
+  });
+}
+
+function handlePopup(containerClass, popupId) {
+  const container = document.querySelector(containerClass);
+  if (!container) return;
+
+  container.addEventListener("click", (event) => {
+    if (event.target === container) {
+      closeModal(popupId);
+    }
+  });
+}
+
+function setupFormHandlers() {
+  // Add form
+  DOM.forms.add?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    submitForm('reagent-form', DOM.forms.add.action, 'POST', handleAddSuccess);
+  });
+  
+  // Edit form
+  DOM.forms.edit?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    submitForm('edit-form', `/edit_reagent/${STATE.currentItemId}`, 'PUT', handleEditSuccess);
+  });
+  
+  // Retrieve form
+  DOM.forms.retrieve?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    submitForm('retrieve-form', `/retrieve_reagent/${STATE.currentItemId}`, 'PUT', handleRetrieveSuccess);
+  });
+  
+  // Return form
+  DOM.forms.return?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    submitForm('return-form', `/return_reagent/${STATE.currentItemId}`, 'PUT', handleReturnSuccess);
+  });
+}
+
+function handleTableClick(e) {
+  const row = e.target.closest('tr[data-id]');
+  if (!row) return;
+  
+  STATE.currentItemId = row.dataset.id;
+  STATE.currentProject = row.dataset.project || '';
+  
+  if (e.target.closest('.edit-btn')) {
+    showEditPopup(STATE.currentItemId);
+  }
+  else if (e.target.closest('.retrieve-btn')) {
+    showRetrievePopup(STATE.currentItemId);
+  }
+  else if (e.target.closest('.return-btn')) {
+    showReturnPopup(STATE.currentItemId);
+  }
+  else if (e.target.closest('.delete-btn')) {
+    showDeletePopup(STATE.currentProject, STATE.currentItemId);
+  }
+}
+
+// ==============================================
+// MODAL FUNCTIONS
+// ==============================================
+function showModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function showAddPopup() {
+  showModal(POPUP_IDS.ADD);
+}
+
+function closeAddPopup() {
+  closeModal(POPUP_IDS.ADD);
+  DOM.forms.add?.reset();
+}
+
+function showEditPopup(id) {
+  STATE.currentItemId = id;
+  showModal(POPUP_IDS.EDIT);
+  loadItemData();
+}
+
+function closeEditPopup() {
+  closeModal(POPUP_IDS.EDIT);
+}
+
+function showRetrievePopup(id) {
+  STATE.currentItemId = id;
+  showModal(POPUP_IDS.RETRIEVE);
+}
+
+function closeRetrievePopup() {
+  closeModal(POPUP_IDS.RETRIEVE);
+  DOM.forms.retrieve?.reset();
+}
+
+function showReturnPopup(id) {
+  STATE.currentItemId = id;
+  showModal(POPUP_IDS.RETURN);
+}
+
+function closeReturnPopup() {
+  closeModal(POPUP_IDS.RETURN);
+  DOM.forms.return?.reset();
+}
+
+function showDeletePopup(project, id) {
+  STATE.currentItemId = id;
+  STATE.currentProject = project;
+  showModal(POPUP_IDS.DELETE);
+}
+
+function closeDeletePopup() {
+  closeModal(POPUP_IDS.DELETE);
+}
+
+// ==============================================
+// DATA HANDLING FUNCTIONS
+// ==============================================
+async function loadItemData() {
+  if (!STATE.currentItemId) return;
+  
+  showLoading(POPUP_IDS.EDIT);
+  
+  try {
+    const response = await fetch(`/get_reagent_info/${STATE.currentItemId}`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const data = await response.json();
+    populateEditForm(data);
+  } catch (error) {
+    console.error('Error loading item data:', error);
+    showNotification('Failed to load item data', 'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+function populateEditForm(data) {
+  if (!DOM.forms.edit) return;
+  
+  const fields = ['name', 'product_code', 'pack_size', 'quantity', 
+                 'expiry_date', 'storage_location', 'threshold_value'];
+  
+  fields.forEach(field => {
+    if (DOM.forms.edit.elements[field]) {
+      DOM.forms.edit.elements[field].value = data[field] || '';
+    }
+  });
+}
+
+// ==============================================
+// FORM HANDLERS
+// ==============================================
+async function submitForm(formId, url, method, successCallback) {
+  const form = document.getElementById(formId);
+  if (!form) return;
+
+  try {
+    const formData = new FormData(form);
+    const response = await fetch(url, {
+      method,
+      headers: {
+        'X-CSRFToken': CSRF_TOKEN,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(Object.fromEntries(formData)),
     });
+
+    if (!response.ok) throw new Error('Network response was not ok');
     
-    document.getElementById('sortColumnDropdown')?.addEventListener('change', (e) => {
-        window.tableManager.sortTableByColumn(e.target.value);
+    const data = await response.json();
+    successCallback(data);
+  } catch (error) {
+    console.error('Error:', error);
+    showNotification(error.message || 'An error occurred. Please try again.', 'error');
+  }
+}
+
+function handleAddSuccess(data) {
+  showNotification('Reagent added successfully', 'success');
+  closeAddPopup();
+  if (data.refresh) {
+    setTimeout(() => location.reload(), 1000);
+  }
+}
+
+function handleEditSuccess(data) {
+  updateTableRow(STATE.currentItemId, data);
+  showNotification('Reagent updated successfully', 'success');
+  closeEditPopup();
+}
+
+function handleRetrieveSuccess(data) {
+  updateTableRow(STATE.currentItemId, data);
+  showNotification('Reagent retrieved successfully', 'success');
+  closeRetrievePopup();
+}
+
+function handleReturnSuccess(data) {
+  updateTableRow(STATE.currentItemId, data);
+  showNotification('Reagent returned successfully', 'success');
+  closeReturnPopup();
+}
+
+async function handleDeleteConfirm() {
+  if (!STATE.currentItemId || !STATE.currentProject) return;
+
+  showLoading(POPUP_IDS.DELETE);
+
+  try {
+    const response = await fetch(`/delete_reagent/${STATE.currentProject}/${STATE.currentItemId}`, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRFToken': CSRF_TOKEN,
+        'Content-Type': 'application/json'
+      }
     });
+
+    if (!response.ok) throw new Error('Failed to delete reagent');
     
-    // Set up delete functionality if needed
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const id = e.target.dataset.id;
-            const projectName = e.target.dataset.project;
-            if (id && projectName) {
-                if (confirm('Are you sure you want to delete this reagent?')) {
-                    fetch(`/delete_reagent/${projectName}/${id}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRFToken': window.formHandler.csrfToken,
-                            'Content-Type': 'application/json',
-                        },
-                    })
-                    .then(response => {
-                        if (response.ok) {
-                            window.tableManager.removeTableRow(id);
-                        }
-                    })
-                    .catch(error => console.error('Error deleting reagent:', error));
-                }
-            }
-        });
-    });
-});
+    const data = await response.json();
+    showNotification('Reagent deleted successfully', 'success');
+    removeTableRow(STATE.currentItemId);
+    closeDeletePopup();
+  } catch (error) {
+    console.error('Delete error:', error);
+    showNotification(error.message || 'Failed to delete reagent', 'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+// ==============================================
+// TABLE OPERATIONS
+// ==============================================
+function updateTableRow(id, data) {
+  const row = DOM.table?.querySelector(`tr[data-id="${id}"]`);
+  if (!row) return;
+  
+  // Highlight update
+  row.classList.add('updated');
+  setTimeout(() => row.classList.remove('updated'), 1000);
+  
+  // Update cells
+  const cells = row.querySelectorAll('td');
+  if (cells.length >= 7) {
+    cells[0].setAttribute('data-fulltext', data.name);
+    cells[0].textContent = truncateText(data.name, 20);
+    cells[1].textContent = data.product_code || '';
+    cells[2].textContent = `${data.pack_size_rem || 0}/${data.pack_size || 0}`;
+    cells[3].textContent = data.quantity || '';
+    cells[5].textContent = data.expiry_date || '';
+    cells[6].setAttribute('data-fulltext', data.storage_location);
+    cells[6].textContent = truncateText(data.storage_location, 15);
+  }
+}
+
+function removeTableRow(id) {
+  const row = DOM.table?.querySelector(`tr[data-id="${id}"]`);
+  if (row) {
+    row.classList.add('fade-out');
+    setTimeout(() => row.remove(), 300);
+  }
+}
+
+// ==============================================
+// FILTERING/SORTING
+// ==============================================
+function filterTable() {
+  const filters = {
+    name: DOM.filterInputs.name?.value.toLowerCase() || '',
+    productCode: DOM.filterInputs.productCode?.value.toLowerCase() || '',
+    minQuantity: DOM.filterInputs.minQuantity?.value ? parseInt(DOM.filterInputs.minQuantity.value) : 0,
+    maxQuantity: DOM.filterInputs.maxQuantity?.value ? parseInt(DOM.filterInputs.maxQuantity.value) : Infinity,
+    minDateExpired: DOM.filterInputs.minDateExpired?.value || '',
+    maxDateExpired: DOM.filterInputs.maxDateExpired?.value || '',
+    minDateCreated: DOM.filterInputs.minDateCreated?.value || '',
+    maxDateCreated: DOM.filterInputs.maxDateCreated?.value || '',
+    storageLocation: DOM.filterInputs.storageLocation?.value.toLowerCase() || ''
+  };
+  
+  const rows = DOM.table?.querySelectorAll('tr[data-id]') || [];
+  
+  rows.forEach(row => {
+    const rowData = {
+      name: (row.dataset.name || '').toLowerCase(),
+      productCode: (row.dataset.productCode || '').toLowerCase(),
+      quantity: parseInt(row.dataset.quantity) || 0,
+      dateCreated: row.dataset.dateCreated || '',
+      expiryDate: row.dataset.expiryDate || '',
+      storageLocation: (row.dataset.storageLocation || '').toLowerCase()
+    };
+    
+    const isVisible = (
+      rowData.name.includes(filters.name) &&
+      rowData.productCode.includes(filters.productCode) &&
+      rowData.quantity >= filters.minQuantity &&
+      rowData.quantity <= filters.maxQuantity &&
+      isDateInRange(rowData.dateCreated, filters.minDateCreated, filters.maxDateCreated) &&
+      isDateInRange(rowData.expiryDate, filters.minDateExpired, filters.maxDateExpired) &&
+      rowData.storageLocation.includes(filters.storageLocation)
+    );
+    
+    row.style.display = isVisible ? '' : 'none';
+  });
+}
+
+function resetFilters() {
+  // Reset all filter inputs
+  Object.values(DOM.filterInputs).forEach(input => {
+    if (input) input.value = '';
+  });
+
+  // Reset sorting dropdown
+  document.getElementById('sortColumnDropdown').value = '0';
+
+  // Reapply filters (which will now show all rows)
+  filterTable();
+}
+
+function sortTableByColumn() {
+  const dropdown = document.getElementById('sortColumnDropdown');
+  if (!dropdown) return;
+
+  const columnNum = dropdown.value;
+  if (!columnNum || columnNum === '0') {
+    resetFilters();
+    return;
+  }
+
+  const tbody = DOM.table?.querySelector('tbody');
+  if (!tbody) return;
+
+  const rows = Array.from(tbody.querySelectorAll('tr[data-id]'));
+  if (rows.length === 0) return;
+
+  // Toggle sort direction if clicking same column
+  if (STATE.activeSort.column === columnNum) {
+    STATE.activeSort.direction = STATE.activeSort.direction === 'asc' ? 'desc' : 'asc';
+  } else {
+    STATE.activeSort.column = columnNum;
+    STATE.activeSort.direction = 'asc';
+  }
+
+  rows.sort((a, b) => {
+    const aValue = getColumnValue(a, columnNum);
+    const bValue = getColumnValue(b, columnNum);
+
+    if (columnNum === '4') { // Quantity column
+      return STATE.activeSort.direction === 'asc' 
+        ? aValue - bValue 
+        : bValue - aValue;
+    }
+  
+    return STATE.activeSort.direction === 'asc' 
+      ? aValue.localeCompare(bValue) 
+      : bValue.localeCompare(aValue);
+  });
+
+  // Reattach sorted rows
+  rows.forEach(row => tbody.appendChild(row));
+}
+
+function getColumnValue(row, columnNum) {
+  const cell = row.querySelector(`td:nth-child(${columnNum})`);
+  if (!cell) return '';
+  const value = cell.textContent.trim();
+  return columnNum === '4' ? parseFloat(value) || 0 : value.toLowerCase();
+}
+
+// ==============================================
+// UTILITY FUNCTIONS
+// ==============================================
+function debounce(func, wait) {
+  let timeout;
+  return function(...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+}
+
+function showLoading(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const loader = document.createElement('div');
+  loader.className = 'loading-overlay';
+  loader.innerHTML = `
+    <div class="spinner"></div>
+    <p>Processing...</p>
+  `;
+  container.appendChild(loader);
+  container.style.position = 'relative';
+}
+
+function hideLoading() {
+  const loaders = document.querySelectorAll('.loading-overlay');
+  loaders.forEach(loader => {
+    loader.parentNode?.removeChild(loader);
+  });
+}
+
+function showNotification(message, type = 'success') {
+  if (!DOM.notificationContainer) return;
+
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+  DOM.notificationContainer.appendChild(notification);
+
+  setTimeout(() => {
+    notification.classList.add('fade-out');
+    setTimeout(() => notification.remove(), 500);
+  }, 3000);
+}
+
+function isDateInRange(dateString, minDateString, maxDateString) {
+  if (!dateString) return true;
+
+  try {
+    const date = new Date(dateString);
+    const minDate = minDateString ? new Date(minDateString) : new Date(0);
+    const maxDate = maxDateString ? new Date(maxDateString) : new Date(8640000000000000);
+  
+    return date >= minDate && date <= maxDate;
+  } catch (e) {
+    console.error('Date parsing error:', e);
+    return true;
+  }
+}
+
+function truncateText(text, maxLength) {
+  return text.length > maxLength 
+    ? text.substring(0, maxLength - 3) + '...' 
+    : text;
+}
+
+function initialFilter() {
+  filterTable();
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', initReagentsManager);

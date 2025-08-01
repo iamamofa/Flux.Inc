@@ -229,7 +229,7 @@
                 <th scope="col"></th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="equipmentTable">
             {% for equipment in equipment_ %}
             <tr data-id="{{ equipment.id }}"
                 data-project="{{ project.name }}"
@@ -242,7 +242,7 @@
                 data-service-contract-end="{{ equipment.service_contract_end|date:"Y-m-d" }}"
                 data-date-recorded="{{ equipment.date_recorded|date:"Y-m-d" }}"
                 data-donated-by="{{ equipment.donated_by }}"
-                data-storage-location="{{ equipment.storage_location }}"
+                data-storage-location="{{ equipment.storage_location }}">
                 <td data-fulltext="{{ equipment.name }}">{{ equipment.name }}</td>
                 <td>{{ equipment.equip_id }}</td>
                 <td>{{ equipment.serial_num }}</td>

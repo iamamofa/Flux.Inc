@@ -371,7 +371,7 @@ function filterTable() {
   const maxServiceEndFilterValue = elements.maxServiceEndFilter.value || '9999-12-31';
   const storageLocationFilterValue = elements.storageLocationFilter.value.toLowerCase();
 
-  const tableRows = elements.table.tBodies[0].rows;
+  const tableRows = elements.table.querySelectorAll('tbody tr');
 
   tableRows.forEach((row) => {
       const cells = row.querySelectorAll('td');

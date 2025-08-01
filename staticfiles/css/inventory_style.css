@@ -1832,7 +1832,7 @@ video {
 #consumablesTable td {
   text-align: left; /* or center based on your preference */
   vertical-align: middle;
-  padding: 12px 15px; /* uniform padding */
+  /* padding: 12px 15px; /* uniform padding */
   border-bottom: 1px solid #e5e7eb; /* subtle divider */
 }
 
@@ -1882,9 +1882,9 @@ video {
 
 #consumablesTable th:nth-child(8),
 #consumablesTable td:nth-child(8) { 
-  width: 10%; /* Actions */
+  /* width: 10%; /* Actions */
   min-width: 150px; /* Ensures buttons don't wrap */
-  text-align: right; /* Aligns actions to the right */
+  text-align: left; /* Aligns actions to the right */
 }
 
 /* Sticky header alignment */
@@ -1947,7 +1947,7 @@ video {
 #equipmentTable td {
     text-align: left;
     vertical-align: middle;
-    padding: 12px 15px;
+    /* padding: 12px 15px; */
     border-bottom: 1px solid #e5e7eb;
 }
 
@@ -2015,9 +2015,9 @@ video {
 
 #equipmentTable th:nth-child(11),
 #equipmentTable td:nth-child(11) {
-    width: 10%; 
-    min-width: 150px;
-    text-align: right;
+    /* width: 10%; */
+    min-width: 10px;
+    text-align: left;
 }  /* Actions */
 
 /* Sticky header alignment */
@@ -2086,7 +2086,7 @@ video {
 #samplesTable td {
     text-align: left;
     vertical-align: middle;
-    padding: 12px 15px;
+    /* padding: 12px 15px; */
     border-bottom 1px solid #e5e7eb;
 }
 
@@ -2141,9 +2141,9 @@ video {
 
 #samplesTable th:nth-child(9),
 #samplesTable td:nth-child(9) {
-    width: 10%;
-    min-width: 150px;
-    text-align: right;
+    /* width: 10%; */
+    min-width: 10px;
+    text-align: left;
 }  /* Actions */
 
 /* Sticky header alignment */
@@ -2206,7 +2206,7 @@ video {
 #reagentsTable td {
     text-align: left;
     vertical-align: middle;
-    padding: 12px 15px;
+    /* padding: 12px 15px; */
     border-bottom: 1px solid #e5e7eb;
 }
 
@@ -2255,9 +2255,9 @@ video {
 
 #reagentsTable th:nth-child(8),
 #reagentsTable td:nth-child(8) {
-    width: 10%;
-    min-width: 150px;
-    text-align: right;
+    /* width: 10%; */
+    min-width: 10px;
+    text-align: left;
 }  /* Actions */
 
 /* Sticky header alignment */
@@ -2606,7 +2606,7 @@ tr.updated {
 }
 
 .actions {
-    display: flex;
+    /* display: flex; */
     gap: 5px;
     flex-wrap: wrap;
 }
@@ -2619,10 +2619,10 @@ tr.updated {
     font-size: 14px;
 }
 
-.edit-btn { background: #2196F3; color: white; }
-.retrieve-btn { background: #4CAF50; color: white; }
-.return-btn { background: #FF9800; color: white; }
-.delete-btn { background: #f44336; color: white; }
+.edit-btn { background: #2196F3 !important; color: white; }
+.retrieve-btn { background: #4CAF50 !important; color: white; }
+.return-btn { background: #FF9800 !important; color: white; }
+.delete-btn { background: #f44336 !important; color: white; }
 
 .actions button:hover {
     opacity: 0.9;
