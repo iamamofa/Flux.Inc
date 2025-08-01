@@ -162,7 +162,7 @@
             </div> 
             <div class="dropdown-content">
                 {% for project in projects %}
-                <a href="{% url 'samples' project_name=project.name %}">{{ project.name }}</a>
+                <a href="{% url 'equipment_' project_name=project.name %}">{{ project.name }}</a>
                 
                 {% endfor %}   
             </div>
@@ -229,7 +229,7 @@
                 <th scope="col"></th>
             </tr>
         </thead>
-        <tbody id="equipmentTable">
+        <tbody>
             {% for equipment in equipment_ %}
             <tr data-id="{{ equipment.id }}"
                 data-project="{{ project.name }}"
@@ -247,11 +247,11 @@
                 <td>{{ equipment.equip_id }}</td>
                 <td>{{ equipment.serial_num }}</td>
                 <td>{{ equipment.quantity }}</td>
-                <td>{{ equipment.status }}</td>
+                <td data-fulltext="{{equipment.status }}">{{ equipment.status|truncatechars:20 }}</td>
                 <td>{{ equipment.service_contract_start|date:"Y-m-d" }}</td>
                 <td>{{ equipment.service_contract_end|date:"Y-m-d" }}</td>
                 <td>{{ equipment.date_recorded }}</td>
-                <td>{{ equipment.donated_by }}</td>
+                <td data-fulltext="{{ equipment.donated_by }}">{{ equipment.donated_by|truncatechars:20 }}</td>
                 <td data-fulltext="{{ equipment.storage_location }}">{{ equipment.storage_location|truncatechars:20 }}</td>
                 <td class="actions">
                     <div class="dropdown">

@@ -315,9 +315,11 @@ function refreshTableRow(id, data) {
   cells[1].textContent = data.equip_id;
   cells[2].textContent = data.serial_num;
   cells[3].textContent = data.quantity;
+  cells[4].setAttribute('data-fulltext', data.status);
   cells[4].textContent = data.status;
   cells[5].textContent = data.service_contract_start;
   cells[6].textContent = data.service_contract_end;
+  cells[8].setAttribute('data-fulltext', data.donated_by);
   cells[8].textContent = data.donated_by;
   cells[9].setAttribute('data-fulltext', data.storage_location);
   cells[9].textContent = truncateText(data.storage_location, 15);
@@ -369,7 +371,7 @@ function filterTable() {
   const maxServiceEndFilterValue = elements.maxServiceEndFilter.value || '9999-12-31';
   const storageLocationFilterValue = elements.storageLocationFilter.value.toLowerCase();
 
-  const tableRows = elements.table.querySelectorAll('tbody tr');
+  const tableRows = elements.table.tBodies[0].rows;
 
   tableRows.forEach((row) => {
       const cells = row.querySelectorAll('td');

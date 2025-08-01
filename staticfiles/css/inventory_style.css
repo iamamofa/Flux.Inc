@@ -2036,6 +2036,16 @@ video {
     max-width: 0;
 }
 
+#equipmentTable td:nth-child(5) { /* Status */
+    white-space: normal;
+    word-break: break-word;
+}
+
+#equipmentTable td:nth-child(9) { /* Donated By */
+    white-space: normal;
+    word-break: break-word;
+}
+
 #equipmentTable td:nth-child(10) { /* Storage location */
     white-space: normal;
     word-break: break-word;

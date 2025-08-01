@@ -231,7 +231,7 @@
                 <td>{{ sample.volume }}</td>
                 <td>{{ sample.date_recorded|date:"Y-m-d" }}</td>
                 <td>{{ sample.well_id }}</td>
-                <td data-fulltext="{{ sample.storage_location }}">{{ sample.storage_location|truncatehcars:20 }}</td>
+                <td data-fulltext="{{ sample.storage_location }}">{{ sample.storage_location|truncatechars:20 }}</td>
                 <td class="actions">
                     <div class="dropdown">
                         <!-- Main trigger button -->
