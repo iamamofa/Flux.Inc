@@ -292,13 +292,20 @@ async function submitForm(formId, url, method, successCallback) {
 
   try {
     const formData = new FormData(form);
+
+      // Debug error
+      for (let [key, value] of formData.entries()) {
+          console.log(`${key}: ${value}`);
+
+
     const response = await fetch(url, {
       method,
       headers: {
         'X-CSRFToken': CSRF_TOKEN,
-        'Content-Type': 'application/json',
+        // 'Content-Type': 'application/json', // Let browser set it automatically
       },
-      body: JSON.stringify(Object.fromEntries(formData)),
+      // body: JSON.stringify(Object.fromEntries(formData)),
+        body: formData, // Send forData directly instead of as JSON
     });
 
     if (!response.ok) {
