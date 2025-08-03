@@ -296,7 +296,7 @@ async function submitForm(formId, url, method, successCallback) {
       // Debug error
       for (let [key, value] of formData.entries()) {
           console.log(`${key}: ${value}`);
-
+      }
 
     const response = await fetch(url, {
       method,
