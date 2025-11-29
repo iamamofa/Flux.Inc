@@ -34,7 +34,7 @@ EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-ALLOWED_HOSTS = ['flux-inc.onrender.com']
+ALLOWED_HOSTS = ['flux-inc.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -60,15 +60,18 @@ MIDDLEWARE = [
     'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
-# Trusted Web origins
+CSRF_USE_SESSIONS = False  # Should be False to use cookies
+CSRF_COOKIE_HTTPONLY = False  # Should be False to allow JavaScript access
 
+# Trusted Web origins
 CSRF_TRUSTED_ORIGINS = [
     'https://flux-inc.onrender.com',
     'https://github.com',
     'https://github.com/iamamofa/Flux.Inc/'
-    
     # Add any other domains you trust
 ]
+
+
 
 
 ROOT_URLCONF = 'inventory_system.urls'

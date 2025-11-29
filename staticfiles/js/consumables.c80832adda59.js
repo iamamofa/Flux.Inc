@@ -1,4 +1,4 @@
-// consumables.js
+// consumables.js - Refactored to match equipment_.js patterns
 
 // ==============================================
 // CONSTANTS AND CONFIGURATION
@@ -50,10 +50,7 @@ const DOM = {
     maxDateCreated: document.getElementById('maxDateCreatedFilterInput'),
     minDateExpired: document.getElementById('minDateExpiredFilterInput'),
     maxDateExpired: document.getElementById('maxDateExpiredFilterInput'),
-    storageLocation: document.getElementById('storageLocationFilterInput'),
-    storageCondition: document.getElementById('storageConditionFilterInput'),
-    vendor: document.getElementById('vendorFilterInput'),
-    thresholdValue: document.getElementById('thresholdValueFilterInput')
+    storageLocation: document.getElementById('storageLocationFilterInput')
   },
   buttons: {
     resetFilters: document.getElementById('resetButton'),
@@ -68,10 +65,7 @@ const DOM = {
 function initConsumablesManager() {
   setupPopups();
   setupEventListeners();
-  setupRetrieveReturnForms();
   initialFilter();
-  setupTemperatureUnitHandling();
-  setupStorageConditionHandling():
 }
 
 // ==============================================
@@ -152,37 +146,20 @@ function setupFormHandlers() {
   // Edit form
   DOM.forms.edit?.addEventListener('submit', (e) => {
     e.preventDefault();
-    submitForm('edit-form', `/edit_consumable/${STATE.currentItemId}`, 'POST', handleEditSuccess);
+    submitForm('edit-form', `/edit_consumable/${STATE.currentItemId}`, 'PUT', handleEditSuccess);
   });
   
   // Retrieve form
   DOM.forms.retrieve?.addEventListener('submit', (e) => {
     e.preventDefault();
-    submitForm('retrieve-form', `/retrieve_consumable/${STATE.currentItemId}`, 'POST', handleRetrieveSuccess);
+    submitForm('retrieve-form', `/retrieve_consumable/${STATE.currentItemId}`, 'PUT', handleRetrieveSuccess);
   });
   
   // Return form
   DOM.forms.return?.addEventListener('submit', (e) => {
     e.preventDefault();
-    submitForm('return-form', `/restock_consumable/${STATE.currentItemId}`, 'POST', handleReturnSuccess);
+    submitForm('return-form', `/return_consumable/${STATE.currentItemId}`, 'PUT', handleReturnSuccess);
   });
-}
-
-function validateTemperatureUnits() {
-    const tempInputs = document.querySelectorAll('input[name="oem_temperature"]');
-    const tempUnitSelects = document.querySelectorAll('select[name="temperature_unit"]');
-    
-    let isValid = true;
-    
-    tempInputs.forEach((input, index) => {
-        if (input.value && tempUnitSelects[index]) {
-            if (!validateTemperatureValue(input, tempUnitSelects[index].value)) {
-                isValid = false;
-            }
-        }
-    });
-    
-    return isValid;
 }
 
 function handleTableClick(e) {
@@ -204,97 +181,6 @@ function handleTableClick(e) {
   else if (e.target.closest('.delete-btn')) {
     showDeletePopup(STATE.currentProject, STATE.currentItemId);
   }
-}
-
-// ==============================================
-// TEMPERATURE UNIT HANDLING
-// ==============================================
-function setupTemperatureUnitHandling() {
-    // Add change listeners to temperature unit selects
-    const tempUnitSelects = document.querySelectorAll('select[name="temperature_unit"]');
-    const tempInputs = document.querySelectorAll('input[name="oem_temperature"]');
-    
-    tempUnitSelects.forEach((select, index) => {
-        // Set initial placeholder based on selected unit
-        updateTemperaturePlaceholder(select, tempInputs[index]);
-        
-        select.addEventListener('change', function() {
-            updateTemperaturePlaceholder(this, tempInputs[index]);
-            validateTemperatureValue(tempInputs[index], this.value);
-        });
-    });
-    
-    // Add validation to temperature inputs
-    tempInputs.forEach((input, index) => {
-        const unitSelect = input.closest('.inputBox').querySelector('select[name="temperature_unit"]');
-        input.addEventListener('blur', function() {
-            if (unitSelect) {
-                validateTemperatureValue(this, unitSelect.value);
-            }
-        });
-    });
-}
-
-function updateTemperaturePlaceholder(select, input) {
-    const unit = select.value;
-    const unitSymbol = unit === 'C' ? '°C' : '°F';
-    if (input) {
-        input.placeholder = `Temperature in ${unitSymbol}`;
-        
-        // Update validation constraints
-        if (unit === 'C') {
-            input.min = -273;
-            input.max = 1000;
-        } else {
-            input.min = -459;
-            input.max = 2000;
-        }
-    }
-}
-
-function validateTemperatureValue(input, unit) {
-    const value = parseFloat(input.value);
-    if (isNaN(value)) return true;
-    
-    let isValid = true;
-    let errorMessage = '';
-    
-    if (unit === 'C') {
-        if (value < -273) {
-            isValid = false;
-            errorMessage = 'Temperature cannot be below absolute zero (-273°C)';
-        } else if (value > 1000) {
-            isValid = false;
-            errorMessage = 'Temperature seems unusually high for storage';
-        }
-    } else {
-        if (value < -459) {
-            isValid = false;
-            errorMessage = 'Temperature cannot be below absolute zero (-459°F)';
-        } else if (value > 2000) {
-            isValid = false;
-            errorMessage = 'Temperature seems unusually high for storage';
-        }
-    }
-    
-    // Show/hide error message
-    let errorElement = input.nextElementSibling;
-    if (!errorElement || !errorElement.classList.contains('temperature-error')) {
-        errorElement = document.createElement('small');
-        errorElement.className = 'temperature-error text-red-500 text-sm mt-1 hidden';
-        input.parentNode.appendChild(errorElement);
-    }
-    
-    if (!isValid) {
-        errorElement.textContent = errorMessage;
-        errorElement.classList.remove('hidden');
-        input.classList.add('border-red-500');
-    } else {
-        errorElement.classList.add('hidden');
-        input.classList.remove('border-red-500');
-    }
-    
-    return isValid;
 }
 
 // ==============================================
@@ -388,8 +274,7 @@ function populateEditForm(data) {
   if (!DOM.forms.edit) return;
   
   const fields = ['name', 'product_code', 'pack_size', 'quantity', 
-                 'expiry_date', 'storage_location', 'storage_condition',
-                 'oem_temperature', 'vendor', 'threshold_value', 'notes'];
+                 'expiry_date', 'storage_location', 'threshold_value'];
   
   fields.forEach(field => {
     if (DOM.forms.edit.elements[field]) {
@@ -410,71 +295,28 @@ async function submitForm(formId, url, method, successCallback) {
   try {
     const formData = new FormData(form);
 
-      // For debugging - log form data
-    for (let [key, value] of formData.entries()) {
-      console.log(`${key}: ${value}`);
-    }
-      console.log('Submitting:', Object.fromEntries(formData.entries()));
-    const csrfToken = getCSRFToken();
-    
     const response = await fetch(url, {
       method,
       headers: {
-        'X-CSRFToken': csrfToken,
+        'X-CSRFToken': CSRF_TOKEN,
+        'Content-Type': 'application/json',
       },
-        body: formData,
-        credentials: 'include'
+      body: JSON.stringify(Object.fromEntries(formData)),
     });
-      console.log(method);
 
-      console.log(response)
-
-      // First get response as text to handle both HTML and JSON
-      const text = await response.text();
-
-    try{
-        // Try to parse as JSON
-        const data = JSON.parse(text);
-        console.log(data)
-    
-        if (!response.ok) {
-            throw new Error(data.error || `Server responded with status ${response.status}`);
-        }
-    
-        successCallback(data);
-    } catch (e) {
-        // If not JSON show error page content in console
-        console.error('Server returned:', text);
-        throw new Error('Server returned an unexpected response. Please check console for details.');
+    if (!response.ok) {
+        throw new Error(`Network response was not ok:
+            ${response.status} ${response.statusText}`);
     }
-      
+    
+    const data = await response.json();
+    successCallback(data);
   } catch (error) {
     console.error('Error:', error);
     showNotification(error.message || 'An error occurred. Please try again.', 'error');
   } finally {
       hideLoading();
   }
-}
-
-// Helper function to get CSRF token
-function getCSRFToken() {
-  // Try to get from meta tag
-  const metaTag = document.querySelector('meta[name="csrf-token"]');
-  if (metaTag) return metaTag.content;
-  
-  // Try to get from cookie as fallback
-  const cookieValue = document.cookie
-    .split('; ')
-    .find(row => row.startsWith('csrftoken='))
-    ?.split('=')[1];
-    
-  if (!cookieValue) {
-    console.error('CSRF token not found');
-    showNotification('Security token missing. Please refresh the page.', 'error');
-    throw new Error('CSRF token not found');
-  }
-  
-  return cookieValue;
 }
 
 function handleAddSuccess(data) {
@@ -487,24 +329,24 @@ function handleAddSuccess(data) {
 
 function handleEditSuccess(data) {
   updateTableRow(STATE.currentItemId, data);
-  showNotification(data.message, 'success');
+  showNotification('Item updated successfully', 'success');
   closeEditPopup();
 
-    //const row = document.querySelector(`tr[data-id="${data.id}"]`);
-  //if (row) {
+    const row = document.querySelector(`tr[data-id="${data.id}"]`);
+  if (row) {
     // Update dataset attributes
-    //row.dataset.name = data.name;
-    //row.dataset.storageLocation = data.storage_location;
+    row.dataset.name = data.name;
+    row.dataset.storageLocation = data.storage_location;
     
     // Update visible cells with truncation
-    //const nameCell = row.querySelector('td:nth-child(1)');
-    //nameCell.setAttribute('data-fulltext', data.name);
-    //nameCell.textContent = truncateText(data.name, 20);
+    const nameCell = row.querySelector('td:nth-child(1)');
+    nameCell.setAttribute('data-fulltext', data.name);
+    nameCell.textContent = truncateText(data.name, 20);
     
-    //const locationCell = row.querySelector('td:nth-child(7)');
-    //locationCell.setAttribute('data-fulltext', data.storage_location);
-    //locationCell.textContent = truncateText(data.storage_location, 15);
-  //}
+    const locationCell = row.querySelector('td:nth-child(7)');
+    locationCell.setAttribute('data-fulltext', data.storage_location);
+    locationCell.textContent = truncateText(data.storage_location, 15);
+  }
 }
 
 function handleRetrieveSuccess(data) {
@@ -515,8 +357,7 @@ function handleRetrieveSuccess(data) {
 
 function handleReturnSuccess(data) {
   updateTableRow(STATE.currentItemId, data);
-    console.log(data);
-  showNotification(data.message, 'success');
+  showNotification('Item returned successfully', 'success');
   closeReturnPopup();
 }
 
@@ -555,57 +396,20 @@ function updateTableRow(id, data) {
   const row = DOM.table?.querySelector(`tr[data-id="${id}"]`);
   if (!row) return;
   
-    // Highlight update
-    row.classList.add('updated');
-    setTimeout(() => row.classList.remove('updated'), 1000);
-
-    // Update dataset attributes
-  row.dataset.name = data.name;
-  row.dataset.productCode = data.product_code;
-  row.dataset.itemsLeftInPack = data.items_left_in_pack;
-  row.dataset.itemsPerPack = data.items_per_pack;
-  row.dataset.packCount = data.pack_count;
-  //row.dataset.dateCreated = data.date_created;
-  row.dataset.expiryDate = data.expiry_date;
-  row.dataset.storageLocation = data.storage_location;
-  row.dataset.coldStorage = data.cold_storage;
-  row.dataset.optimalTemp = data.optimal_temp;
-  row.dataset.vendor = data.vendor;
-  row.dataset.thresholdValue = data.threshold_value;
-  row.dataset.notes = data.notes;
-
-  // Update visible cells
+  // Highlight update
+  row.classList.add('updated');
+  setTimeout(() => row.classList.remove('updated'), 1000);
+  
+  // Update cells
   const cells = row.querySelectorAll('td');
-  if (cells.length > 7) {
-    cells[0].textContent = escapeHtml(data.name) || '';
-    cells[1].textContent = escapeHtml(data.product_code) || '';
-    cells[2].textContent = data.items_left_in_pack || 0;
-    cells[3].textContent = data.items_per_pack || 0;
-    cells[4].textContent = data.pack_count || 0;
-    //cells[5].textContent = data.date_created || '';
-    cells[6].textContent = data.expiry_date || '';
-    cells[7].textContent = escapeHtml(data.storage_location) || '';
-    cells[8].textContent = escapeHtml(data.cold_storage) || '';
-    cells[9].textContent = data.optimal_temp || 0;
-    cells[10].textContent = escapeHtml(data.vendor) || '';
-    cells[11].textContent = data.threshold || 0;
-    cells[12].textContent = escapeHtml(data.notes) || '';
+  if (cells.length >= 7) {
+    cells[0].textContent = data.name || '';
+    cells[1].textContent = data.product_code || '';
+    cells[2].textContent = `${data.pack_size_rem || 0}/${data.pack_size || 0}`;
+    cells[3].textContent = data.quantity || '';
+    cells[5].textContent = data.expiry_date || '';
+    cells[6].textContent = data.storage_location || '';
   }
-}
-
-// Helper function to escape HTML
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// Improved truncate function
-function truncateText(text, maxLength) {
-  if (!text) return '';
-  return text.length > maxLength 
-    ? text.substring(0, maxLength - 3) + '...' 
-    : text;
 }
 
 function removeTableRow(id) {
@@ -629,12 +433,7 @@ function filterTable() {
     maxDateExpired: DOM.filterInputs.maxDateExpired?.value || '',
     minDateCreated: DOM.filterInputs.minDateCreated?.value || '',
     maxDateCreated: DOM.filterInputs.maxDateCreated?.value || '',
-    storageLocation: DOM.filterInputs.storageLocation?.value.toLowerCase() || '',
-    storageCondition: DOM.filterInputs.storageCondition?.value.toLowerCase() || '',
-    optimalTemperature: DOM.filterInputs.optimalTemperature?.value ? parseInt(DOM.filterInputs.optimalTemperature.value) : null,
-    temperatureUnit: document.getElementById('temperatureUnitFilter')?.value || '',
-    vendor: DOM.filterInputs.vendor?.value.toLowerCase() || '',
-    thresholdValue: DOM.filterInputs.thresholdValue?.value ? parseInt(DOM.filterInputs.thresholdValue.value) : null
+    storageLocation: DOM.filterInputs.storageLocation?.value.toLowerCase() || ''
   };
   
   const rows = DOM.table?.querySelectorAll('tr[data-id]') || [];
@@ -642,22 +441,37 @@ function filterTable() {
   rows.forEach(row => {
     const isVisible = checkRowAgainstFilters(row, filters);
     row.style.display = isVisible ? '' : 'none';
+
+      const nameCell = row.querySelector('td:nth-child(1)');
+    if (nameCell) {
+      const fullName = row.dataset.name || '';
+      nameCell.setAttribute('data-fulltext', fullName);
+      nameCell.textContent = truncateText(fullName, 20); // Truncate to 20 chars
+    }
+
+    const locationCell = row.querySelector('td:nth-child(7)');
+    if (locationCell) {
+      const fullLocation = row.dataset.storageLocation || '';
+      locationCell.setAttribute('data-fulltext', fullLocation);
+      locationCell.textContent = truncateText(fullLocation, 15);
+    }
   });
+}
+
+function truncateText(text, maxLength) {
+  return text.length > maxLength 
+    ? text.substring(0, maxLength - 3) + '...' 
+    : text;
 }
 
 function checkRowAgainstFilters(row, filters) {
   const rowData = {
     name: (row.dataset.name || '').toLowerCase(),
     productCode: (row.dataset.productCode || '').toLowerCase(),
-    quantity: parseInt(row.dataset.packCount) || 0,
+    quantity: parseInt(row.dataset.quantity) || 0,
     dateCreated: row.dataset.dateCreated || '',
     expiryDate: row.dataset.expiryDate || '',
-    storageLocation: (row.dataset.storageLocation || '').toLowerCase(),
-    storageCondition: (row.dataset.coldStorage || '').toLowerCase(),
-    optimalTemperature: parseInt(row.dataset.optimalTemp) || 0,
-    temperatureUnit: row.dataset.temperatureUnit || 'C',
-    vendor: (row.dataset.vendor || '').toLowerCase(),
-    thresholdValue: parseInt(row.dataset.threshold) || 0
+    storageLocation: (row.dataset.storageLocation || '').toLowerCase()
   };
   
   return (
@@ -667,12 +481,7 @@ function checkRowAgainstFilters(row, filters) {
     rowData.quantity <= filters.maxQuantity &&
     isDateInRange(rowData.dateCreated, filters.minDateCreated, filters.maxDateCreated) &&
     isDateInRange(rowData.expiryDate, filters.minDateExpired, filters.maxDateExpired) &&
-    rowData.storageLocation.includes(filters.storageLocation) &&
-    (filters.storageCondition === '' || rowData.storageCondition.includes(filters.storageCondition)) &&
-    (filters.optimalTemperature === null || rowData.optimalTemperature === filters.optimalTemperature) &&
-    (filters.temperatureUnit === '' || rowData.temperatureUnit === filters.temperatureUnit) &&
-    rowData.vendor.includes(filters.vendor) &&
-    (filters.thresholdValue === null || rowData.thresholdValue === filters.thresholdValue)
+    rowData.storageLocation.includes(filters.storageLocation)
   );
 }
 
@@ -717,7 +526,7 @@ function sortTableByColumn() {
     const aValue = getColumnValue(a, columnNum);
     const bValue = getColumnValue(b, columnNum);
 
-    if (columnNum === '5') { // Quantity column
+    if (columnNum === '4') { // Quantity column
       return STATE.activeSort.direction === 'asc' 
         ? aValue - bValue 
         : bValue - aValue;
@@ -736,7 +545,7 @@ function getColumnValue(row, columnNum) {
   const cell = row.querySelector(`td:nth-child(${columnNum})`);
   if (!cell) return '';
   const value = cell.textContent.trim();
-  return columnNum === '5' ? parseFloat(value) || 0 : value.toLowerCase();
+  return columnNum === '4' ? parseFloat(value) || 0 : value.toLowerCase();
 }
 
 // ==============================================
@@ -772,32 +581,17 @@ function hideLoading() {
 }
 
 function showNotification(message, type = 'success') {
-  const options = {
-    text: message,
-    duration: 5000,
-    close: true,
-    gravity: "top", // top or bottom
-    position: "right", // left, center or right
-    stopOnFocus: true, // Prevents dismissing when window is focused
-    className: `custom-toast ${type}-toast`,
-  };
+  if (!DOM.notificationContainer) return;
 
-  Toastify(options).showToast();
-}
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+  DOM.notificationContainer.appendChild(notification);
 
-function validateExpiryDate(input) {
-  const errorElement = document.getElementById('date-error');
-  const selectedDate = new Date(input.value);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Reset time part for accurate comparison
-
-  if (selectedDate < today) {
-    errorElement.classList.remove('hidden');
-    input.setCustomValidity('Expiry date must be in the future');
-  } else {
-    errorElement.classList.add('hidden');
-    input.setCustomValidity('');
-  }
+  setTimeout(() => {
+    notification.classList.add('fade-out');
+    setTimeout(() => notification.remove(), 500);
+  }, 3000);
 }
 
 function isDateInRange(dateString, minDateString, maxDateString) {
@@ -813,87 +607,6 @@ function isDateInRange(dateString, minDateString, maxDateString) {
     console.error('Date parsing error:', e);
     return true;
   }
-}
-
-// Validate positive integer input
-function validatePositiveInteger(input) {
-  // Remove any non-digit characters
-  input.value = input.value.replace(/[^0-9]/g, '');
-  
-  // Ensure minimum value of 1
-  if (input.value && parseInt(input.value) < 1) {
-    input.value = '1';
-  }
-  
-  // Remove leading zeros
-  if (input.value.length > 1 && input.value.startsWith('0')) {
-    input.value = input.value.replace(/^0+/, '');
-  }
-}
-
-// Add event listeners to forms
-function setupRetrieveReturnForms() {
-  const editPackSizeInput = document.getElementById('pack_size');
-  const editQuantityInput = document.getElementById('quantity');
-  const editThresholdInput = document.getElementById('threshold_value');
-  const retrieveInput = document.getElementById('retrieveFilterInput');
-  const returnInput = document.getElementById('returnFilterInput');
-
-
-  if (editPackSizeInput) {
-    editPackSizeInput.addEventListener('change', function() {
-      if (!this.value || parseInt(this.value) < 1) {
-        this.value = '1';
-      }
-    });
-  }
-
-  if (editQuantityInput) {
-    editQuantityInput.addEventListener('change', function() {
-      if (!this.value || parseInt(this.value) < 1) {
-        this.value = '1';
-      }
-    });
-  }
-  if (editThresholdInput) {
-    editThresholdInput.addEventListener('change', function() {
-      if (!this.value || parseInt(this.value) < 1) {
-        this.value = '1';
-      }
-    });
-  }
-
-  if (retrieveInput) {
-    retrieveInput.addEventListener('change', function() {
-      if (!this.value || parseInt(this.value) < 1) {
-        this.value = '1';
-      }
-    });
-  }
-  
-  if (returnInput) {
-    returnInput.addEventListener('change', function() {
-      if (!this.value || parseInt(this.value) < 1) {
-        this.value = '1';
-      }
-    });
-  }
-}
-
-function setupStorageConditionHandling() {
-    const storageConditionSelects = document.querySelectorAll('select[name="storageConditionOptions"]');
-    
-    storageConditionSelects.forEach(select => {
-        select.addEventListener('change', function() {
-            const otherField = this.closest('.inputBox').querySelector('#otherField');
-            if (otherField) {
-                otherField.style.display = this.value === 'other' ? 'block' : 'none';
-            }
-        });
-        
-        // Trigger change on page load
-        select.dispatchEvent(new Event('change'));
-    });
 }
 
 function initialFilter() {

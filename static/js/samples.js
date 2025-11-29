@@ -32,6 +32,13 @@ const STATE = {
   }
 };
 
+// Global state for storage creation
+const STORAGE_STATE = {
+    currentShelf: null,
+    currentRack: null,
+    currentBox: null
+};
+
 // DOM Elements
 const DOM = {
   table: document.getElementById('samplesTable'),
@@ -66,6 +73,11 @@ function initSamplesManager() {
   setupPopups();
   setupEventListeners();
   initialFilter();
+
+ // Load storage options if we're on a project page
+  if (STATE.currentProject) {
+    loadStorageOptions();
+  }
 }
 
 // ==============================================
@@ -583,6 +595,423 @@ function truncateText(text, maxLength) {
 
 function initialFilter() {
   filterTable();
+}
+
+// Load storage options when the page loads
+async function loadStorageOptions() {
+  try {
+    const response = await fetch(`/api/storage-options/${STATE.currentProject}`);
+    if (!response.ok) throw new Error('Failed to load storage options');
+    
+    const data = await response.json();
+    populateShelves(data.shelves);
+    // Pre-populate racks and boxes too for better UX
+    populateRacks(data.racks);
+    populateBoxes(data.boxes);
+  } catch (error) {
+    console.error('Error loading storage options:', error);
+    showNotification('Failed to load storage options', 'error');
+  }
+}
+
+// Populate shelves dropdown
+function populateShelves(shelves) {
+  const shelfSelect = document.getElementById('shelfSelect');
+  if (!shelfSelect) return;
+  
+  // Clear existing options except the first two
+  while (shelfSelect.options.length > 2) {
+    shelfSelect.remove(2);
+  }
+  
+  // Add new options with project info
+  shelves.forEach(shelf => {
+    const option = document.createElement('option');
+    option.value = shelf.id;
+    option.textContent = `${shelf.name} (${shelf.location_code}) - ${shelf.project__name}`;
+    option.setAttribute('data-project', shelf.project__name);
+    shelfSelect.appendChild(option);
+  });
+}
+
+// Populate racks dropdown
+function populateRacks(racks) {
+  const rackSelect = document.getElementById('rackSelect');
+  if (!rackSelect) return;
+  
+  // Clear existing options except the first two
+  while (rackSelect.options.length > 2) {
+    rackSelect.remove(2);
+  }
+  
+  // Add new options with project and shelf info
+  racks.forEach(rack => {
+    const option = document.createElement('option');
+    option.value = rack.id;
+    option.textContent = `${rack.name} (${rack.location_code}) - ${rack.project__name}`;
+    option.setAttribute('data-shelf', rack.shelf_id);
+    option.setAttribute('data-project', rack.project__name);
+    rackSelect.appendChild(option);
+  });
+}
+
+// Populate boxes dropdown
+function populateBoxes(boxes) {
+  const boxSelect = document.getElementById('boxSelect');
+  if (!boxSelect) return;
+  
+  // Clear existing options except the first two
+  while (boxSelect.options.length > 2) {
+    boxSelect.remove(2);
+  }
+  
+  // Add new options with project and rack info
+  boxes.forEach(box => {
+    const option = document.createElement('option');
+    option.value = box.id;
+    option.textContent = `${box.name} (${box.location_code}) - ${box.project__name}`;
+    option.setAttribute('data-rack', box.rack_id);
+    option.setAttribute('data-project', box.project__name);
+    boxSelect.appendChild(option);
+  });
+}
+
+// Handle shelf selection change
+function handleShelfChange(shelfId) {
+  const rackSelect = document.getElementById('rackSelect');
+  const newShelfForm = document.getElementById('newShelfForm');
+  
+  if (shelfId === 'new') {
+    // Show new shelf form
+    newShelfForm.style.display = 'block';
+    rackSelect.disabled = true;
+    STORAGE_STATE.currentShelf = null;
+  } else if (shelfId) {
+    // Hide new shelf form and filter racks
+    newShelfForm.style.display = 'none';
+    STORAGE_STATE.currentShelf = shelfId;
+    filterRacksByShelf(shelfId);
+    rackSelect.disabled = false;
+  } else {
+    // No shelf selected
+    newShelfForm.style.display = 'none';
+    rackSelect.disabled = true;
+    STORAGE_STATE.currentShelf = null;
+  }
+  
+  // Reset downstream selections
+  disableSelect('boxSelect');
+  STORAGE_STATE.currentRack = null;
+  STORAGE_STATE.currentBox = null;
+}
+
+// Handle rack selection change
+function handleRackChange(rackId) {
+  const boxSelect = document.getElementById('boxSelect');
+  const newRackForm = document.getElementById('newRackForm');
+  
+  if (rackId === 'new') {
+    // Show new rack form
+    newRackForm.style.display = 'block';
+    boxSelect.disabled = true;
+    STORAGE_STATE.currentRack = null;
+  } else if (rackId) {
+    // Hide new rack form and filter boxes
+    newRackForm.style.display = 'none';
+    STORAGE_STATE.currentRack = rackId;
+    filterBoxesByRack(rackId);
+    boxSelect.disabled = false;
+  } else {
+    // No rack selected
+    newRackForm.style.display = 'none';
+    boxSelect.disabled = true;
+    STORAGE_STATE.currentRack = null;
+  }
+  
+  // Reset downstream selection
+  STORAGE_STATE.currentBox = null;
+}
+
+// Handle box selection change
+function handleBoxChange(boxId) {
+  const newBoxForm = document.getElementById('newBoxForm');
+  
+  if (boxId === 'new') {
+    // Show new box form
+    newBoxForm.style.display = 'block';
+    STORAGE_STATE.currentBox = null;
+  } else if (boxId) {
+    // Hide new box form
+    newBoxForm.style.display = 'none';
+    STORAGE_STATE.currentBox = boxId;
+  } else {
+    // No box selected
+    newBoxForm.style.display = 'none';
+    STORAGE_STATE.currentBox = null;
+  }
+}
+
+// Filter racks by selected shelf
+function filterRacksByShelf(shelfId) {
+  const rackSelect = document.getElementById('rackSelect');
+  if (!rackSelect) return;
+  
+  // Enable all options first
+  Array.from(rackSelect.options).forEach(option => {
+    option.style.display = '';
+  });
+  
+  // Hide options that don't belong to the selected shelf
+  if (shelfId && shelfId !== 'new') {
+    Array.from(rackSelect.options).forEach(option => {
+      if (option.value && option.value !== 'new' && option.getAttribute('data-shelf') !== shelfId) {
+        option.style.display = 'none';
+      }
+    });
+  }
+}
+
+// Filter boxes by selected rack
+function filterBoxesByRack(rackId) {
+  const boxSelect = document.getElementById('boxSelect');
+  if (!boxSelect) return;
+  
+  // Enable all options first
+  Array.from(boxSelect.options).forEach(option => {
+    option.style.display = '';
+  });
+  
+  // Hide options that don't belong to the selected rack
+  if (rackId && rackId !== 'new') {
+    Array.from(boxSelect.options).forEach(option => {
+      if (option.value && option.value !== 'new' && option.getAttribute('data-rack') !== rackId) {
+        option.style.display = 'none';
+      }
+    });
+  }
+}
+
+// Disable a select dropdown
+function disableSelect(selectId) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  
+  // Clear options except the first one
+  while (select.options.length > 1) {
+    select.remove(1);
+  }
+  
+  // Reset to default and disable
+  select.selectedIndex = 0;
+  select.disabled = true;
+}
+
+// Create new shelf
+async function createNewShelf() {
+  const name = document.getElementById('newShelfName').value;
+  const code = document.getElementById('newShelfCode').value;
+  
+  if (!name || !code) {
+    showNotification('Please provide both name and location code', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/api/create-shelf/${STATE.currentProject}`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': CSRF_TOKEN,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, location_code: code })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create shelf');
+    }
+    
+    const data = await response.json();
+    
+    // Add the new shelf to the dropdown and select it
+    const shelfSelect = document.getElementById('shelfSelect');
+    const option = document.createElement('option');
+    option.value = data.id;
+    option.textContent = `${data.name} (${data.location_code}) - ${data.project__name || STATE.currentProject}`;
+    option.setAttribute('data-project', data.project__name || STATE.currentProject);
+    shelfSelect.appendChild(option);
+    shelfSelect.value = data.id;
+    
+    // Hide the form and trigger change
+    document.getElementById('newShelfForm').style.display = 'none';
+    handleShelfChange(data.id);
+    
+    showNotification('Shelf created successfully', 'success');
+    
+  } catch (error) {
+    showNotification(error.message, 'error');
+  }
+}
+
+// Cancel new shelf creation
+function cancelNewShelf() {
+  document.getElementById('newShelfForm').style.display = 'none';
+  document.getElementById('shelfSelect').value = '';
+  document.getElementById('newShelfName').value = '';
+  document.getElementById('newShelfCode').value = '';
+}
+
+// Create new rack
+async function createNewRack() {
+  if (!STORAGE_STATE.currentShelf) {
+    showNotification('Please select a shelf first', 'error');
+    return;
+  }
+  
+  const name = document.getElementById('newRackName').value;
+  const code = document.getElementById('newRackCode').value;
+  
+  if (!name || !code) {
+    showNotification('Please provide both name and location code', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/api/create-rack/${STORAGE_STATE.currentShelf}`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': CSRF_TOKEN,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, location_code: code })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create rack');
+    }
+    
+    const data = await response.json();
+    
+    // Add the new rack to the dropdown and select it
+    const rackSelect = document.getElementById('rackSelect');
+    const option = document.createElement('option');
+    option.value = data.id;
+    option.textContent = `${data.name} (${data.location_code}) - ${data.project__name}`;
+    option.setAttribute('data-shelf', data.shelf_id);
+    option.setAttribute('data-project', data.project__name);
+    rackSelect.appendChild(option);
+    rackSelect.value = data.id;
+    
+    // Hide the form and trigger change
+    document.getElementById('newRackForm').style.display = 'none';
+    handleRackChange(data.id);
+    
+    showNotification('Rack created successfully', 'success');
+    
+  } catch (error) {
+    showNotification(error.message, 'error');
+  }
+}
+
+// Cancel new rack creation
+function cancelNewRack() {
+  document.getElementById('newRackForm').style.display = 'none';
+  document.getElementById('rackSelect').value = '';
+  document.getElementById('newRackName').value = '';
+  document.getElementById('newRackCode').value = '';
+}
+
+// Create new box
+async function createNewBox() {
+  if (!STORAGE_STATE.currentRack) {
+    showNotification('Please select a rack first', 'error');
+    return;
+  }
+  
+  const name = document.getElementById('newBoxName').value;
+  const code = document.getElementById('newBoxCode').value;
+  
+  if (!name || !code) {
+    showNotification('Please provide both name and location code', 'error');
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/api/create-box/${STORAGE_STATE.currentRack}`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': CSRF_TOKEN,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ name, location_code: code })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to create box');
+    }
+    
+    const data = await response.json();
+    
+    // Add the new box to the dropdown and select it
+    const boxSelect = document.getElementById('boxSelect');
+    const option = document.createElement('option');
+    option.value = data.id;
+    option.textContent = `${data.name} (${data.location_code}) - ${data.project__name}`;
+    option.setAttribute('data-rack', data.rack_id);
+    option.setAttribute('data-project', data.project__name);
+    boxSelect.appendChild(option);
+    boxSelect.value = data.id;
+    
+    // Hide the form
+    document.getElementById('newBoxForm').style.display = 'none';
+    
+    showNotification('Box created successfully', 'success');
+    
+  } catch (error) {
+    showNotification(error.message, 'error');
+  }
+}
+
+// Cancel new box creation
+function cancelNewBox() {
+  document.getElementById('newBoxForm').style.display = 'none';
+  document.getElementById('boxSelect').value = '';
+  document.getElementById('newBoxName').value = '';
+  document.getElementById('newBoxCode').value = '';
+}
+
+// Prepare storage data for form submission
+function prepareStorageData(formData) {
+  // Handle shelf
+  const shelfSelect = document.getElementById('shelfSelect');
+  if (shelfSelect.value === 'new') {
+    formData.append('new_shelf_name', document.getElementById('newShelfName').value);
+    formData.append('new_shelf_code', document.getElementById('newShelfCode').value);
+  } else {
+    formData.append('shelf', shelfSelect.value);
+  }
+  
+  // Handle rack
+  const rackSelect = document.getElementById('rackSelect');
+  if (rackSelect.value === 'new') {
+    formData.append('new_rack_name', document.getElementById('newRackName').value);
+    formData.append('new_rack_code', document.getElementById('newRackCode').value);
+  } else {
+    formData.append('rack', rackSelect.value);
+  }
+  
+  // Handle box
+  const boxSelect = document.getElementById('boxSelect');
+  if (boxSelect.value === 'new') {
+    formData.append('new_box_name', document.getElementById('newBoxName').value);
+    formData.append('new_box_code', document.getElementById('newBoxCode').value);
+  } else {
+    formData.append('box', boxSelect.value);
+  }
+  
+  return formData;
 }
 
 // Initialize when DOM is loaded

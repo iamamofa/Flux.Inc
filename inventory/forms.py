@@ -1,9 +1,11 @@
 # forms.py
 from django import forms
-from .models import UserApplication, Project, Consumable, Reagent
+from django.utils import timezone
+from .models import UserApplication, Project, Consumable, Reagent, MSDSFile
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from .utils.msds_validation import validate_file_size
 import random
 import string
 import uuid
@@ -30,13 +32,39 @@ def generate_unique_username(first_name, last_name):
 class ConsumableForm(forms.ModelForm):
     class Meta:
         model = Consumable
-        fields = ['name', 'product_code', 'quantity', 'expiry_date', 'storage_location', 'threshold_value']
-
+        fields = ['name', 'product_code', 'pack_count', 'expiry_date', 'storage_location', 'threshold_value']
 
 class ReagentForm(forms.ModelForm):
     class Meta:
         model = Reagent
-        fields = '__all__'
+        fields = [
+            'name', 'product_code', 'items_per_pack', 'pack_count',
+            'expiry_date', 'storage_location', 'cold_storage',
+            'oem_temperature', 'temperature_unit', 'vendor',
+            'country_of_origin', 'hazard_level', 'threshold_value', 'notes'
+        ]
+        widgets = {
+            'expiry_date': forms.DateInput(attrs={'type': 'date', 'min': timezone.now().date()}),
+            'notes': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def clean_expiry_date(self):
+        expiry_date = self.cleaned_data.get('expiry_date')
+        if expiry_date and expiry_date < timezone.now().date():
+            raise forms.ValidationError("Expiry date cannot be in the past")
+        return expiry_date
+
+    def clean_hazard_level(self):
+        hazard_level = self.cleaned_data.get('hazard_level')
+        if hazard_level is not None and (hazard_level < 0 or hazard_level > 4):
+            raise forms.ValidationError("Hazard level must be between 0 and 4")
+        return hazard_level
+
+    def clean_items_per_pack(self):
+        items_per_pack = self.cleaned_data.get('items_per_pack')
+        if items_per_pack <= 0:
+            raise forms.ValidationError("Items per pack must be positive")
+        return items_per_pack
 
 
 class UserApplicationForm(forms.ModelForm):
@@ -145,3 +173,26 @@ class NewProjectForm(forms.Form):
         if Project.objects.filter(name=project_name).exists():
             raise ValidationError("Project name already exists.")
         return project_name
+
+
+class MSDSUploadForm(forms.Form):
+    msds_file = forms.FileField(
+            label='MSDS File',
+            help_text='Upload Material Safety Data Sheet (PDF only, max 5MB)',
+            widget=forms.FileInput(attrs={'accept': '.pdf'})
+    )
+
+    def clean_file(self):
+        msds_file = self.cleaned_data.get('msds_file')
+
+        if not msds_file:
+            return msds_file
+
+        # Validate file size
+        validate_file_size(msds_file)
+
+        # Validate file type
+        if not msds_file.name.lower().endswith('.pdf'):
+            raise forms.ValidationError("Only PDF files are allowed")
+
+        return file

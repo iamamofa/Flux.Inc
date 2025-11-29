@@ -32,15 +32,10 @@
 
 <div class="border-b mt-5 pb-3">
     <div class="text-gray-700 flex items-center justify-between mb-3">
-        <span>Type</span>
+        <span>Sample Type</span>
     </div>
-    <select id="sortColumnDropdown" class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
-        <option value="All">All</option>
-        <option value="Bacteria">Bacteria</option>
-        <option value="Fungi">Fungi</option>
-        <option value="Parasite">Parasite</option>
-        <option value="Virus">Virus</option>
-    </select>
+    <input type="text" id="sampleTypeFilterInput" placeholder="Filter by Sample Type"
+            class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2">
 </div>
 
 <!-- Country Filter -->
@@ -76,6 +71,60 @@
     </div>
 </div>
 
+<!-- Storage Location Filter -->
+<div class="border-b mt-5 pb-3">
+    <div class="text-gray-700 flex items-center justify-between mb-3">
+        <span>Storage Location</span>
+    </div>
+        <input type="text" id="storageLocationFilterInput" placeholder="Filter by storage location"
+            class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-500 rounded mt-2">
+</div>
+
+<div class="border-b mt-5 pb-3">
+    <div class="text-gray-700 flex items-center justify-between mb-3">
+        <span>Shelf</span>
+    </div>
+    <select id="shelfFilterInput" class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
+        <option value="All">All</option>
+        {% for shelf in shelves %}
+        <option value="{{ shelf.name }}">{{ shelf.name }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="border-b mt-5 pb-3">
+    <div class="text-gray-700 flex items-center justify-between mb-3">
+        <span>Rack</span>
+    </div>
+    <select id="rackFilterInput" class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
+        <option value="All">All</option>
+        {% for rack in racks %}
+        <option value="{{ rack.name }}">{{ rack.name }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="border-b mt-5 pb-3">
+    <div class="text-gray-700 flex items-center justify-between mb-3">
+        <span>Box</span>
+    </div>
+    <select id="boxFilterInput" class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
+        <option value="All">All</option>
+        {% for box in boxes %}
+        <option value="{{ box.name }}">{{ box.name }}</option>
+        {% endfor %}
+    </select>
+</div>
+
+<!-- Well ID Filter -->
+<div class="border-b mt-5 pb-3">
+    <div class="text-gray-700 flex items-center justify-between mb-3">
+        <span>Well ID</span>
+    </div>
+    <input type="text" id="wellIDFilterInput" placeholder="Filter by well ID"
+        class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-500 rounded mt-2">
+</div>
+
 <!-- Date Recorded Filter -->
 <div class="border-b mt-5 pb-3">
     <div class="text-gray-700 flex items-center justify-between mb-3">
@@ -99,15 +148,6 @@
     </div>
 </div>
 
-<!-- Storage Location Filter -->
-<div class="border-b mt-5 pb-3">
-    <div class="text-gray-700 flex items-center justify-between mb-3">
-        <span>Storage Location</span>
-    </div>
-        <input type="text" id="storageLocationFilterInput" placeholder="Filter by storage location"
-            class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-500 rounded mt-2">
-</div>
-
 <!-- Sort Dropdown -->
 <div class="border-b mt-5 pb-3">
     <div class="text-gray-700 flex items-center justify-between mb-3">
@@ -117,10 +157,16 @@
         <option value="0">None</option>
         <option value="1">Sample ID</option>
         <option value="2">Type</option>
-        <option value="4">Country</option>
-        <option value="5">Volume</option>
-        <option value="6">Date Recorded</option>
-        <option value="8">Storage Location</option>
+        <option value="3">Country</option>
+        <option value="4">Volume</option>
+        <option value="5">Date Recorded</option>
+        <option value="6">Shelf</option>
+        <option value="7">Rack</option>
+        <option value="8">Box</option>
+        <option value="9">Storage Location</option>
+        <option value="10">Well ID</option>
+        <option value="11">Storage Temperature</option>
+        <option value="12">Threshold Value</option>
     </select>
 </div>
 
@@ -149,7 +195,6 @@
             <div class="dropdown-content">
                 {% for project in projects %}
                 <a href="{% url 'samples' project_name=project.name %}">{{ project.name }}</a>
-                
                 {% endfor %}   
             </div>
         </div>
@@ -202,13 +247,21 @@
         <thead>
             <tr>
                 <th scope="col">Sample ID</th>
-                <th scope="col">Type</th>
-                <th scope="col">Description</th>
+                <th scope="col">Sample Type</th>
+                <th scope="col">Collection Date</th>
+                <th scope="col">Date Recorded</th>
                 <th scope="col">Country</th>
                 <th scope="col">Volume</th>
-                <th scope="col">Date Recorded</th>
-                <th scope="col">Well ID</th>
+                <th scope="col">Concentration</th>
                 <th scope="col">Storage Location</th>
+                <th scope="col">Cold Storage ID</th>
+                <th scope="col">Storage Temperature</th>
+                <th scop="col">Shelf</th>
+                <th scop="col">Rack</th>
+                <th scop="col">Box</th>
+                <th scope="col">Well ID</th>
+                <th scope="col">Threshold Value</th>
+                <th scope="col">Notes</th>
                 <th scope="col"></th>
             </tr>
         </thead>
@@ -218,20 +271,44 @@
                 data-project="{{ project.name }}"
                 data-sample-id="{{ sample.sample_id }}"
                 data-sample-type="{{ sample.sample_type }}"
-                data-description="{{ sample.description }}"
+                data-collection-date="{{ sample.collection_date|date:'Y-m-d' }}"
+                data-date-recorded="{{ sample.date_recorded|date:'Y-m-d' }}"
                 data-country="{{ sample.country }}"
                 data-volume="{{ sample.volume }}"
-                data-date-recorded="{{ sample.date_recorded|date:'Y-m-d' }}"
-                data-well-id="{{ sample.well_id }}"
-                data-storage-location="{{ sample.storage_location }}">
+                data-concentration="{{ sample.concentration }}"
+                data-storage-location="{{ sample.storage_location }}"
+                data-cold-storage-id="{{ sample.cold_storage_id }}"
+                data-storage-temperature="{{ sample.storage_temperature }}"
+                data-shelf="{{ sample.shelf.name|default:'' }}"
+                data-rack="{{ sample.rack.name|default:'' }}"
+                data-box="{{ sample.box.name|default:'' }}"
+                data-well-id="{{ sample.well_id|default:'' }}"
+                data-threshold-value="{{ sample.threshold_value }}"
+                data-notes="{{ sample.notes }}">
                 <td>{{ sample.sample_id }}</td>
                 <td>{{ sample.sample_type }}</td>
-                <td>{{ sample.description }}</td>
+                <td>{{ sample.collection_date|date:'Y-m-d' }}</td>
+                <td>{{ sample.date_recorded|date:'Y-m-d' }}</td>
                 <td>{{ sample.country }}</td>
-                <td>{{ sample.volume }}</td>
-                <td>{{ sample.date_recorded|date:"Y-m-d" }}</td>
-                <td>{{ sample.well_id }}</td>
-                <td data-fulltext="{{ sample.storage_location }}">{{ sample.storage_location|truncatechars:20 }}</td>
+                <td>{{ sample.volume }} {{sample.volume_unit}}</td>
+                <td>{{ sample.concentration }}</td>
+                <td>{{ sample.storage_location }}</td>
+                <td>{{ sample.cold_storage_id }}</td>
+                <td>{{ sample.storage_temperature }}</td>
+                <td>{{ sample.shelf.name|default:"-" }}</td>
+                <td>{{ sample.rack.name|default:"-" }}</td>
+                <td>{{ sample.box.name|default:"-" }}</td>
+                <td>{{ sample.well_id|default:"-" }}</td>
+                <td>{{ sample.threshold_value }}</td>
+                <td>
+                    {% if sample.notes %}
+                        <button class="text-primary hover-underline" onclick="showSampleNotesPopup('{{ sample.id }}')">
+                            View Notes
+                        </button>
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
                 <td class="actions">
                     <div class="dropdown">
                         <!-- Main trigger button -->
@@ -263,6 +340,33 @@
         </tbody>
     </table>
 </div>
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="mt-6 flex justify-center items-center space-x-2">
+    <!-- Pevious Page -->
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}"
+           class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+            &laquo; Previous
+        </a>
+    {% endif %}
+
+    <!-- Page Numbers -->
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        </span class="px-3 py-1 bg-primary text-white rounded-md text-sm">{{ num }}</span>
+        {% else %}
+        <a href="?page={{ page_obj.next_page_number }}"
+           class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+            Next &raquo;
+        </a>
+        {% endif %}
+</div>
+
+<div class="mt-2 text-center text-sm text-gray-500">
+    Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }} samples
+</div>
+{% endif %}
 {% endblock %}
 
 {% block popups_block %}
@@ -270,55 +374,425 @@
 <div class="popup-container1" id="addPopup">
     <div class="popup-card">
         <h2>Add Item</h2>
+        <div class="modal-body">
+            <div class="entry-mode-selector" style="margin-bottom: 20px;">
+                <div style="display: flex; border-bottom: 1px solid var(--border);">
+                    <div class-"nav-tab active" data-mode="single">Single Entry"</div>
+                    <div class="nav-tab" data-mode="batch">Batch Entry</div>
+                    <div class="nav-tab" data-mode="import">Import</div>
+                </div>
+            </div>
+
+            <!-- Single Entry Form -->
+            <div class="entry-form" id="single-entry-form">
+                <form id="sample-form" method="POST" action="{% url 'add_sample' project_name=project.name %}">
+                    {% csrf_token %}
+                    <div class="Form-row">
+                        <div class="form-group">
+                            <label for="sample_id">Sample ID *</label>
+                            <input type="text" name="sample_id" id="sample_id" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sample_type">Sample Type *</label>
+                            <input type="Text" name="Sample_type" id="sample_type" placeholder="e.g.Sputum, DNA, Blood etc." required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="notes">Notes *</label>
+                            <textarea name="notes" id="notes" rows="4"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="collection_date">Collection Date *</label>
+                            <input type="date" name="collection_date" id="collection_date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="country">Country *</label>
+                            <input type="text" name="country" id="country" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="volume">Volume *</label>
+                            <input type="number" name="volume" id="volume" step="0.1" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="volume_unit">Unit *</label>
+                            <select name="volume_unit" id="volume_unit" required>
+                                <option value="mL">mL</option>
+                                <option value="μL">μL</option>
+                            </select>
+                        </div>
+                    </div>    
+                    <div class="storage-hierarchy">
+                        <div class="storage-title">Storage Location</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <!-- Shelf Selection -->
+                                <label for="shelf">Shelf</label>
+                                <select name="shelf" id="shelfSelect" onchange="handleShelfChange(this.value)">
+                                    <option value="">Select Shelf</option>
+                                    <option value="new">+ Create New Shelf</option>
+                                        {% for shelf in shelves %}
+                                        <option value="{{ shelf.id }}" data-project="{{ shelf.project.name }}">{{ shelf.name }} ({{ shelf.location_code }}) - {{ shelf.project_name }}</option>
+                                        {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- New Shelf Form (initially hidden) -->
+                            <div id="newShelfForm" class="new-item-form" style="display: none;">
+                                <div class="inputBox">
+                                    <label>New Shelf Label</label>
+                                    <input type="text" name="new_shelf_label" id="newShelfLabel" placeholder="Shelf Label">
+                                </div>
+                                <div class="inputBox">
+                                    <label>Location Code</label>
+                                    <input type="text" name="new_shelf_code" id="newShelfCode" placeholder="Location Code">
+                                </div>
+                                <div class="inputBox">
+                                    <label class="input-label">
+                                        <span class="label-text">Capacity</span>
+                                        <span class="label-description">Max racks this shelf can hold</span>
+                                    </label>
+                                    <input type="number" name="new_shelf_capacity" id="newShelfCapacity" 
+                                        min="1" step="1" placeholder="Enter number">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="notes">Notes</label>
+                                        <textarea name="new_shelf_notes" id="newShelfNotes" rows="4"></textarea>
+                                    </div>
+                                </div>
+                                <button type="button" onclick="createNewShelf()" class="btn btn-secondary">Create Shelf</button>
+                                <button type="button" onclick="cancelNewShelf()" class="btn btn-outline">Cancel</button>
+                            </div>
+
+                            <!-- Rack Selection -->
+                            <div class="form-group">
+                                <label>Rack</label>
+                                <select name="rack" id="rackSelect" onchange="handleRackChange(this.value)" disabled>
+                                    <option value="">Select Rack</option>
+                                    <option value="new">+ Create New Rack</option>
+                                    {% for rack in racks %}
+                                    <option value="{{ rack.id }}" data-shelf="{{ rack.shelf.id }}" data-project="{{ rack.project.name }}">
+                                    {{ rack.name }} ({{ rack.location_code }}) - {{ rack.project.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- New Rack Form (initially hidden) -->
+                            <div id="newRackForm" class="new-item-form" style="display: none;">
+                                <div class="inputBox">
+                                    <label>New Rack Label</label>
+                                    <input type="text" name="new_rack_name" id="newRackName" placeholder="Rack Label">
+                                </div>
+                                <div class="inputBox">
+                                    <label class="input-label">
+                                        <span class="label-text">Capacity</span>
+                                        <span class="label-description">Max boxes this rack can hold</span>
+                                    </label>
+                                    <input type="number" name="new_rack_capacity" id="newRackCapacity" 
+                                    min="1" step="1" placeholder="Enter number">
+                                </div>
+                                <div class="inputBox">
+                                    <label>Notes</label>
+                                    <input type="text" name="new_rack_notes" id="newRackNotes" placeholder="Rack Notes">
+                                </div>
+                                <button type="button" onclick="createNewRack()" class="btn btn-secondary">Create Rack</button>
+                                <button type="button" onclick="cancelNewRack()" class="btn btn-outline">Cancel</button>
+                            </div>
+
+                            <!-- Box Selection -->
+                            <div class="inputBox">
+                                <label>Box</label>
+                                <select name="box" id="boxSelect" onchange="handleBoxChange(this.value)" disabled>
+                                    <option value="">Select Box</option>
+                                    <option value="new">+ Create New Box</option>
+                                    {% for box in boxes %}
+                                    <option value="{{ box.id }}" data-rack="{{ box.rack.id }}" data-project="{{ box.project.name }}">
+                                    {{ box.name }} ({{ box.location_code }}) - {{ box.project.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- New Box Form (initially hidden) -->
+                            <div id="newBoxForm" class="new-item-form" style="display: none;">
+                                <div class="inputBox">
+                                    <label>New Box Name</label>
+                                    <input type="text" name="new_box_name" id="newBoxName" placeholder="Box Name">
+                                </div>
+                                <div class="inputBox">
+                                    <label class="input-label">
+                                        <span class="label-text">Row Count</span>
+                                        <span class="label-description">Max number of rows in the box</span>
+                                    </label>
+                                    <input type="number" name="new_box_row_count" id="newBoxRowCount" 
+                                    min="1" step="1" placeholder="Enter number">
+                                </div>
+                                <div class="inputBox">
+                                    <label class="input-label">
+                                        <span class="label-text">Column Count</span>
+                                        <span class="label-description">Max number of columns in the box</span>
+                                    </label>
+                                    <input type="number" name="new_box_column_count" id="newBoxColumnCount" 
+                                    min="1" step="1" placeholder="Enter number">
+                                </div>
+                                <div class="inputBox">
+                                    <label>Notes</label>
+                                    <input type="text" name="new_box_notes" id="newBoxNotes" placeholder="Box Notes">
+                                </div>
+                                <button type="button" onclick="createNewBox()" class="btn btn-secondary">Create Box</button>
+                                <button type="button" onclick="cancelNewBox()" class="btn btn-outline">Cancel</button>
+                            </div>
+
+                            <!-- Well ID -->
+                             <div class="inputBox">
+                                <label>Well ID</label>
+                                <input type="text" name="well_id" id="well_id" required
+                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.well_id }}">
+                            </div>
+                    </div>
         <div class="box">
             <form id="sample-form" method="POST" action="{% url 'add_sample' project_name=project.name %}">
                 {% csrf_token %}
                 <div class="inputBox">
+                    <label>Sample ID</label>
                     <input type="text" name="sample_id" id="sample_id" required
                         onkeyup="this.setAttribute('value', this.value);" value="{{ form.sample_id }}">
-                    <label>Sample ID</label>
                 </div>
-                <div class="quantity-filter-container">
-                    <label for="sample_type">Type</label>
+                <div class="inputBox">
+                    <div>
+                        <label for="sampleTypeOptions">Sample Type</label>
+                        <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
+                            id="sample_type" name="sample_type" required">
+                            <option value="">-- Please Select --</option>
+                            <option value="dna">DNA</option>
+                            <option value="rna">RNA</option>
+                            <option value="blood">Blood</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div id="otherField" style="display: none; margin-top: 10px;">
+                        <label for="otherValue">Please specify:</label>
+                        <input type="text" id="otherValue" name="sample_type_other"
+                               class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label for="collection_date">Sample Collection Date</label>
                     <div class="inputBox">
-                        <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" id="sample_type" name="sample_type" required
-                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.sample_type }}">
-                            <option value="Bacteria">Bacteria</option>
-                            <option value="Fungi">Fungi</option>
-                            <option value="Parasite">Parasite</option>
-                            <option value="Virus">Virus</option>
+                        <input type="date" name="collection_date" id="collection_date" required
+                            min="{{ current_date|date:'Y-m-d' }}"
+                            onchange="validateExpiryDate(this)">
+                        <label>Collection Date</label>
+                        <small class="text-red-500 hidden" id="date-error">Expiry date must be in the future</small>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label for="date_recorded">Date Recorded</label>
+                    <div class="inputBox">
+                        <input type="date" name="date_recorded" id="date_recorded" required
+                            min="{{ current_date|date:'Y-m-d' }}"
+                            onchange="validateExpiryDate(this)">
+                        <label>Date Recorded</label>
+                        <small class="text-red-500 hidden" id="date-error">Expiry date must be in the future</small>
+                    </div>
+                </div>
+                <div class="inputBox">
+                    <label>Country</label>
+                    <input type="text" name="country" id="country" required
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.country }}">
+                </div>
+                <div class="inputBox">
+                    <label for="volume">Sample Volume</label>
+                    <div class="flex space-x-2">
+                        <input type="number" min="1" name="volume" id="volume" required
+                            onkeyup="this.setAttribute('value', this.value);" value="{{ form.volume }}"
+                                class="flex-1 bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
+                        <select name="volume_unit" class="w-20 bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
+                            <option value="mL">mL</option>
+                            <option value="µL">µL</option>
                         </select>
                     </div>
                 </div>
                 <div class="inputBox">
-                    <input type="text" name="description" id="description" required
-                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.description }}">
-                    <label>Description</label>
+                    <label>Sample Concentration</label>
+                    <input type="number" min="1" name="concentration" id="concentration" required
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.concentration }}">
                 </div>
                 <div class="inputBox">
-                    <input type="text" name="country" id="country" required
-                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.country }}">
-                    <label>Country</label>
+                    <label>Cold Storage ID</label>
+                    <input type="text" name="cold_storage_id" id="cold_storage_id" required
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.cold_storage_id }}">
                 </div>
                 <div class="inputBox">
-                    <input type="number" name="volume" id="volume" required
-                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.volume }}">
-                    <label>Volume in ml</label>
+                    <label for="storage_temperature">Storage Temperature</label>
+                    <div class="flex space-x-2">
+                        <input type="number" name="storage_temperature" id="storage_temperature" required
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.storage_temperature }}"
+                                class="flex-1 bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
+                        <select name="temperature_unit" class="w-20 bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
+                            <option value="C">C</option>
+                            <option value="F">F</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="inputBox">
-                    <input type="text" name="well_id" id="well_id" required
+                <div class="storage-hierarchy">
+                    <h3>Storage Location</h3>
+
+                    <!-- Shelf Selection -->
+                    <div class="inputBox">
+                        <label>Shelf</label>
+                        <select name="shelf" id="shelfSelect" onchange="handleShelfChange(this.value)">
+                            <option value="">Select Shelf</option>
+                            <option value="new">+ Create New Shelf</option>
+                            {% for shelf in shelves %}
+                            <option value="{{ shelf.id }}" data-project="{{ shelf.project.name }}">{{ shelf.name }} ({{ shelf.location_code }}) - {{ shelf.project_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- New Shelf Form (initially hidden) -->
+                    <div id="newShelfForm" class="new-item-form" style="display: none;">
+                        <div class="inputBox">
+                            <label>New Shelf Name</label>
+                            <input type="text" name="new_shelf_name" id="newShelfName" placeholder="Shelf Name">
+                        </div>
+                        <div class="inputBox">
+                            <label>Location Code</label>
+                            <input type="text" name="new_shelf_code" id="newShelfCode" placeholder="Location Code">
+                        </div>
+                        <div class="inputBox">
+                            <label class="input-label">
+                                <span class="label-text">Capacity</span>
+                                <span class="label-description">Max racks this shelf can hold</span>
+                            </label>
+                            <input type="number" name="new_shelf_capacity" id="newShelfCapacity" 
+                            min="1" step="1" placeholder="Enter number">
+                        </div>
+                        <div class="inputBox">
+                            <label>Notes</label>
+                            <input type="text" name="new_shelf_notes" id="newShelfNotes" placeholder="Shelf Notes">
+                        </div>
+                        <button type="button" onclick="createNewShelf()" class="btn btn-secondary">Create Shelf</button>
+                        <button type="button" onclick="cancelNewShelf()" class="btn btn-outline">Cancel</button>
+                    </div>
+
+                    <!-- Rack Selection -->
+                    <div class="inputBox">
+                        <label>Rack</label>
+                        <select name="rack" id="rackSelect" onchange="handleRackChange(this.value)" disabled>
+                            <option value="">Select Rack</option>
+                            <option value="new">+ Create New Rack</option>
+                            {% for rack in racks %}
+                            <option value="{{ rack.id }}" data-shelf="{{ rack.shelf.id }}" data-project="{{ rack.project.name }}">
+                            {{ rack.name }} ({{ rack.location_code }}) - {{ rack.project.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- New Rack Form (initially hidden) -->
+                    <div id="newRackForm" class="new-item-form" style="display: none;">
+                        <div class="inputBox">
+                            <label>New Rack Name</label>
+                            <input type="text" name="new_rack_name" id="newRackName" placeholder="Rack Name">
+                        </div>
+                        <div class="inputBox">
+                            <label class="input-label">
+                                <span class="label-text">Capacity</span>
+                                <span class="label-description">Max boxes this rack can hold</span>
+                            </label>
+                            <input type="number" name="new_rack_capacity" id="newRackCapacity" 
+                            min="1" step="1" placeholder="Enter number">
+                        </div>
+                        <div class="inputBox">
+                            <label>Notes</label>
+                            <input type="text" name="new_rack_notes" id="newRackNotes" placeholder="Rack Notes">
+                        </div>
+                        <button type="button" onclick="createNewRack()" class="btn btn-secondary">Create Rack</button>
+                        <button type="button" onclick="cancelNewRack()" class="btn btn-outline">Cancel</button>
+                    </div>
+
+                    <!-- Box Selection -->
+                    <div class="inputBox">
+                        <label>Box</label>
+                        <select name="box" id="boxSelect" onchange="handleBoxChange(this.value)" disabled>
+                            <option value="">Select Box</option>
+                            <option value="new">+ Create New Box</option>
+                            {% for box in boxes %}
+                            <option value="{{ box.id }}" data-rack="{{ box.rack.id }}" data-project="{{ box.project.name }}">
+                            {{ box.name }} ({{ box.location_code }}) - {{ box.project.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- New Box Form (initially hidden) -->
+                    <div id="newBoxForm" class="new-item-form" style="display: none;">
+                        <div class="inputBox">
+                            <label>New Box Name</label>
+                            <input type="text" name="new_box_name" id="newBoxName" placeholder="Box Name">
+                        </div>
+                        <div class="inputBox">
+                            <label class="input-label">
+                                <span class="label-text">Row Count</span>
+                                <span class="label-description">Max number of rows in the box</span>
+                            </label>
+                            <input type="number" name="new_box_row_count" id="newBoxRowCount" 
+                            min="1" step="1" placeholder="Enter number">
+                        </div>
+                        <div class="inputBox">
+                            <label class="input-label">
+                                <span class="label-text">Column Count</span>
+                                <span class="label-description">Max number of columns in the box</span>
+                            </label>
+                            <input type="number" name="new_box_column_count" id="newBoxColumnCount" 
+                            min="1" step="1" placeholder="Enter number">
+                        </div>
+                        <div class="inputBox">
+                            <label>Notes</label>
+                            <input type="text" name="new_box_notes" id="newBoxNotes" placeholder="Box Notes">
+                        </div>
+                        <button type="button" onclick="createNewBox()" class="btn btn-secondary">Create Box</button>
+                        <button type="button" onclick="cancelNewBox()" class="btn btn-outline">Cancel</button>
+                    </div>
+
+                    <!-- Well ID -->
+                    <div class="inputBox">
+                        <label>Well ID</label>
+                        <input type="text" name="well_id" id="well_id" required
                         onkeyup="this.setAttribute('value', this.value);" value="{{ form.well_id }}">
-                    <label>Well ID</label>
+                    </div>
                 </div>
                 <div class="inputBox">
-                    <input type="text" name="storage_location" id="storage_location" required
-                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.storage_location }}">
                     <label>Storage Location</label>
+                    <input type="text" name="storage_location" id="edit_storage_location" required
+                    onkeyup="this.setAttribute('value', this.value);" value="{{ form.storage_location }}">
                 </div>
                 <div class="inputBox">
-                    <input type="number" name="threshold_value" id="threshold_value" required
-                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.threshold_value }}">
-                    <label>Threshold in ml</label>
+                    <label>Sample Volume Threshold</label>
+                    <div class="flex space-x-2">
+                        <input type="number" min="1" name="threshold_value" id="threshold_value" required
+                            onkeyup="this.setAttribute('value', this.value);" value="{{ form.threshold_value }}"
+                                class="flex-1 bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
+                        <select name="threshold_unit" class="w-20 bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
+                            <option value="mL">mL</option>
+                            <option value="µL">µL</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="inputBox">
+                    <label>Notes</label>
+                    <input type="text" name="notes" id="notes" required
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.notes }}">
                 </div>
                 <div class="inputBox button">
                     <button class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="submit">Add</button>
@@ -336,12 +810,12 @@
             <form id="edit-form" method="POST">
                 {% csrf_token %}
                 <div class="inputBox">
+                    <label>Sample ID</label>
                     <input type="text" name="sample_id" id="edit_sample_id" required
                         onkeyup="this.setAttribute('value', this.value);">
-                    <label>Sample ID</label>
                 </div>
                 <div class="quantity-filter-container">
-                    <label for="edit_sample_type">Type</label>
+                    <label for="edit_sample_type">Sample Type</label>
                     <div class="inputBox">
                         <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" id="edit_sample_type" name="sample_type" required
                         onkeyup="this.setAttribute('value', this.value);">
@@ -352,35 +826,193 @@
                         </select>
                     </div>
                 </div>
-                <div class="inputBox">
-                    <input type="text" name="description" id="edit_description" required
-                        onkeyup="this.setAttribute('value', this.value);">
-                    <label>Description</label>
+                <div class="form-row">
+                    <label for="edit_collection_date">Sample Collection Date</label>
+                    <div class="inputBox">
+                        <input type="date" name="collection_date" id="edit_collection_date" required
+                            min="{{ current_date|date:'Y-m-d' }}"
+                            onchange="validateExpiryDate(this)">
+                        <label>Collection Date</label>
+                        <small class="text-red-500 hidden" id="date-error">Expiry date must be in the future</small>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label for="edit_date_recorded">Date Recorded</label>
+                    <div class="inputBox">
+                        <input type="date" name="date_recorded" id="edit_date_recorded" required
+                            min="{{ current_date|date:'Y-m-d' }}"
+                            onchange="validateExpiryDate(this)">
+                        <label>Date Recorded</label>
+                        <small class="text-red-500 hidden" id="date-error">Expiry date must be in the future</small>
+                    </div>
                 </div>
                 <div class="inputBox">
+                    <label>Country</label>
                     <input type="text" name="country" id="edit_country" required
                         onkeyup="this.setAttribute('value', this.value);">
-                    <label>Country</label>
                 </div>
                 <div class="inputBox">
+                    <label>Volume in ml</label>
                     <input type="number" name="volume" id="edit_volume" required
                         onkeyup="this.setAttribute('value', this.value);">
-                    <label>Volume in ml</label>
                 </div>
                 <div class="inputBox">
-                    <input type="text" name="well_id" id="edit_well_id" required
+                    <label>Sample Concentration</label>
+                    <input type="number" min="1" name="concentration" id="edit_concentration" required
                         onkeyup="this.setAttribute('value', this.value);">
-                    <label>Well ID</label>
                 </div>
                 <div class="inputBox">
+                    <label>Cold Storage ID</label>
+                    <input type="text" name="cold_storage_id" id="edit_cold_storage_id" required
+                        onkeyup="this.setAttribute('value', this.value);">
+                </div>
+                <div class="inputBox">
+                    <label>Storage Temperature</label>
+                    <input type="number" name="storage_temperature" id="edit_storage_temperature" required
+                        onkeyup="this.setAttribute('value', this.value);">
+                </div>
+                                <div class="storage-hierarchy">
+                    <h3>Storage Location</h3>
+
+                    <!-- Shelf Selection -->
+                    <div class="inputBox">
+                        <label>Shelf</label>
+                        <select name="shelf" id="shelfSelect" onchange="handleShelfChange(this.value)">
+                            <option value="">Select Shelf</option>
+                            <option value="new">+ Create New Shelf</option>
+                            {% for shelf in shelves %}
+                            <option value="{{ shelf.id }}" data-project="{{ shelf.project.name }}">{{ shelf.name }} ({{ shelf.location_code }}) - {{ shelf.project_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- New Shelf Form (initially hidden) -->
+                    <div id="newShelfForm" class="new-item-form" style="display: none;">
+                        <div class="inputBox">
+                            <label>New Shelf Name</label>
+                            <input type="text" name="new_shelf_name" id="newShelfName" placeholder="Shelf Name">
+                        </div>
+                        <div class="inputBox">
+                            <label>Location Code</label>
+                            <input type="text" name="new_shelf_code" id="newShelfCode" placeholder="Location Code">
+                        </div>
+                        <div class="inputBox">
+                            <label class="input-label">
+                                <span class="label-text">Capacity</span>
+                                <span class="label-description">Max racks this shelf can hold</span>
+                            </label>
+                            <input type="number" name="new_shelf_capacity" id="newShelfCapacity" 
+                            min="1" step="1" placeholder="Enter number">
+                        </div>
+                        <div class="inputBox">
+                            <label>Notes</label>
+                            <input type="text" name="new_shelf_notes" id="newShelfNotes" placeholder="Shelf Notes">
+                        </div>
+                        <button type="button" onclick="createNewShelf()" class="btn btn-secondary">Create Shelf</button>
+                        <button type="button" onclick="cancelNewShelf()" class="btn btn-outline">Cancel</button>
+                    </div>
+
+                    <!-- Rack Selection -->
+                    <div class="inputBox">
+                        <label>Rack</label>
+                        <select name="rack" id="rackSelect" onchange="handleRackChange(this.value)" disabled>
+                            <option value="">Select Rack</option>
+                            <option value="new">+ Create New Rack</option>
+                            {% for rack in racks %}
+                            <option value="{{ rack.id }}" data-shelf="{{ rack.shelf.id }}" data-project="{{ rack.project.name }}">
+                            {{ rack.name }} ({{ rack.location_code }}) - {{ rack.project.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- New Rack Form (initially hidden) -->
+                    <div id="newRackForm" class="new-item-form" style="display: none;">
+                        <div class="inputBox">
+                            <label>New Rack Name</label>
+                            <input type="text" name="new_rack_name" id="newRackName" placeholder="Rack Name">
+                        </div>
+                        <div class="inputBox">
+                            <label class="input-label">
+                                <span class="label-text">Capacity</span>
+                                <span class="label-description">Max boxes this rack can hold</span>
+                            </label>
+                            <input type="number" name="new_rack_capacity" id="newRackCapacity" 
+                            min="1" step="1" placeholder="Enter number">
+                        </div>
+                        <div class="inputBox">
+                            <label>Notes</label>
+                            <input type="text" name="new_rack_notes" id="newRackNotes" placeholder="Rack Notes">
+                        </div>
+                        <button type="button" onclick="createNewRack()" class="btn btn-secondary">Create Rack</button>
+                        <button type="button" onclick="cancelNewRack()" class="btn btn-outline">Cancel</button>
+                    </div>
+
+                    <!-- Box Selection -->
+                    <div class="inputBox">
+                        <label>Box</label>
+                        <select name="box" id="boxSelect" onchange="handleBoxChange(this.value)" disabled>
+                            <option value="">Select Box</option>
+                            <option value="new">+ Create New Box</option>
+                            {% for box in boxes %}
+                            <option value="{{ box.id }}" data-rack="{{ box.rack.id }}" data-project="{{ box.project.name }}">
+                            {{ box.name }} ({{ box.location_code }}) - {{ box.project.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- New Box Form (initially hidden) -->
+                    <div id="newBoxForm" class="new-item-form" style="display: none;">
+                        <div class="inputBox">
+                            <label>New Box Name</label>
+                            <input type="text" name="new_box_name" id="newBoxName" placeholder="Box Name">
+                        </div>
+                        <div class="inputBox">
+                            <label class="input-label">
+                                <span class="label-text">Row Count</span>
+                                <span class="label-description">Max number of rows in the box</span>
+                            </label>
+                            <input type="number" name="new_box_row_count" id="newBoxRowCount" 
+                            min="1" step="1" placeholder="Enter number">
+                        </div>
+                        <div class="inputBox">
+                            <label class="input-label">
+                                <span class="label-text">Column Count</span>
+                                <span class="label-description">Max number of columns in the box</span>
+                            </label>
+                            <input type="number" name="new_box_column_count" id="newBoxColumnCount" 
+                            min="1" step="1" placeholder="Enter number">
+                        </div>
+                        <div class="inputBox">
+                            <label>Notes</label>
+                            <input type="text" name="new_box_notes" id="newBoxNotes" placeholder="Box Notes">
+                        </div>
+                        <button type="button" onclick="createNewBox()" class="btn btn-secondary">Create Box</button>
+                        <button type="button" onclick="cancelNewBox()" class="btn btn-outline">Cancel</button>
+                    </div>
+
+                    <!-- Well ID -->
+                    <div class="inputBox">
+                        <label>Well ID</label>
+                        <input type="text" name="well_id" id="well_id" required
+                        onkeyup="this.setAttribute('value', this.value);" value="{{ form.well_id }}">
+                    </div>
+                </div>
+                <div class="inputBox">
+                    <label>Storage Location</label>
                     <input type="text" name="storage_location" id="edit_storage_location" required
                         onkeyup="this.setAttribute('value', this.value);">
-                    <label>Storage Location</label>
                 </div>
                 <div class="inputBox">
+                    <label>Threshold in ml</label>
                     <input type="number" name="threshold_value" id="edit_threshold_value" required
                         onkeyup="this.setAttribute('value', this.value);">
-                    <label>Threshold in ml</label>
+                </div>
+                <div class="inputBox">
+                    <label>Notes</label>
+                    <input type="text" name="notes" id="edit_notes" required
+                        onkeyup="this.setAttribute('value', this.value);">
                 </div>
                 <div class="inputBox button">
                     <button class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="submit">Update</button>
@@ -413,7 +1045,7 @@
 <!-- Return Sample Popup -->
 <div class="popup-container4" id="returnPopup">
     <div class="popup-card">
-        <h2>Return Item</h2>
+        <h2>Restock Item</h2>
         <br>
         <form id="return-form" method="POST">
             {% csrf_token %}

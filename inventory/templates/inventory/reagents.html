@@ -40,7 +40,7 @@
 
 <div class="border-b mt-5 pb-3">
     <div class="text-gray-700 flex items-center justify-between mb-3">
-        <span>Quantity</span>
+        <span>Total Number of Packs</span>
     </div>
 
     <div class="quantity-filter-container">
@@ -49,21 +49,21 @@
         </div>
         <div>
             <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
-                type="number" id="minQuantityFilterInput">
+                type="number" min="1" step="1" id="minQuantityFilterInput">
         </div>
         <div class="mt-1 text-gray-500 text-sm ">
             <label for="maxQuantityFilterInput">Max:</label>
         </div>
         <div>
             <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
-                type="number" id="maxQuantityFilterInput">
+                type="number" min="1" step="1" id="maxQuantityFilterInput">
         </div>
     </div>
 </div>
 
 <div class="border-b mt-5 pb-3">
     <div class="text-gray-700 flex items-center justify-between mb-3">
-        <span>Date Created</span>
+        <span>Date Recorded</span>
     </div>
     <div class="quantity-filter-container">
         <div class="mt-1 text-gray-500 text-sm ">
@@ -93,14 +93,14 @@
         </div>
         <div>
             <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
-                type="date" id="minDateCreatedFilterInput">
+                type="date" id="minDateExpiredFilterInput">
         </div>
         <div class="mt-1 text-gray-500 text-sm">
             <label for="maxDateExpiredFilterInput">To:</label>
         </div>
         <div>
             <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
-                type="date" id="maxDateCreatedFilterInput">
+                type="date" id="maxDateExpiredFilterInput">
         </div>
     </div>
 </div>
@@ -115,21 +115,88 @@
 
 <div class="border-b mt-5 pb-3">
     <div class="text-gray-700 flex items-center justify-between mb-3">
+        <span>Storage Condition</span>
+    </div>
+        <input type="text" id="storageConditionFilterInput" placeholder="Filter by storage condition"
+            class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2">
+</div>
+
+<div class="border-b mt-5 pb-3">
+    <div class="text-gray-700 flex items-center justify-between mb-3">
+        <span>Optimal Temperature</span>
+    </div>
+        <input type="number" id="optimalTemperatureFilterInput" placeholder="Filter by OEM Optimal Temperature"
+            class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2">
+</div>
+
+<div class="border-b mt-5 pb-3">
+    <div class="text-gray-700 flex items-center justify-between mb-3">
+        <span>Temperature Unit</span>
+    </div>
+    <select id="temperatureUnitFilter" class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
+        <option value="">All Units</option>
+        <option value="C">°C</option>
+        <option value="F">°F</option>
+    </select>
+</div>
+
+<div class="border-b mt-5 pb-3">
+    <div class="text-gray-700 flex items-center justify-between mb-3">
+        <span>Vendor</span>
+    </div>
+        <input type="text" id="vendorFilterInput" placeholder="Filter by vendor/supplier"
+        class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2">
+</div>
+
+<div class="border-b mt-5 pb-3">
+    <div class="text-gray-700 flex items-center justify-between mb-3">
+        <span>Country of Origin</span>
+    </div>
+        <input type="text" id="countryOfOriginFilterInput" placeholder="Filter by country of origin"
+            class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2">
+</div>
+
+<div class="border-b mt-5 pb-3">
+    <div class="text-gray-700 flex items-center justify-between mb-3">
+        <span>Hazard Level</span>
+    </div>
+        <input type="number" min="1" max="4" id="hazardLevelFilterInput" placeholder="Filter by hazard level"
+            class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2">
+</div>
+
+<div class="border-b mt-5 pb-3">
+    <div class="text-gray-700 flex items-center justify-between mb-3">
+        <span>Threshold Value</span>
+    </div>
+        <input type="number" min="1" id="thresholdValueFilterInput" placeholder="Filter by threshold value"
+            class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2">
+</div>
+
+<div class="border-b mt-5 pb-3">
+    <div class="text-gray-700 flex items-center justify-between mb-3">
         <span>Sort By</span>
     </div>
     <select id="sortColumnDropdown" class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
         <option value="0">None</option>
         <option value="1">Name</option>
         <option value="2">Product Code</option>
-        <option value="4">Quantity</option>
-        <option value="5">Date Created</option>
-        <option value="6">Expiry Date</option>
-        <option value="7">Storage Location</option>
+        <option value="3">Total Number of Packs</option>
+        <option value="4">Date Recorded</option>
+        <option value="5">Expiry Date</option>
+        <option value="6">Storage Location</option>
+        <option value="7">Storage Condition</option>
+        <option value="9">Optimal Temperature</option>
+        <option value="8">Vendor</option>
+        <option value="10">Country of Origin</option>
+        <option value="11">Hazard Level</option>
+        <option value="12">Threshold</option>
     </select>
 </div>
 
 <!-- Apply Button Section -->
-<button id="resetButton" class="btn btn-primary mt-8">Reset</button>
+<div class="mt-8 flex items-start justify-between space-x-3">
+    <button id="resetButton" class="btn btn-primary mt-8">Reset</button>
+</div>
 {% endblock %}
 
 {% block content %}
@@ -191,6 +258,31 @@
                                 clip-rule="evenodd" />
             </svg>
         </button> -->
+        <div class="stats-cards">
+            <div class="stat-card">
+                <h3>Total Reagents</h3>
+                <div class="value">{{ total_count }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Expiring Soon</h3>
+                <div class="value">{{ expiring_soon_count }}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Low Stock</h3>
+                <div class="value">{{ low_stock_count }}</div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #fef3c7; border: 1px solid #eab308;"></div>
+                <span>Expires in < 1 month</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: #fecaca; border: 1px solid #ef4444;"></div>
+                <span>Expires in < 1 week</span>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -209,11 +301,20 @@
             <tr>
                 <th scope="col">Name</th>
                 <th scope="col">Product Code</th>
-                <th scope="col">Pack Size</th>
-                <th scope="col">Quantity</th>
-                <th scope="col">Date Created</th>
+                <th scope="col">Items Remaining in Open Pack</th>
+                <th scope="col">Items Per Pack</th>
+                <th scope="col">Total Number of Packs</th>
+                <th scope="col">Date Recorded</th>
                 <th scope="col">Expiry Date</th>
                 <th scope="col">Storage Location</th>
+                <th scope="col">Storage Condition</th>
+                <th scope="col">Optimal Temp.</th>
+                <th scope="col">Vendor</th>
+                <th scope="col">Country of Origin</th>
+                <th scope="col">Hazard Level</th>
+                <th scope="col">MSDS</th>
+                <th scope="col">Threshold</th>
+                <th scope="col">Notes</th>
                 <th scope="col"></th>
             </tr>
         </thead>
@@ -223,18 +324,48 @@
                 data-project="{{ project.name }}"
                 data-name="{{ reagent.name }}"
                 data-product-code="{{ reagent.product_code }}"
-                data-pack-size="{{ reagent.pack_size }}"
-                data-quantity="{{ reagent.quantity }}"
+                data-items-left-in-pack="{{ reagent.items_left_in_per_pack }}"
+                data-items-per-pack="{{ reagent.items_per_pack }}"
+                data-pack-count="{{ reagent.pack_count }}"
                 data-date-created="{{ reagent.date_recorded|date:'Y-m-d' }}"
                 data-expiry-date="{{ reagent.expiry_date|date:'Y-m-d' }}"
-                data-storage-location="{{ reagent.storage_location }}">
-                <td>{{ reagent.name }}</td>
+                data-storage-location="{{ reagent.storage_location }}"
+                data-cold-storage="{{ reagent.cold_storage }}"
+                data-optimal-temp="{{ reagent.oem_temperature }}"
+                data-vendor="{{ reagent.vendor }}"
+                data-country-of-origin="{{ reagent.country_of_origin }}"
+                data-hazard-level="{{ reagent.hazard_level }}"
+                data-msds="{{ reagent.msds_files }}"
+                data-threshold-value="{{ reagent.threshold_value }}"
+                data-notes="{{ reagent.notes }}"
+                class="{% if reagent.is_expiring_in_30_days %}expiry-warning{% endif %}
+                        {% if reagent.is_expiring_in_7_days %}expiry-critical{% endif %}">
+                <td class="{% if reagent.is_reagent_low_stock %}low-stock-indicator{% endif %}">{{ reagent.name }}</td>
                 <td>{{ reagent.product_code }}</td>
-                <td>{{ reagent.pack_size_rem }} / {{ reagent.pack_size }}</td>
-                <td>{{ reagent.quantity }}</td>
+                <td>{{ reagent.items_left_in_per_pack }}</td>
+                <td>{{ reagent.items_per_pack }}</td>
+                <td>{{ reagent.pack_count }}</td>
                 <td>{{ reagent.date_recorded|date:"Y-m-d" }}</td>
                 <td>{{ reagent.expiry_date|date:"Y-m-d" }}</td>
                 <td data-fulltext="{{ reagent.storage_location }}">{{ reagent.storage_location|truncatechars:20 }}</td>
+                <td>{{ reagent.cold_storage }}</td>
+                <td>{{ reagent.temperature_display }}</td>
+                <td>{{ reagent.vendor }}</td>
+                <td>{{ reagent.country_of_origin }}</td>
+                <td>{{ reagent.hazard_level }}</td>
+                <td>
+                    {% if reagent.msds_files.exists %}
+                        <button class="text-primary hover:underline" onclick="showMsdsPopup('{{ reagent.id }}')">
+                            View MSDS
+                        </button>
+                    {% else %}
+                        <button class="text-primary hover:underline" onclick="showMsdsPopup('{{ reagent.id }}')">
+                            Upload MSDS
+                        </button>
+                    {% endif %}
+                </td>
+                <td>{{ reagent.threshold_value }}</td>
+                <td data-fulltext="{{ reagent.notes }}">{{ reagent.notes|truncatechars:20 }}</td>
                 <td class="actions">
                     <div class="dropdown">
                         <!-- Main trigger button -->
@@ -248,14 +379,14 @@
 
                         <!-- Hidden action buttons -->
                         <div class="dropdown-actions">
-                            <button class="retrieve-action" onclick="showRetrievePopup()" data-id="{{ consumable.id }}">Retrieve</a>
-                            <button class="return-action" onclick="showReturnPopup()" data-id="{{ consumable.id }}">Return</button>
+                            <button class="retrieve-action" data-id="{{ reagent.id }}">Retrieve</a>
+                            <button class="return-action" data-id="{{ reagent.id }}">Restock</button>
                                             
                             {% if user == project.project_manager or user in project.project_editors.all %}
                                             
                             <hr role="separator">
-                            <button class="edit-action" onclick="showEditPopup()" data-id="{{ consumable.id }}">Edit</button>
-                            <button class="delete-action" onclick="showDeletePopup()" data-project="{{ project.name }}" data-id="{{ consumable.id }}">Delete</button>
+                            <button class="edit-action" data-id="{{ reagent.id }}">Edit</button>
+                            <button class="delete-action" data-project="{{ project.name }}" data-id="{{ reagent.id }}">Delete</button>
                                 
                             {% endif %}
                         </div>
@@ -266,6 +397,39 @@
         </tbody>
     </table>
 </div>
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="mt-6 flex justify-center items-center space-x-2">
+    <!-- Previous Page -->
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}" 
+       class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+        &laquo; Previous
+    </a>
+    {% endif %}
+    
+    <!-- Page Numbers -->
+    {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <span class="px-3 py-1 bg-primary text-white rounded-md text-sm">{{ num }}</span>
+        {% else %}
+        <a href="?page={{ num }}" class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">{{ num }}</a>
+        {% endif %}
+    {% endfor %}
+    
+    <!-- Next Page -->
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" 
+       class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+        Next &raquo;
+    </a>
+    {% endif %}
+</div>
+
+<div class="mt-2 text-center text-sm text-gray-500">
+    Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }} reagents
+</div>
+{% endif %}
 {% endblock %}
 
 {% block popups_block %}
@@ -276,41 +440,90 @@
             <form id="reagent-form" method="POST" action="{% url 'add_reagent' project_name=project.name %}">
                 {% csrf_token %}
                 <div class="inputBox">
-                    <input type="text" name="name" id="name" required
-                           onkeyup="this.setAttribute('value', this.value)" value="{{ form.name }}">
+                    <input type="text" name="name" id="name" required onkeyup="this.setAttribute('value', this.value)" value="{{ form.name }}">
                     <label>Name</label>
                 </div>
                 <div class="inputBox">
-                    <input type="text" name="product_code" id="product_code" required
-                           onkeyup="this.setAttribute('value', this.value)" value="{{ form.product_code }}">
+                    <input type="text" name="product_code" id="product_code" required onkeyup="this.setAttribute('value', this.value)" value="{{ form.product_code }}">
                     <label>Product Code</label>
                 </div>
                 <div class="inputBox">
-                    <input type="text" name="pack_size" id="pack_size" required
-                           onkeyup="this.setAttribute('value', this.value)" value="{{ form.pack_size }}">
-                    <label>Pack Size</label>
+                    <input type="text" name="pack_size" id="pack_size" required onkeyup="this.setAttribute('value', this.value)" value="{{ form.items_per_pack }}">
+                    <label>Items Per Pack</label>
                 </div>
                 <div class="inputBox">
-                    <input type="text" name="quantity" id="quantity" required
-                           onkeyup="this.setAttribute('value', this.value)" value="{{ form.quantity }}">
-                    <label>Quantity</label>
+                    <input type="text" name="quantity" id="quantity" required onkeyup="this.setAttribute('value', this.value)" value="{{ form.pack_count }}">
+                    <label>Total Number of Packs</label>
                 </div>
                 <div class="form-row">
                     <label for="expiry_date">Expiry Date</label>
                     <div class="inputBox">
-                        <input type="date" name="expiry_date" id="expiry_date" required
-                               value="{{ form.expiry_date }}">
+                        <input type="date" name="expiry_date" id="expiry_date" required min="{{ current_date|date:'Y-m-d' }}" onchange="validateExpiryDate(this)">
+                        <label>Expiry Date</label>
+                        <small class="text-red-500 hidden" id="date-error">Expiry date must be in the future</small>
                     </div>
                 </div>
                 <div class="inputBox">
-                    <input type="text" name="storage_location" id="storage_location" required
-                           onkeyup="this.setAttribute('value', this.value)" value="{{ form.storage_location }}">
+                    <input type="text" name="storage_location" id="storage_location" required onkeyup="this.setAttribute('value', this.value)" value="{{ form.storage_location }}">
                     <label>Storage Location</label>
                 </div>
                 <div class="inputBox">
-                    <input type="text" name="threshold_value" id="threshold_value" required
-                           onkeyup="this.setAttribute('value', this.value)" value="{{ form.threshold_value }}">
+                    <div>
+                        <label for="storageConditionOptions">Storage Condition</label>
+                        <select id="storageConditionOptions" name="storage_condition" class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded" required>
+                            <option value="">-- Please Select --</option>
+                            <option value="fridge">Refrigerator</option>
+                            <option value="freezer">Freezer</option>
+                            <option value="roomTemp">Room Temperature</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div id="otherField" style="display: none; margin-top: 10px;">
+                        <label for="otherValue">Please specify:</label>
+                        <input type="text" id="otherValue" name="storage_condition_other"
+                               class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2">
+                    </div>
+                </div>
+                <div class="inputBox">
+                    <label for="oem_temperature">Optimal Temperature</label>
+                    <div class="flex space-x-2">
+                        <input type="number" name="oem_temperature" id="oem_temperature" 
+                                required onkeyup="this.setAttribute('value', this.value)" 
+                                value="{{ form.oem_temperature }}"
+                                class="flex-1 bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
+                        <select name="temperature_unit" class="w-20 bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
+                            <option value="C">C</option>
+                            <option value="F">F</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="vendor" id="vendor" required="" onkeyup="this.setAttribute('value', this.value);" value="{{ form.vendor }}">
+                    <label>Vendor</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="country_of_origin" id="country_of_origin" required="" onkeyup="this.setAttribute('value', this.value);" value="{{ form.country_of_origin }}">
+                    <label>Country of Origin</label>
+                </div>
+                <div class="inputBox">
+                    <input type="number" name="hazard_level" id="hazard_level" required="" min="1" max="4" onkeyup="this.setAttribute('value', this.value);" value="{{ form.hazard_level }}">
+                    <label>Hazard Level</label>
+                </div>
+                <div class="inputBox">
+                    <label for="msds_file">MSDS File</label>
+                    <input type="file" name="msds_file" id="msds_file" required="" accept=".pdf">
+                    <small class="text-gray-500">Upload Material Safety Data Sheet (PDF only, max 5MB)</small>
+                    <div id="msdsUploadStatus" class="hidden text-sm mt-1"></div>
+                    <!-- Progress bar will be inserted here by JavaScript -->
+                </div>
+
+                <div class="inputBox">
+                    <input type="text" name="threshold_value" id="threshold_value" required onkeyup="this.setAttribute('value', this.value)" value="{{ form.threshold_value }}">
                     <label>Threshold</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="notes" id="notes" required="" onkeyup="this.setAttribute('value', this.value);" value="{{ form.notes }}">
+                    <label>Notes</label>
                 </div>
                 <div class="inputBox button">
                     <button class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="submit">Add</button>
@@ -320,125 +533,194 @@
     </div>
 </div>
 <div class="popup-container2" id="editPopup">
-            <div class="popup-card">
-                <h2>Edit Item</h2>
-                <div class="box">
-                    <form id="edit-form" method="POST" action="">
-                        {% csrf_token %}
-                        <div class="inputBox">
-                            <input type="text" name="name" id="name" required=""
-                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.name }}">
-                            <label>Name</label>
-                        </div>
-                        <div class="inputBox">
-                            <input type="text" name="product_code" id="product_code" required=""
-                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.product_code }}">
-                            <label>Product Code</label>
-                        </div>
-                        <div class="inputBox">
-                            <input type="text" name="pack_size" id="pack_size" required=""
-                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.pack_size }}">
-                            <label>Pack Size</label>
-                        </div>
-                        <div class="inputBox">
-                            <input type="text" name="quantity" id="quantity" required=""
-                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.quantity }}">
-                            <label>Quantity</label>
-                        </div>
-                        <div class="form-row">
-                            <label for="expiry_date">Expiry Date</label>
-                            <div class="inputBox">
-                                <input type="date" name="expiry_date" id="expiry_date" required=""
-                                    value="{{ form.expiry_date }}">
-                            </div>
-                        </div>
-                        <div class="inputBox">
-                            <input type="text" name="storage_location" id="storage_location" required=""
-                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.storage_location }}">
-                            <label>Storage Location</label>
-                        </div>
-                        <div class="inputBox">
-                            <input type="text" name="threshold_value" id="threshold_value" required=""
-                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.threshold_value }}">
-                            <label>Threshold</label>
-                        </div>
-                        <div class="inputBox button">
-                            <button class = "bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="Submit" onclick="">Edit</button>
-                        </div>
-                    </form>
+    <div class="popup-card">
+        <h2>Edit Item</h2>
+        <div class="box">
+            <form id="edit-form" method="POST" action="">
+                {% csrf_token %}
+                <div class="inputBox">
+                    <input type="text" name="name" id="name" required="" onkeyup="this.setAttribute('value', this.value);" value="{{ form.name }}">
+                    <label>Name</label>
                 </div>
-            </div>
+                <div class="inputBox">
+                    <input type="text" name="product_code" id="product_code" required="" onkeyup="this.setAttribute('value', this.value);" value="{{ form.product_code }}">
+                    <label>Product Code</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="pack_size" id="pack_size" required="" min="1" onkeyup="this.setAttribute('value', this.value);" value="{{ form.items_per_pack }}">
+                    <label>Items Per Pack</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="quantity" id="quantity" required="" onkeyup="this.setAttribute('value', this.value);" value="{{ form.pack_count }}">
+                    <label>Total Number of Packs</label>
+                </div>
+                <div class="form-row">
+                    <label for="expiry_date">Expiry Date</label>
+                    <div class="inputBox">
+                        <input type="date" name="expiry_date" id="expiry_date" required="" value="{{ form.expiry_date }}">
+                    </div>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="storage_location" id="storage_location" required="" onkeyup="this.setAttribute('value', this.value);" value="{{ form.storage_location }}">
+                    <label>Storage Location</label>
+                </div>
+                <div class="inputBox">
+                    <div>
+                        <label for="storageConditionOptions">Storage Condition</label>
+                        <select id="storageConditionOptions" name="storage_condition" class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded" required>
+                            <option value="">-- Please Select --</option>
+                            <option value="fridge">Refrigerator</option>
+                            <option value="freezer">Freezer</option>
+                            <option value="roomTemp">Room Temperature</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div id="otherField" style="display: none; margin-top: 10px;">
+                        <label for="otherValue">Please specify:</label>
+                        <input type="text" id="otherValue" name="storage_condition_other"
+                               class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2">
+                    </div>
+                </div>
+                <div class="inputBox">
+                    <label for="oem_temperature">Optimal Temperature</label>
+                    <div class="flex space-x-2">
+                        <input type="number" name="oem_temperature" id="oem_temperature" 
+                            required onkeyup="this.setAttribute('value', this.value)" 
+                            value="{{ form.oem_temperature }}"
+                            class="flex-1 bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
+                        <select name="temperature_unit" class="w-20 bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
+                            <option value="C">C</option>
+                            <option value="F">F</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="vendor" id="vendor" required="" onkeyup="this.setAttribute('value', this.value);" value="{{ form.vendor }}">
+                    <label>Vendor</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="country_of_origin" id="country_of_origin" required="" onkeyup="this.setAttribute('value', this.value);" value="{{ form.country_of_origin }}">
+                    <label>Country of Origin</label>
+                </div>
+                <div class="inputBox">
+                    <input type="number" name="hazard_level" id="hazard_level" required="" min="1" max="4" onkeyup="this.setAttribute('value', this.value);" value="{{ form.hazard_level }}">
+                    <label>Hazard Level</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="threshold_value" id="threshold_value" required onkeyup="this.setAttribute('value', this.value)" value="{{ form.threshold_value }}">
+                    <label>Threshold</label>
+                </div>
+                <div class="inputBox">
+                    <input type="text" name="notes" id="notes" required="" onkeyup="this.setAttribute('value', this.value);" value="{{ form.notes }}">
+                    <label>Notes</label>
+                </div>
+                <div class="inputBox button">
+                    <button class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="Submit" onclick="">Edit</button>
+                </div>
+            </form>
         </div>
+    </div>
+</div>
 
-        <div class="popup-container3" id="retrievePopup">
-            <div class="popup-card">
-                <h2>Retrieve Item</h2>
-                <br>
-                <form id="retrieve-form" method="POST" action="">
+<div class="popup-container3" id="retrievePopup">
+    <div class="popup-card">
+        <h2>Retrieve Item</h2>
+        <br>
+        <form id="retrieve-form" method="POST" class="space-y-4" action="">
+            {% csrf_token %}
+            <div class="flex flex-col space-y-2">
+                <label for="retrieve_by" class="text-sm font-medium text-gray-700">Retrieve By</label>
+                <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" id="retrieve_by" name="retrieve_by" required="" onkeyup="this.setAttribute('value', this.value);" value="">
+                    <option value="Pack size">Items Per Pack</option>
+                    <option value="Quantity">Total Number of Packs</option>
+                </select>
+            </div>
+            <div class="flex flex-col space-y-2">
+                <label for="retrieveFilterInput" class="text-sm font-medium text-gray-700">Amount</label>
+                <input class="w-full bg-gray-100 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+                        type="number" name="amount" id="retrieveFilterInput" required="" min="1" onkeyup="this.setAttribute('value', this.value);" value="">
+            </div>
+            <div class="flex justify-end space-x-3 pt-2">
+                <button type="button" onclick="closeRetrievePopup()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary/90">
+                    Confirm
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="popup-container4" id="returnPopup">
+    <div class="popup-card">
+        <h2 class="text-lg font-semibold mb-4">Restock Item</h2>
+        <form id="return-form" method="POST" class="space-y-5">
+            {% csrf_token %}
+            <div class="flex flex-col space-y-2">
+                <label for="return_by" class="text-sm font-medium text-gray-700">Restock By</label>
+                <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" id="return_by" name="return_by" required onkeyup="this.setAttribute('value', this.value);" value="">
+                    <option value="Pack size">Items Per Pack</option>
+                    <option value="Quantity">Total Number of Packs</option>
+                </select>
+            </div>
+            <div class="flex flex-col space-y-2">
+                <label for="returnFilterInput" class="text-sm font-medium text-gray-700">Amount</label>
+                <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" type="number" name="amount" id="returnFilterInput" required min="1" onkeyup="this.setAttribute('value', this.value);" value="">
+            </div>
+            <div class="flex justify-end space-x-3 pt-2">
+                <button type="button" onclick="closeReturnPopup()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary/90">
+                    Confirm
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="popup-container6" id="msdsPopup">
+    <div class="popup-card" style="max-width: 800px;">
+        <h2>MSDS Files</h2>
+        <div class="msds-files-container" id="msdsFilesContainer">
+            <!-- MSDS files will be loaded here dynamically -->
+        </div>
+        <div class="mt-4">
+            <button id="uploadMsdsBtn" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+                Upload New MSDS
+            </button>
+            <div id="msdsUploadForm" class="hidden mt-4">
+                <form id="msdsUploadFormElement" enctype="multipart/form-data">
                     {% csrf_token %}
-                    <div class="quantity-filter-container">
-                        <label for="retrieve_by">Retrieve By</label>
-                        <div class="inputBox">
-                            <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" id="retrieve_by" name="retrieve_by" required=""
-                            onkeyup="this.setAttribute('value', this.value);" value="">
-                                <option value="Pack size">Pack size</option>
-                                <option value="Quantity">Quantity</option>
-                              </select>
-                        </div>
-                    </div>
-                    <div class="quantity-filter-container">
-                    <h3>Amount</h3>
-                    <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" type="number" name="amount" id="retrieveFilterInput" required=""
-                        onkeyup="this.setAttribute('value', this.value);" value="">
-                    </div>
-                    <br>
-                    <div class="inputBox button">
-                        <button class = "bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="Submit" onclick="">OK</button>
+                    <input type="file" name="msds_file" id="msdsFileInput" accept=".pdf" required class="mb-2">
+                    <div class="flex space-x-2">
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                        <button type="button" onclick="cancelMsdsUpload()" class="btn btn-secondary">Cancel</button>
                     </div>
                 </form>
             </div>
         </div>
-
-        <div class="popup-container4" id="returnPopup">
-            <div class="popup-card">
-                <h2>Return Item</h2>
-                <br>
-                <form id="return-form" method="POST" action="">
-                    {% csrf_token %}
-                    <div class="quantity-filter-container">
-                        <label for="return_by">Return By</label>
-                        <div class="inputBox">
-                            <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" id="return_by" name="return_by" required=""
-                            onkeyup="this.setAttribute('value', this.value);" value="">
-                                <option value="Pack size">Pack size</option>
-                                <option value="Quantity">Quantity</option>
-                              </select>
-                        </div>
-                    </div>
-                    <div class="quantity-filter-container">
-                    <h3>Amount</h3>
-                    <input class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" type="number" name="amount" id="returnFilterInput" required=""
-                        onkeyup="this.setAttribute('value', this.value);" value="">
-                    </div>
-                    <br>
-                    <div class="inputBox button">
-                        <button class = "bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="Submit" onclick="">OK</button>
-                    </div>
-                </form>
-            </div>
+        <div class="mt-4 flex justify-end">
+            <button onclick="closeMsdsPopup()" class="btn btn-secondary">Close</button>
         </div>
+    </div>
+</div>
 
-        <div class="popup-container1" id="deletePopup">
-            <div class="popup-card">
-                <h2>Confirm Deletion</h2>
-                <br>
-                <p>Are you sure you want to delete this item?</p>
-                <div class="buttons">
-                    <button class="border border-gray-300 font-medium text-sm w-1/3 text-gray-500 tracking-wide py-2 rounded-md hover:border-gray-400" style="margin-right: 10px;" onclick="closeDeletePopup()">Cancel</button>
-                    <button class="delete-bg-primary border delete-border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:delete-bg-primary/90" onclick="deleteItem()">Confirm</button>
-                </div>
-            </div>
+<div class="popup-container1" id="deletePopup">
+    <div class="popup-card">
+        <h2>Confirm Deletion</h2>
+        <br>
+        <p>Are you sure you want to delete this item?</p>
+        <div class="buttons">
+            <button class="border border-gray-300 font-medium text-sm w-1/3 text-gray-500 tracking-wide py-2 rounded-md hover:border-gray-400" style="margin-right: 10px;" onclick="closeDeletePopup()">Cancel</button>
+            <button class="delete-bg-primary border delete-border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:delete-bg-primary/90" onclick="handleDeleteConfirm()">Confirm</button>
         </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block inventory_scripts %}

@@ -1684,10 +1684,90 @@ video {
 
 .popup-card {
     background-color: #fff;
-    padding: 20px;
-    border-radius: 5px;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    width: 100%;
     max-width: 400px;
-    text-align: center;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.popup-card h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 1rem;
+}
+
+.popup-card form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.popup-card .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.popup-card label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+.popup-card input,
+.popup-card select {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    background-color: #f9fafb;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+}
+
+.popup-card input:focus,
+.popup-card select:focus {
+    outline: none;
+    border-color: #6464e6;
+    box-shadow: 0 0 0 1px #6464e6;
+    background-color: #fff;
+}
+
+.popup-card .button-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.popup-card .button-group button {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.popup-card .button-group button[type="button"] {
+    background-color: #fff;
+    border: 1px solid #d1d5db;
+    color: #374151;
+}
+
+.popup-card .button-group button[type="button"]:hover {
+    background-color: #f3f4f6;
+}
+
+.popup-card .button-group button[type="submit"] {
+    background-color: #6464e6;
+    color: #fff;
+    border: 1px solid #6464e6;
+}
+
+.popup-card .button-group button[type="submit"]:hover {
+    background-color: #5555d5;
 }
 
 .buttons {
@@ -1735,7 +1815,6 @@ video {
 }*/
 
 .popup-container1, 
-.popup-container2,
 .popup-container3,
 .popup-container4,
 .popup-container5 {
@@ -1749,6 +1828,34 @@ video {
     align-items: center;
     justify-content: center;
     display: flex;
+}
+
+.popup-container2 {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center !important;
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center !important;
+  margin: 0;
+  z-index: 999;
+  padding: 0;
+}
+
+.popup-container6 {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
 }
 
 /* When modal is active */
@@ -1822,6 +1929,56 @@ video {
     gap: 8px;
     white-space: nowrap;
 }*/
+
+/* Truncated text styling */
+.truncated {
+  position: relative;
+  cursor: pointer;
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.truncated:hover::after {
+  content: attr(data-fulltext);
+  position: absolute;
+  left: 0;
+  top: 100%;
+  z-index: 100;
+  background: white;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  white-space: normal;
+  width: auto;
+  min-width: 200px;
+  color: #333;
+}
+
+/* For storage location cells specifically */
+td[data-fulltext] {
+  position: relative;
+}
+
+td[data-fulltext]:hover::after {
+  content: attr(data-fulltext);
+  position: absolute;
+  left: 0;
+  top: 100%;
+  z-index: 100;
+  background: white;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  white-space: normal;
+  width: auto;
+  min-width: 200px;
+  color: #333;
+}
 
 #consumablesTable {
   width: 100%;
@@ -2310,6 +2467,33 @@ video {
   max-width: 300px;
 }
 
+.status-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.msds-files-container {
+    max-height: 60vh;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+.status-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    display: inline-block;
+}
+
+.msds-files-container {
+    max-height: 60vh;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    width: 100%;
+}
 
 ::-webkit-scrollbar {
     width: 20px;
@@ -2539,12 +2723,32 @@ input[type="number"] {
     animation: slideIn 0.5s forwards;
 }
 
+.custom-toast {
+  background: var(--toast-bg, #10B981) !important;
+  color: white !important;
+  border-radius: 4px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
 .toast.success {
     background: #28a745;
 }
 
 .toast.error {
     background: #dc3545;
+}
+
+.success-toast {
+  --toast-bg: #10B981; /* green-500 */
+}
+
+.error-toast {
+  --toast-bg: #EF4444; /* red-500 */
+}
+
+.warning-toast {
+  --toast-bg: #F59E0B; /* yellow-500 */
+  color: #000 !important; /* black text for better contrast */
 }
 
 .toast.fade-out {
@@ -2568,19 +2772,50 @@ tr.fade-out {
 }
 
 tr.updated {
-    background-color: rgba(40, 167, 69, 0.2);
-    transition: background-color 1s ease;
+    animation: highlightUpdate 2s;
+}
+
+@keyframes highlightUpdate {
+  0% { background-color: rgba(16, 185, 129, 0.3); }
+  100% { background-color: transparent; }
 }
 
 /* Notifications */
 .notification {
-    padding: 12px;
-    margin: 10px 0;
-    border-radius: 4px;
-    animation: slideIn 0.3s ease-out;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 15px;
+  border-radius: 5px;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all 0.3s ease;
 }
-.notification.success { background: #4CAF50; color: white; }
-.notification.error { background: #F44336; color: white; }
+
+.notification.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.notification.success { background-color: #10B981; }
+.notification.error { background-color: #EF4444; }
+
+.notification.warning {
+  background-color: #F59E0B; /* yellow-500 */
+}
+
+.notification-close {
+  margin-left: 10px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.animate-fadeOut {
+  animation: fadeOut 0.5s forwards;
+}
 
 /* Row animations */
 .fade-out {
@@ -2626,4 +2861,49 @@ tr.updated {
 
 .actions button:hover {
     opacity: 0.9;
+}
+
+.label-text {
+    display: block;
+    font-size: 0.875rem;
+    margin-bottom: 2px;
+}
+
+.label-description {
+    display: block;
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: normal;
+}
+
+.input-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.new-item-form {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    border-left: 4px solid #4CAF50;
+}
+
+.new-item-form .inputBox {
+    margin-bottom: 10px;
+}
+
+.new-item-form button {
+    margin-right: 10px;
+    margin-top: 10px;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-body {
+    padding: 20px;
 }
