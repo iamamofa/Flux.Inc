@@ -4,34 +4,55 @@
     var densityKey = "flux.density";
     var sidebarKey = "flux.sidebar";
     var root = document.documentElement;
+    var preferences = { density: "comfortable", sidebar: "expanded" };
+    var storageAvailable = true;
+
+    try {
+        var storedDensity = localStorage.getItem(densityKey);
+        var storedSidebar = localStorage.getItem(sidebarKey);
+        if (storedDensity === "compact") preferences.density = storedDensity;
+        if (storedSidebar === "collapsed") preferences.sidebar = storedSidebar;
+    } catch (error) {
+        storageAvailable = false;
+    }
 
     function applyPreferences() {
-        root.dataset.density = localStorage.getItem(densityKey) || "comfortable";
-        root.dataset.sidebar = localStorage.getItem(sidebarKey) || "expanded";
+        root.dataset.density = preferences.density;
+        root.dataset.sidebar = preferences.sidebar;
     }
 
     function updateControls() {
-        var density = localStorage.getItem(densityKey) || "comfortable";
-        var sidebar = localStorage.getItem(sidebarKey) || "expanded";
-
         document.querySelectorAll("[data-flux-density]").forEach(function (control) {
-            control.checked = control.value === density;
+            control.checked = control.value === preferences.density;
         });
         document.querySelectorAll("[data-flux-sidebar]").forEach(function (control) {
-            control.checked = control.value === sidebar;
+            control.checked = control.value === preferences.sidebar;
         });
     }
 
+    function announce(message) {
+        var status = document.querySelector("[data-flux-preference-status]");
+        if (status) status.textContent = storageAvailable ? message : "Applied for this page. Enable browser storage to keep your preferences.";
+    }
+
     function savePreference(key, value) {
-        localStorage.setItem(key, value);
+        preferences[key === densityKey ? "density" : "sidebar"] = value;
+        try {
+            localStorage.setItem(key, value);
+            storageAvailable = true;
+        } catch (error) {
+            storageAvailable = false;
+        }
         applyPreferences();
         updateControls();
+        announce("Preferences saved in this browser.");
     }
 
     applyPreferences();
 
     document.addEventListener("DOMContentLoaded", function () {
         updateControls();
+        if (!storageAvailable) announce("");
 
         document.querySelectorAll("[data-flux-density]").forEach(function (control) {
             control.addEventListener("change", function () {
@@ -51,10 +72,18 @@
         var reset = document.querySelector("[data-flux-reset-preferences]");
         if (reset) {
             reset.addEventListener("click", function () {
-                localStorage.removeItem(densityKey);
-                localStorage.removeItem(sidebarKey);
+                preferences.density = "comfortable";
+                preferences.sidebar = "expanded";
+                try {
+                    localStorage.removeItem(densityKey);
+                    localStorage.removeItem(sidebarKey);
+                    storageAvailable = true;
+                } catch (error) {
+                    storageAvailable = false;
+                }
                 applyPreferences();
                 updateControls();
+                announce("Default preferences restored.");
             });
         }
     });

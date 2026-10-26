@@ -152,6 +152,8 @@ class ProjectSettingsAccessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'That username is already in use.')
         self.assertContains(response, 'That email address is already in use.')
+        self.assertContains(response, 'Your profile hasn’t been saved.')
+        self.assertContains(response, 'href="#id_email"')
         self.manager.refresh_from_db()
         self.assertEqual(self.manager.username, 'mega-manager')
 
@@ -485,6 +487,36 @@ class ProjectSettingsAccessTests(TestCase):
 
         self.assertRedirects(response, self.url, fetch_redirect_response=False)
         self.assertEqual(UserProfile.objects.get(user=self.manager).time_zone, 'UTC')
+
+    def test_settings_displays_save_confirmation(self):
+        self.client.force_login(self.manager)
+
+        response = self.client.post(self.url, {
+            'notification_action': 'timezone',
+            'time_zone': 'Africa/Accra',
+        }, follow=True)
+
+        self.assertContains(response, 'Your time zone was updated.')
+        self.assertContains(response, 'role="status"')
+
+    def test_email_delivery_status_requires_both_credentials(self):
+        self.client.force_login(self.manager)
+
+        for email_user, password, configured in (
+            ('', '', False),
+            ('alerts@example.invalid', '', False),
+            ('', 'test-password', False),
+            ('alerts@example.invalid', 'test-password', True),
+        ):
+            with self.subTest(configured=configured, email_user=email_user):
+                with override_settings(EMAIL_HOST_USER=email_user, EMAIL_HOST_PASSWORD=password):
+                    response = self.client.get(self.url)
+
+                self.assertEqual(response.context['email_alerts_configured'], configured)
+                if configured:
+                    self.assertContains(response, 'Email delivery is configured.')
+                else:
+                    self.assertContains(response, 'Contact your system administrator')
 
 
 class TeamMemberManagementTests(TestCase):
@@ -1139,7 +1171,7 @@ class DashboardChartDataTests(TestCase):
                 self.assertContains(response, 'id="addPopup"')
                 self.assertContains(response, f'id="{add_button_id}"')
                 self.assertContains(response, 'showInventoryPopup')
-                self.assertContains(response, 'flux_design_system.css?v=6')
+                self.assertContains(response, 'flux_design_system.css?v=7')
                 self.assertContains(response, 'id="stockActionDialog"')
                 self.assertContains(response, 'data-stock-action="remove"')
                 self.assertContains(response, 'data-stock-action="add"')

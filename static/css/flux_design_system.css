@@ -268,8 +268,9 @@ body.flux-dashboard main {
 }
 
 .flux-settings {
-    max-width: 980px;
+    max-width: 1180px;
     margin: 0 auto;
+    line-height: 1.5;
 }
 
 body.settings-page .inventory-filter-panel,
@@ -285,6 +286,8 @@ body.settings-page main > section {
 
 .flux-settings-header {
     margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--flux-border);
 }
 
 .flux-settings-header-main {
@@ -311,7 +314,7 @@ body.settings-page main > section {
     display: inline-flex;
     align-items: center;
     gap: 0.55rem;
-    margin: 1rem 0 0 !important;
+    margin: 0 !important;
     padding: 0.45rem 0.7rem;
     border: 1px solid var(--flux-border);
     border-radius: 999px;
@@ -336,9 +339,11 @@ body.settings-page main > section {
 
 .flux-settings-overview {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem;
-    margin: 1.5rem 0 2rem;
+    align-content: start;
+    gap: 0.3rem;
+    position: sticky;
+    top: 1.5rem;
+    margin: 0;
 }
 
 .flux-settings-overview a {
@@ -346,35 +351,33 @@ body.settings-page main > section {
     min-width: 0;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    padding: 1rem 1.1rem;
-    border: 1px solid var(--flux-border);
-    border-radius: 0.85rem;
-    background: var(--flux-surface);
+    gap: 0.65rem;
+    padding: 0.85rem 0.75rem;
+    border: 1px solid transparent;
+    border-radius: 0.7rem;
     color: var(--flux-text);
-    box-shadow: var(--flux-shadow);
     text-decoration: none;
-    transition: border-color var(--flux-motion) ease, transform var(--flux-motion) ease;
+    transition: background var(--flux-motion) ease;
 }
 
 .flux-settings-overview a:hover {
-    transform: translateY(-1px);
-    border-color: color-mix(in srgb, var(--flux-accent) 35%, var(--flux-border));
+    background: #ececee;
 }
 
-.flux-settings-overview a > span:first-child {
+.flux-settings-overview a > span:not([aria-hidden]) {
     display: grid;
     gap: 0.3rem;
+    flex: 1;
 }
 
 .flux-settings-overview strong {
-    font-size: 0.9rem;
+    font-size: 0.82rem;
     font-weight: 650;
 }
 
 .flux-settings-overview small {
     color: var(--flux-muted);
-    font-size: 0.78rem;
+    font-size: 0.73rem;
 }
 
 .flux-settings-overview a > span:last-child {
@@ -384,8 +387,8 @@ body.settings-page main > section {
 
 .flux-settings-section {
     scroll-margin-top: 1.5rem;
-    margin: 1rem 0;
-    padding: clamp(1rem, 3vw, 1.5rem);
+    margin: 0 0 1rem;
+    padding: clamp(1.1rem, 3vw, 2rem);
     border: 1px solid var(--flux-border);
     border-radius: 1rem;
     background: var(--flux-surface);
@@ -394,7 +397,7 @@ body.settings-page main > section {
 
 .flux-settings-section h2 {
     margin: 0 0 0.35rem;
-    font-size: 1.05rem;
+    font-size: 1.25rem;
     font-weight: 650;
     letter-spacing: -0.02em;
 }
@@ -420,7 +423,7 @@ body.settings-page main > section {
 
 .flux-settings-preference-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.75rem;
     margin-top: 1rem;
 }
@@ -438,7 +441,8 @@ body.settings-page main > section {
 }
 
 .flux-settings-preference .flux-setting-options {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 1rem;
 }
 
 .flux-settings-help {
@@ -512,9 +516,9 @@ body.settings-page main > section {
     min-height: 2.7rem;
     width: fit-content;
     padding: 0.55rem 0.9rem;
-    border: 1px solid var(--flux-accent);
+    border: 1px solid #c74400;
     border-radius: 0.65rem;
-    background: var(--flux-accent);
+    background: #c74400;
     color: #fff;
     font: inherit;
     font-size: 0.83rem;
@@ -533,12 +537,12 @@ body.settings-page main > section {
     font-size: 0.82rem;
 }
 
-.flux-settings-status {
+.flux-settings-section .flux-settings-status {
     background: #edf8f1;
     color: #17643a;
 }
 
-.flux-settings-warning {
+.flux-settings-section .flux-settings-warning {
     background: #fff5e8;
     color: #8a4b08;
 }
@@ -571,9 +575,9 @@ body.settings-page main > section {
 }
 
 .flux-profile-picture {
-    grid-column: 1 / -1;
-    width: 6rem;
-    height: 6rem;
+    flex: 0 0 auto;
+    width: 4.5rem;
+    height: 4.5rem;
     border: 1px solid var(--flux-border);
     border-radius: 50%;
     object-fit: cover;
@@ -582,15 +586,17 @@ body.settings-page main > section {
 .flux-profile-picture-empty {
     display: grid;
     place-items: center;
-    background: var(--flux-surface-subtle);
-    color: var(--flux-muted);
-    font-size: 0.75rem;
+    background: #fff0e5;
+    color: #a13700;
+    font-size: 1.3rem;
+    font-weight: 650;
     text-align: center;
 }
 
 .flux-profile-field {
     display: grid;
     gap: 0.35rem;
+    min-width: 0;
 }
 
 .flux-profile-field label,
@@ -617,6 +623,16 @@ body.settings-page main > section {
     padding: 0.4rem;
 }
 
+.flux-profile-field input::file-selector-button {
+    padding: 0.4rem 0.65rem;
+    margin-right: 0.6rem;
+    border: 0;
+    border-radius: 0.4rem;
+    background: #efeff1;
+    color: var(--flux-text);
+    cursor: pointer;
+}
+
 .flux-profile-field textarea {
     min-height: 6rem;
     resize: vertical;
@@ -631,6 +647,7 @@ body.settings-page main > section {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    grid-column: 1 / -1;
 }
 
 .flux-login-history-table-wrap {
@@ -745,6 +762,300 @@ body.settings-page main > section {
     margin: 0.3rem 0 0;
     font-size: 0.9rem;
     font-weight: 620;
+}
+
+.flux-settings-layout {
+    display: grid;
+    grid-template-columns: 245px minmax(0, 1fr);
+    align-items: start;
+    gap: 2rem;
+}
+
+.flux-settings-content,
+.flux-settings-context {
+    min-width: 0;
+}
+
+.flux-settings-context {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-top: 1.2rem;
+}
+
+.flux-settings-access,
+.flux-settings-nav-label {
+    color: var(--flux-muted);
+    font-size: 0.72rem;
+}
+
+.flux-settings-nav-label {
+    padding: 0 0.75rem;
+    margin: 0 0 0.75rem;
+    font-weight: 650;
+    letter-spacing: 0.08em;
+}
+
+.flux-settings-nav-icon {
+    flex: 0 0 auto;
+    color: var(--flux-muted);
+}
+
+.flux-settings-overview a[aria-current] {
+    border-color: #f4d7c4;
+    background: #fff0e5;
+}
+
+.flux-settings-overview a[aria-current] strong,
+.flux-settings-overview a[aria-current] .flux-settings-nav-icon,
+.flux-settings-overview a[aria-current] > span:last-child {
+    color: #a13700;
+}
+
+.flux-settings-section[hidden] {
+    display: none;
+}
+
+.flux-settings-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 0.5rem;
+}
+
+.flux-settings-section-heading h2 {
+    margin-bottom: 0;
+}
+
+.flux-settings-badge {
+    padding: 0.25rem 0.55rem;
+    border: 1px solid var(--flux-border);
+    border-radius: 999px;
+    color: #606066;
+    background: var(--flux-surface-subtle);
+    font-size: 0.68rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.flux-profile-identity,
+.flux-profile-field-wide,
+.flux-settings-form-footer,
+.flux-profile-error-summary {
+    grid-column: 1 / -1;
+}
+
+.flux-profile-identity {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.25rem 0 1.25rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px solid var(--flux-border);
+}
+
+.flux-profile-identity > div:last-child {
+    display: grid;
+    gap: 0.2rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.flux-profile-identity strong {
+    font-size: 1rem;
+}
+
+.flux-profile-identity span,
+.flux-profile-identity small {
+    color: var(--flux-muted);
+    font-size: 0.78rem;
+}
+
+.flux-profile-identity small {
+    margin-top: 0.25rem;
+    font-size: 0.72rem;
+}
+
+.flux-profile-optional {
+    margin-left: 0.5rem;
+    color: var(--flux-muted);
+    font-size: 0.7rem;
+    font-weight: 400;
+}
+
+.flux-settings-form-footer,
+.flux-settings-preference-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--flux-border);
+}
+
+.flux-settings-form-footer p {
+    max-width: 18rem;
+    margin: 0;
+    color: var(--flux-muted);
+    font-size: 0.76rem;
+}
+
+.flux-setting-option span {
+    display: grid;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.flux-setting-option small {
+    margin-top: 0.15rem;
+    color: var(--flux-muted);
+    font-size: 0.72rem;
+    font-weight: 400;
+}
+
+.flux-settings-theme-preview {
+    display: flex;
+    gap: 0.6rem;
+    max-width: 17rem;
+    height: 4.5rem;
+    padding: 0.5rem;
+    margin-top: 1rem;
+    border: 1px solid var(--flux-border);
+    border-radius: 0.5rem;
+    background: white;
+}
+
+.flux-settings-theme-preview > span {
+    width: 2.5rem;
+    border-radius: 0.25rem;
+    background: #f0f0f2;
+    border-top: 6px solid #ff5c00;
+}
+
+.flux-settings-theme-preview > div {
+    display: grid;
+    flex: 1;
+    gap: 0.4rem;
+}
+
+.flux-settings-theme-preview i {
+    border-radius: 0.2rem;
+    background: #f5f5f7;
+}
+
+.flux-settings-messages {
+    margin-bottom: 1.5rem;
+}
+
+.flux-settings-message,
+.flux-profile-error-summary {
+    padding: 0.9rem 1rem;
+    border: 1px solid #bee2cc;
+    border-radius: 0.7rem;
+    background: #edf8f1;
+    color: #17643a;
+    font-size: 0.83rem;
+}
+
+.flux-settings-message-error,
+.flux-profile-error-summary {
+    border-color: #f0c6c3;
+    background: #fff3f2;
+    color: #a32626;
+}
+
+.flux-profile-error-summary p {
+    margin: 0.25rem 0 0;
+}
+
+.flux-profile-error-summary ul {
+    margin: 0.5rem 0 0;
+    padding-left: 1.2rem;
+    list-style: disc;
+}
+
+.flux-profile-error-summary a {
+    text-decoration: underline;
+}
+
+.flux-profile-field-invalid input,
+.flux-profile-field-invalid textarea {
+    border-color: #b42318 !important;
+}
+
+.flux-settings-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.flux-settings-info-grid > div {
+    padding: 1rem;
+    border: 1px solid var(--flux-border);
+    border-radius: 0.7rem;
+    background: var(--flux-surface-subtle);
+}
+
+.flux-settings-info-grid h3 {
+    margin: 0 0 0.4rem;
+}
+
+.flux-settings-info-grid p {
+    color: var(--flux-muted);
+    font-size: 0.82rem;
+}
+
+.flux-settings-danger {
+    color: #b42318;
+    border-color: #f0c6c3;
+}
+
+.flux-settings-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1rem 0.5rem 0 0;
+    text-decoration: none;
+}
+
+.flux-settings :is(a, button, input, select, textarea):focus-visible {
+    outline: 2px solid #a13700;
+    outline-offset: 3px;
+}
+
+.flux-settings :is(h2, .flux-settings-project strong, dd) {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 1250px) {
+    .flux-settings-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.5rem;
+    }
+
+    .flux-settings-overview {
+        position: static;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.4rem;
+    }
+
+    .flux-settings-overview a {
+        justify-content: flex-start;
+        border-color: var(--flux-border);
+        background: var(--flux-surface);
+    }
+
+    .flux-settings-overview small,
+    .flux-settings-overview a > span:last-child,
+    .flux-settings-nav-label {
+        display: none;
+    }
 }
 
 /* Shared modal layout for inventory actions, team forms, and confirmations. */
@@ -1281,13 +1592,41 @@ body:has(.modal.active) {
     }
 
     .flux-settings-overview {
-        grid-template-columns: minmax(0, 1fr);
-        gap: 0.55rem;
-        margin-top: 1.2rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.45rem;
     }
 
     .flux-settings-overview a {
-        padding: 0.9rem;
+        padding: 0.75rem 0.6rem;
+        min-height: 3.25rem;
+    }
+
+    .flux-settings-overview strong {
+        font-size: 0.75rem;
+    }
+
+    .flux-profile-form {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .flux-settings-form-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .flux-settings-form-footer .flux-settings-submit {
+        width: 100%;
+    }
+
+    .flux-settings input,
+    .flux-settings select,
+    .flux-settings textarea {
+        max-width: 100%;
+        font-size: 1rem;
+    }
+
+    .flux-settings-preference .flux-setting-options {
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .flux-settings-header-main {

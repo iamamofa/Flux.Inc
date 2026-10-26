@@ -19,63 +19,101 @@
                 <span aria-hidden="true">←</span> Back to inventory
             </a>
         </div>
-        <p class="flux-settings-project"><span>Current project</span><strong>{{ project.name }}</strong></p>
+        <div class="flux-settings-context">
+            <p class="flux-settings-project"><span>Current project</span><strong>{{ project.name }}</strong></p>
+            <span class="flux-settings-access">{% if is_project_manager %}Project manager{% elif can_manage_alert_schedule %}Editor{% else %}Member{% endif %}</span>
+        </div>
     </header>
 
+    {% if messages %}
+    <div class="flux-settings-messages" aria-label="Settings updates">
+        {% for message in messages %}
+        <p class="flux-settings-message {% if message.tags == 'error' %}flux-settings-message-error{% endif %}" role="{% if message.tags == 'error' %}alert{% else %}status{% endif %}">{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="flux-settings-layout">
     <nav class="flux-settings-overview" aria-label="Settings sections">
+        <p class="flux-settings-nav-label">YOUR WORKSPACE</p>
         <a href="#profile">
+            {% include 'inventory/partials/settings_icon.html' with icon='profile' %}
             <span><strong>Your Profile</strong><small>Account details, photo and bio</small></span>
             <span aria-hidden="true">→</span>
         </a>
         <a href="#general-appearance">
+            {% include 'inventory/partials/settings_icon.html' with icon='appearance' %}
             <span><strong>General &amp; Appearance</strong><small>Display, density and navigation</small></span>
             <span aria-hidden="true">→</span>
         </a>
         <a href="#inventory-preferences">
+            {% include 'inventory/partials/settings_icon.html' with icon='inventory' %}
             <span><strong>Inventory Preferences</strong><small>Defaults and validation</small></span>
             <span aria-hidden="true">→</span>
         </a>
         <a href="#notifications">
+            {% include 'inventory/partials/settings_icon.html' with icon='notifications' %}
             <span><strong>Notifications</strong><small>Inventory and account alerts</small></span>
             <span aria-hidden="true">→</span>
         </a>
         <a href="#password-security">
+            {% include 'inventory/partials/settings_icon.html' with icon='security' %}
             <span><strong>Password &amp; Security</strong><small>Password and account security</small></span>
             <span aria-hidden="true">→</span>
         </a>
         <a href="#data-privacy">
+            {% include 'inventory/partials/settings_icon.html' with icon='data' %}
             <span><strong>Data &amp; Privacy</strong><small>Data access and handling</small></span>
             <span aria-hidden="true">→</span>
         </a>
         {% if can_view_login_history %}
         <a href="#team-login-history">
+            {% include 'inventory/partials/settings_icon.html' with icon='history' %}
             <span><strong>Team Login History</strong><small>Member and editor sign-ins</small></span>
             <span aria-hidden="true">→</span>
         </a>
         {% endif %}
         <a href="#about-flux">
+            {% include 'inventory/partials/settings_icon.html' with icon='about' %}
             <span><strong>About Flux</strong><small>Application and project details</small></span>
             <span aria-hidden="true">→</span>
         </a>
     </nav>
 
+    <div class="flux-settings-content" data-settings-content {% if profile_form.errors %}data-profile-errors{% endif %}>
     <section class="flux-settings-section" id="profile" aria-labelledby="profileTitle">
-        <h2 id="profileTitle">Your Profile</h2>
+        <div class="flux-settings-section-heading"><h2 id="profileTitle">Your Profile</h2><span class="flux-settings-badge">Personal</span></div>
         <p>Manage the account information and short introduction shown to your project team.</p>
         <form class="flux-settings-form flux-profile-form" method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <input type="hidden" name="notification_action" value="profile">
 
+            {% if profile_form.errors %}
+            <div class="flux-profile-error-summary" role="alert">
+                <strong>Your profile hasn’t been saved.</strong>
+                <p>Check the highlighted fields and try again.</p>
+                <ul>
+                    {% for field in profile_form %}{% for error in field.errors %}
+                    <li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>
+                    {% endfor %}{% endfor %}
+                </ul>
+                {{ profile_form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <div class="flux-profile-identity">
             {% if profile.profile_picture %}
             <img class="flux-profile-picture" src="{{ profile.profile_picture.url }}" alt="Your profile picture">
             {% else %}
-            <div class="flux-profile-picture flux-profile-picture-empty" aria-label="No profile picture">Profile photo</div>
+            <div class="flux-profile-picture flux-profile-picture-empty" aria-label="No profile picture">{{ user.first_name|default:user.username|first|upper }}{{ user.last_name|first|upper }}</div>
             {% endif %}
+                <div><strong>{{ user.get_full_name|default:user.username }}</strong><span>{{ user.email }}</span><small>Your profile is shared across your Flux projects.</small></div>
+            </div>
 
             {% for field in profile_form %}
             {% if field.name != 'remove_profile_picture' %}
-            <div class="flux-profile-field">
-                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            <div class="flux-profile-field {% if field.name == 'bio' or field.name == 'profile_picture' %}flux-profile-field-wide{% endif %} {% if field.errors %}flux-profile-field-invalid{% endif %}">
+                <label for="{{ field.id_for_label }}">{{ field.label }}{% if not field.field.required %}<span class="flux-profile-optional">Optional</span>{% endif %}</label>
                 {{ field }}
                 {% if field.help_text %}<small class="flux-settings-help">{{ field.help_text }}</small>{% endif %}
                 {% for error in field.errors %}<small class="flux-profile-error">{{ error }}</small>{% endfor %}
@@ -87,72 +125,83 @@
                 {{ profile_form.remove_profile_picture }} Remove current profile picture
             </label>
             {% endif %}
-            <button type="submit" class="flux-settings-submit">Save profile</button>
+            <div class="flux-settings-form-footer"><p>Changes apply to your account in every project.</p><button type="submit" class="flux-settings-submit">Save profile</button></div>
         </form>
     </section>
 
     <section class="flux-settings-section" id="general-appearance" aria-labelledby="appearanceTitle">
-        <h2 id="appearanceTitle">General &amp; Appearance</h2>
-        <p>These preferences are saved in this browser and do not change shared project data.</p>
+        <div class="flux-settings-section-heading"><h2 id="appearanceTitle">General &amp; Appearance</h2><span class="flux-settings-badge">This browser</span></div>
+        <p>Make this workspace feel right for you. Display preferences apply immediately and are saved in this browser.</p>
 
         <div class="flux-settings-preference-grid">
             <div class="flux-settings-preference">
                 <h3>Theme</h3>
                 <p class="flux-settings-current-value">Light</p>
                 <p class="flux-settings-help">Flux currently uses the light theme.</p>
+                <div class="flux-settings-theme-preview" aria-hidden="true"><span></span><div><i></i><i></i><i></i></div></div>
             </div>
 
             <div class="flux-settings-preference">
                 <h3>Table density</h3>
+                <p class="flux-settings-help">Choose how much space each inventory row uses.</p>
                 <div class="flux-setting-options" role="radiogroup" aria-label="Table density">
                     <label class="flux-setting-option">
                         <input type="radio" name="density" value="comfortable" data-flux-density>
-                        <span>Comfortable</span>
+                        <span>Comfortable<small>More room to scan</small></span>
                     </label>
                     <label class="flux-setting-option">
                         <input type="radio" name="density" value="compact" data-flux-density>
-                        <span>Compact</span>
+                        <span>Compact<small>More rows on screen</small></span>
                     </label>
                 </div>
             </div>
 
             <div class="flux-settings-preference">
                 <h3>Desktop navigation</h3>
+                <p class="flux-settings-help">Keep labels visible or give your inventory more room.</p>
                 <div class="flux-setting-options" role="radiogroup" aria-label="Desktop navigation width">
                     <label class="flux-setting-option">
                         <input type="radio" name="sidebar" value="expanded" data-flux-sidebar>
-                        <span>Expanded</span>
+                        <span>Expanded<small>Icons and labels</small></span>
                     </label>
                     <label class="flux-setting-option">
                         <input type="radio" name="sidebar" value="collapsed" data-flux-sidebar>
-                        <span>Compact</span>
+                        <span>Compact<small>Icons only</small></span>
                     </label>
                 </div>
             </div>
         </div>
 
-        <button class="flux-settings-reset" type="button" data-flux-reset-preferences>Restore default preferences</button>
+        <div class="flux-settings-preference-footer">
+            <p class="flux-settings-help" data-flux-preference-status role="status" aria-live="polite">Changes are saved automatically.</p>
+            <button class="flux-settings-reset" type="button" data-flux-reset-preferences>Restore default preferences</button>
+        </div>
     </section>
 
     <section class="flux-settings-section" id="inventory-preferences" aria-labelledby="inventoryPreferencesTitle">
-        <h2 id="inventoryPreferencesTitle">Inventory Preferences</h2>
-        <p>Workspace-wide defaults and validation rules are not currently configurable here. Stock thresholds, expiry dates and storage details are set on individual inventory records.</p>
+        <div class="flux-settings-section-heading"><h2 id="inventoryPreferencesTitle">Inventory Preferences</h2><span class="flux-settings-badge">Project</span></div>
+        <p>Keep stock information accurate by updating preferences on individual inventory records.</p>
+        <div class="flux-settings-info-grid">
+            <div><h3>Stock thresholds</h3><p>Set the minimum quantity for each item to flag low stock.</p></div>
+            <div><h3>Expiry &amp; storage</h3><p>Manage expiry dates and storage locations on each record.</p></div>
+        </div>
+        <p class="flux-settings-help">Workspace-wide defaults and validation rules are not currently configurable.</p>
         <a class="flux-settings-action" href="{{ inventory_url }}">Open Inventory <span aria-hidden="true">→</span></a>
     </section>
 
     <section class="flux-settings-section" id="notifications" aria-labelledby="notificationsTitle">
         <h2 id="notificationsTitle">Notifications</h2>
-        <p>Low-stock summaries are sent twice daily when items are below their configured thresholds. Each recipient receives them at these times in their own selected time zone.</p>
+        <p>Choose when low-stock summaries reach you. Summaries are sent twice daily, only when this project has items below their stock thresholds.</p>
         {% if email_alerts_configured %}
         <p class="flux-settings-status">Email delivery is configured.</p>
         {% else %}
-        <p class="flux-settings-warning">Email delivery is not configured. Ask the system operator to set FLUX_EMAIL_USER and FLUX_EMAIL_PASSWORD.</p>
+        <p class="flux-settings-warning">Email delivery isn’t configured yet. Contact your system administrator to enable inventory emails.</p>
         {% endif %}
 
         <form class="flux-settings-form" method="post">
             {% csrf_token %}
             <input type="hidden" name="notification_action" value="timezone">
-            <label for="notificationTimeZone">Your time zone</label>
+            <div class="flux-settings-section-heading"><label for="notificationTimeZone">Your time zone</label><span class="flux-settings-badge">Personal</span></div>
             <div class="flux-settings-inline-form">
                 <select id="notificationTimeZone" name="time_zone" required>
                     {% for time_zone in time_zones %}
@@ -167,7 +216,7 @@
         <form class="flux-settings-form" method="post">
             {% csrf_token %}
             <input type="hidden" name="notification_action" value="schedule">
-            <h3>Project email schedule</h3>
+            <div class="flux-settings-section-heading"><h3>Project email schedule</h3><span class="flux-settings-badge">{% if can_manage_alert_schedule %}Project{% else %}View only{% endif %}</span></div>
             <p class="flux-settings-help">Times are interpreted in each recipient’s time zone. Emails are sent only when the project has low-stock items.</p>
             <div class="flux-settings-schedule">
                 <div>
@@ -189,9 +238,12 @@
     </section>
 
     <section class="flux-settings-section" id="password-security" aria-labelledby="securityTitle">
-        <h2 id="securityTitle">Password &amp; Security</h2>
-        <p>Password changes are supported. Two-factor authentication and active-session management are not currently available. Project managers can review team login history below.</p>
+        <div class="flux-settings-section-heading"><h2 id="securityTitle">Password &amp; Security</h2><span class="flux-settings-badge">Personal</span></div>
+        <p>Protect your account with a strong, unique password.</p>
+        <div class="flux-settings-info-grid"><div><h3>Account password</h3><p>Update the password you use to sign in to all your Flux projects.</p></div></div>
         <a class="flux-settings-action" href="{% url 'change_password' %}">Change password <span aria-hidden="true">→</span></a>
+        {% if can_view_login_history %}<p class="flux-settings-help">Review your team’s sign-ins in <a href="#team-login-history">Team Login History</a>.</p>{% endif %}
+        <p class="flux-settings-help">Two-factor authentication and active-session management are not currently available.</p>
     </section>
 
     {% if can_view_login_history %}
@@ -248,16 +300,17 @@
         <form class="flux-settings-form" method="post" onsubmit="return confirm('Clear all login history for this project?');">
             {% csrf_token %}
             <input type="hidden" name="notification_action" value="clear_login_history">
-            <button type="submit" class="flux-settings-submit">Clear project login history</button>
+            <p class="flux-settings-help">Clearing history permanently removes this project’s recorded sign-ins.</p>
+            <button type="submit" class="flux-settings-reset flux-settings-danger">Clear project login history</button>
         </form>
     </section>
     {% endif %}
 
     <section class="flux-settings-section" id="data-privacy" aria-labelledby="dataPrivacyTitle">
-        <h2 id="dataPrivacyTitle">Data &amp; Privacy</h2>
+        <div class="flux-settings-section-heading"><h2 id="dataPrivacyTitle">Data &amp; Privacy</h2><span class="flux-settings-badge">Project</span></div>
         <p>Download a copy of this project’s inventory, logs, storage locations, archived records and attached MSDS files.</p>
         <p class="flux-settings-help">Flux creates the ZIP when requested and does not retain a backup copy. Use your browser’s download options to save it to a local, USB or external drive.</p>
-        <a class="flux-settings-action" href="{% url 'export_project_backup' project_name=project.name %}">
+        <a class="flux-settings-submit flux-settings-download" href="{% url 'export_project_backup' project_name=project.name %}">
             Download project backup <span aria-hidden="true">↓</span>
         </a>
         <a class="flux-settings-action" href="{{ logs_url }}">View Logs <span aria-hidden="true">→</span></a>
@@ -271,7 +324,12 @@
             <div><dt>Project</dt><dd>{{ project.name }}</dd></div>
             <div><dt>Your access</dt><dd>{% if user == project.project_manager %}Project manager{% elif user in project.project_editors.all %}Editor{% else %}Member{% endif %}</dd></div>
         </dl>
-        <p class="flux-settings-help">Documentation and support links are not configured in this application.</p>
     </section>
+    </div>
+    </div>
 </div>
+{% endblock %}
+
+{% block inventory_scripts %}
+<script src="{% static 'js/settings.js' %}" defer></script>
 {% endblock %}

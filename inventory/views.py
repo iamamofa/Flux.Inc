@@ -466,7 +466,9 @@ def project_settings(request, project_name):
         'login_events_page': login_events_page,
         'time_zones': sorted(available_timezones()),
         'can_manage_alert_schedule': can_manage_alert_schedule,
-        'email_alerts_configured': bool(settings.EMAIL_HOST_USER),
+        'email_alerts_configured': bool(
+            settings.EMAIL_HOST_USER and settings.EMAIL_HOST_PASSWORD
+        ),
         **get_sidebar_urls(project_name),
     })
 

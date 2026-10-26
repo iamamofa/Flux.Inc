@@ -206,9 +206,9 @@ class UserProfileForm(forms.ModelForm):
     class Meta:
         model = UserProfile
         fields = (
-            'username',
             'first_name',
             'last_name',
+            'username',
             'email',
             'department',
             'phone_number',
@@ -217,7 +217,7 @@ class UserProfileForm(forms.ModelForm):
         )
         widgets = {
             'bio': forms.Textarea(attrs={'rows': 4, 'maxlength': 500}),
-            'profile_picture': forms.ClearableFileInput(
+            'profile_picture': forms.FileInput(
                 attrs={'accept': 'image/*'}
             ),
         }
@@ -229,6 +229,19 @@ class UserProfileForm(forms.ModelForm):
         self.fields['first_name'].initial = user.first_name
         self.fields['last_name'].initial = user.last_name
         self.fields['email'].initial = user.email
+        for name, autocomplete in {
+            'username': 'username',
+            'first_name': 'given-name',
+            'last_name': 'family-name',
+            'email': 'email',
+            'phone_number': 'tel',
+        }.items():
+            self.fields[name].widget.attrs['autocomplete'] = autocomplete
+        self.fields['phone_number'].widget.input_type = 'tel'
+        self.fields['profile_picture'].help_text = 'Choose an image up to 5 MB.'
+        self.fields['bio'].help_text = (
+            'A short introduction for your team. Maximum 500 characters.'
+        )
 
     def clean_username(self):
         username = self.cleaned_data['username'].strip()
