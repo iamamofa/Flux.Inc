@@ -1,0 +1,58 @@
+name: Weekly AI bug fixes
+
+on:
+  schedule:
+    - cron: '17 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  fix-bugs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install project dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-runtime.txt
+
+      - name: Run Codex bug-fix agent
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          permission-profile: ':workspace'
+          prompt: |
+            Find and fix concrete bugs in this Django project.
+            Start by running `python manage.py check` and `python manage.py test`.
+            Investigate failures and relevant code paths, make only focused fixes,
+            and add or update regression tests for each fix. If the test suite
+            passes, inspect the code for a small, well-supported bug to fix rather
+            than making speculative changes. Run the relevant tests after editing.
+            Do not change dependencies, secrets, deployment configuration, or
+            unrelated behavior. If no concrete bug is found, leave the checkout
+            unchanged. Do not merge or push changes.
+
+      - name: Create bug-fix pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: codex/weekly-bug-fixes
+          delete-branch: true
+          title: 'Fix bugs identified by weekly AI review'
+          commit-message: 'Fix bugs identified by weekly AI review'
+          body: |
+            Automated weekly bug-fix proposal from OpenAI Codex.
+
+            Review the code changes and test results before merging.

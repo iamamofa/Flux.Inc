@@ -203,6 +203,18 @@ python manage.py send_scheduled_low_stock_alerts
 
 The low-stock command must be scheduled externally, typically once per minute, and requires the application email environment variables. See the [Administrator Portal Guide](ADMIN_PORTAL_README.md) for scheduling and delivery behavior.
 
+## Weekly AI bug-fix proposals
+
+The `Weekly AI bug fixes` GitHub Actions workflow runs every Monday and can also
+be started manually from the Actions tab. It uses OpenAI Codex to run the Django
+checks and tests, investigate concrete bugs, and open or update a pull request
+with focused fixes. Changes are not merged automatically.
+
+To enable it, add an `OPENAI_API_KEY` Actions secret in the repository settings
+and allow GitHub Actions to create pull requests under **Settings → Actions →
+General → Workflow permissions**. The workflow requires the project
+dependencies listed in `requirements-runtime.txt` and runs on Python 3.11.
+
 ## Configuration
 
 Flux reads configuration from environment variables and loads a local `.env` file when present. See [.env.example](.env.example) for the available variable names and placeholder values.
@@ -258,4 +270,3 @@ See [LICENSE](LICENSE) for the project's usage terms. Review those terms before 
 
 - [Administrator Portal Guide](ADMIN_PORTAL_README.md): implementation details, quick start, security, deployment, and limitations.
 - [.env.example](.env.example): placeholder environment configuration.
-

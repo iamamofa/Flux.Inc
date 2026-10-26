@@ -1,5 +1,5 @@
 from urllib.parse import urlencode
-from datetime import datetime, time, timezone as datetime_timezone
+from datetime import datetime, time, timedelta, timezone as datetime_timezone
 import io
 import json
 from tempfile import TemporaryDirectory
@@ -14,6 +14,7 @@ from django.core.management import call_command, CommandError
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth.signals import user_logged_in
+from django.utils import timezone
 from PIL import Image
 
 from .models import (
@@ -1161,7 +1162,7 @@ class DashboardChartDataTests(TestCase):
             pack_count=1,
             cold_storage='Room temperature',
             threshold_value=3,
-            expiry_date='2026-10-25',
+            expiry_date=timezone.localdate() + timedelta(days=1),
         )
 
         response = self.client.get(
