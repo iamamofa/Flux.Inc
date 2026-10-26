@@ -5,7 +5,9 @@
   <img src="https://img.shields.io/badge/License-See%20LICENSE-lightgrey" alt="See LICENSE" />
 </p>
 
-<h1 align="center">Flux</h1>
+<p align="center">
+<img src ="./static/images/Logo_Orange.png">
+</p>
 
 <p align="center">
   Research inventory management and an integrated administrator portal for laboratory operations.
