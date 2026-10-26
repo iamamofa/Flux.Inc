@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="{% static '/images/Icon.png' %}">
+    <link rel="icon" type="image/png" href="{% static 'images/Icon.png' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <link rel="stylesheet" href="{% static 'css/inventory_style.css' %}">
     <link rel="stylesheet" href="{% static 'css/flux_design_system.css' %}?v=7">
@@ -353,14 +353,17 @@
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="{% static 'js/flux_preferences.js' %}?v=2" defer></script>
     <title>Flux - {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/flux_pages.css' %}?v=1">
+    <script src="{% static 'js/flux_pages.js' %}" defer></script>
 </head>
 <body class="flux-inventory-layout relative min-h-screen font-poppins antialiased text-sm bg-white flex text-gray-800 h-full 2xl:max-w-[1920px] 2xl:mx-auto 2xl:border-r-2 {% block page_class %}{% endblock %}"
     x-data="{ showMenu: false, showFilters: false, filtersVisible: true }"
     x-init="filtersVisible = localStorage.getItem('flux.filters') !== 'hidden'">
+    <a class="flux-skip-link" href="#workspaceContent">Skip to content</a>
 
     {% include 'inventory/partials/sidebar.html' %}
 
-    <main class="bg-white min-h-screen lg:ml-60 flex w-full">
+    <main id="workspaceContent" tabindex="-1" class="bg-white min-h-screen lg:ml-60 flex w-full">
         <!-- Screen Overlay shows on small screen showMenu -->
         <div class="inventory-nav-overlay absolute lg:hidden left-0 top-0 h-full w-full bg-black/30 z-[15]"
              @click="showMenu = false"
@@ -387,6 +390,7 @@
 
         <!-- Main Content -->
         <section class="flex-1 py-6 px-4 md:px-4 lg:px-8">
+            {% if request.resolver_match.url_name != 'project_settings' %}{% include "inventory/partials/messages.html" %}{% endif %}
             {% include "inventory/partials/low_stock_alerts.html" %}
             <div class="inventory-desktop-toolbar">
                 <button type="button"
@@ -406,6 +410,7 @@
                 </button>
             </div>
             {% block content %}{% endblock %}
+            <div class="flux-workspace-footer"><span>FLUX · {{ project.name }}</span><a href="{{ settings_url }}">Workspace settings ↗</a></div>
         </section>
 
         {% block popups_block %}

@@ -1,48 +1,5 @@
-{% extends "inventory/base_auth.html" %}
-{% load static %}
-
-{% block title %}Account Created{% endblock %}
-
-{% block extra_css %}
-<style>
-    body {
-            flex-direction: column;
-            margin: 0;
-            font-family: Arial, sans-serif;
-        }
-    img {
-            max-width: 100%;
-            height: auto;
-            max-height: 70vh;
-        }
-
-    .button {
-            display: inline-block;
-            padding: 10px 20px;
-            border: 2px solid #000;
-            border-radius: 4px;
-            text-decoration: none;
-            color: #000;
-            transition: background-color 0.3s ease;
-        }
-
-    .button:hover {
-            background-color: #000;
-            color: #fff;
-        }
-    p {
-            margin: 0; /* Set the margin to 0 to remove spacing between paragraphs */
-            padding: 0; /* Set the padding to 0 to remove spacing between paragraphs */
-        }
-</style>
-{% endblock %}
-
+{% extends 'inventory/base_auth.html' %}
+{% block title %}Account created{% endblock %}
 {% block content %}
-<div style="text-align: center; padding: 20px;">
-    <img src="{% static 'images/Account_created.png' %}" alt="Account Created">
-    <p>Your account has been created successfully</p>
-    <p>Kindly reach out to your project coordinator to be added to a project.</p> 
-    <br>
-    <a href="{% url 'home' %}" class="button">Back to Home</a>
-</div>
+<div class="flux-outcome-icon" aria-hidden="true">✓</div><p class="flux-eyebrow">ACCOUNT CREATED</p><h1>Welcome to the team.</h1><p class="flux-account-intro">Your account has been created successfully.</p><div class="flux-info-note"><strong>One more step</strong><p>Ask your project coordinator to add your account to a project. Then sign in to access your inventory.</p></div><a class="flux-button flux-button-primary" href="{% url 'login' %}">Go to sign in <span aria-hidden="true">→</span></a>
 {% endblock %}

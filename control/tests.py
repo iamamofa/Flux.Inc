@@ -89,7 +89,7 @@ class PortalTests(TestCase):
         response = self.client.get(reverse('control:overview'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'control/portal_refined.css?v=1')
+        self.assertContains(response, 'control/portal_refined.css?v=2')
         self.assertContains(response, 'Administrator overview')
 
     def test_anonymous_requires_login(self):
@@ -247,3 +247,33 @@ class PortalTests(TestCase):
         response = self.client.get(reverse('control:overview'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Original project')
+
+
+@override_settings(ALLOWED_HOSTS=['testserver', 'localhost'])
+class PortalPageFeedbackTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_superuser('page-admin', 'admin@example.invalid', 'test-password')
+        self.client.force_login(self.admin)
+
+    def test_unread_notifications_keep_filter_when_paginating(self):
+        AdminNotification.objects.bulk_create([
+            AdminNotification(recipient=self.admin, title=f'Update {number}', message='Project update')
+            for number in range(21)
+        ])
+        response = self.client.get(reverse('control:notifications'), {'filter': 'unread'})
+        self.assertContains(response, 'aria-current="page"')
+        self.assertContains(response, 'page=2&filter=unread', html=False)
+
+    def test_invalid_department_form_displays_field_links(self):
+        response = self.client.post(reverse('control:department_create'), {'name': '', 'code': ''})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Your changes haven’t been saved.')
+        self.assertContains(response, 'href="#id_name"')
+
+    def test_read_only_settings_disable_editing_controls(self):
+        viewer = User.objects.create_user('settings-reader', is_staff=True)
+        viewer.user_permissions.add(Permission.objects.get(codename='view_portalsettings'))
+        self.client.force_login(viewer)
+        response = self.client.get(reverse('control:settings'))
+        self.assertContains(response, 'class="form-readonly" disabled')
+        self.assertNotContains(response, 'Save settings')

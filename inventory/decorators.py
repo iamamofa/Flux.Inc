@@ -23,7 +23,7 @@ def project_access_required(view_func):
                 else:
                     # Redirect to appropriate error page
                     from django.shortcuts import render
-                    return render(request, 'inventory/403.html', status=403)
+                    return render(request, 'inventory/403_page.html', status=403)
 
         return view_func(request, *args, **kwargs)
     return _wrapped_view

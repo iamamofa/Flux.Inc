@@ -1,0 +1,4 @@
+<details class="flux-project-switcher">
+    <summary><span><small>CURRENT PROJECT</small><strong>{{ project.name }}</strong></span><span aria-hidden="true">⌄</span></summary>
+    <div class="flux-project-options"><p>Switch workspace</p>{% for other_project in projects %}<a href="{% url project_route project_name=other_project.name %}" {% if other_project.pk == project.pk %}aria-current="true"{% endif %}>{{ other_project.name }}{% if other_project.pk == project.pk %}<span aria-hidden="true">✓</span>{% endif %}</a>{% empty %}<span>{{ project.name }}</span>{% endfor %}</div>
+</details>

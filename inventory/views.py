@@ -45,7 +45,7 @@ from .low_stock import get_low_stock_alerts
 from .email_utils import attach_inline_email_images
 from .forms import (
     UserApplicationForm, ProjectManagerSignUpForm,
-    EditorMemberSignUpForm, LoginForm, UserProfileForm, EquipmentForm,
+    EditorMemberSignUpForm, LoginForm, UserProfileForm, EquipmentForm, NewProjectForm,
 )
 
 from .tasks import scan_file_for_viruses
@@ -296,8 +296,8 @@ def register_user(request):
 
 def login_view(request):
     """User login view"""
+    form = LoginForm(request.POST or None)
     if request.method == 'POST':
-        form = LoginForm(request.POST)
         if form.is_valid():
             email = form.cleaned_data['email']
             password = form.cleaned_data['password']
@@ -320,7 +320,7 @@ def login_view(request):
                     messages.error(request, "Account not properly set up.")
             else:
                 messages.error(request, 'Invalid credentials.')
-    return render(request, 'inventory/login.html', {'form': LoginForm()})
+    return render(request, 'inventory/login.html', {'form': form})
 
 
 @login_required
@@ -793,26 +793,28 @@ def create_project(request):
     if request.method != 'POST':
         return JsonResponse({"error": "Invalid request method"}, status=405)
 
+    form = NewProjectForm(request.POST)
+    if not form.is_valid():
+        return JsonResponse({'error': form.errors['project_name'][0]}, status=400)
+
     try:
-        project_name = clean_text_field(request.POST.get('project_name'))
-        project = Project.objects.create(
-            name=project_name,
-            project_manager=request.user
-        )
-
-        # Add project to manager's profile
-        user_profile = UserProfile.objects.get(user=request.user)
-        user_profile.managed_projects.add(project)
-
-        Log.objects.create(
-            project=project,
-            user=request.user,
-            action=f'Created project {project_name}'
-        )
+        project_name = form.cleaned_data['project_name']
+        with transaction.atomic():
+            project = Project.objects.create(
+                name=project_name,
+                project_manager=request.user,
+            )
+            user_profile, _ = UserProfile.objects.get_or_create(user=request.user)
+            user_profile.managed_projects.add(project)
+            Log.objects.create(
+                project=project,
+                user=request.user,
+                action=f'Created project {project_name}',
+            )
 
         return JsonResponse({
             "message": "Project created successfully",
-            "redirect": f"/consumables/{project_name}"
+            "redirect": reverse('consumables', kwargs={'project_name': project_name})
         })
 
     except Exception as e:
@@ -831,7 +833,7 @@ def log(request, project_name):
         context = {
             'project': project,
             'projects': get_user_projects(request.user),
-            'logs': logs,
+            'logs': Paginator(logs, 50).get_page(request.GET.get('page')),
             **get_sidebar_urls(project_name)
         }
         return render(request, 'inventory/logs.html', context)
@@ -1275,24 +1277,31 @@ class InventoryItemViews:
     @classmethod
     def restore_item(cls, request, project_name, trash_id, model, trash_model):
         """Generic restore item from trash"""
+        if request.method != 'POST':
+            return JsonResponse({'error': 'Use POST to restore a record.'}, status=405)
         try:
             project = get_object_or_404(Project, name=project_name)
+            if not cls.can_manage_archive(request.user, project):
+                return JsonResponse({'error': 'Only the project manager or an editor can restore records.'}, status=403)
             trash_item = get_object_or_404(trash_model, id=trash_id, project=project)
 
-            # Create new item from trash data
-            item_data = {field.name: getattr(trash_item, field.name) 
-                        for field in trash_item._meta.fields 
-                        if field.name not in ['id', 'project', 'deleted_at', 'deleted_by', 'deletion_reason']}
-            item = model.objects.create(project=project, **item_data)
-
-            # Delete trash record
-            trash_item.delete()
-
-            Log.objects.create(
-                project=project,
-                user=request.user,
-                action=f'Restored {getattr(item, "name", "item")} from trash'
-            )
+            # Archive metadata such as original_id is not an inventory field.
+            model_fields = {field.name for field in model._meta.fields}
+            item_data = {
+                field.name: getattr(trash_item, field.name)
+                for field in trash_item._meta.fields
+                if field.name in model_fields and field.name not in {'id', 'project'}
+            }
+            if model is Sample and not item_data.get('collection_date'):
+                return JsonResponse({'error': 'This archived sample is missing its collection date and cannot be restored.'}, status=400)
+            with transaction.atomic():
+                item = model.objects.create(project=project, **item_data)
+                trash_item.delete()
+                Log.objects.create(
+                    project=project,
+                    user=request.user,
+                    action=f'Restored {getattr(item, "name", "item")} from trash'
+                )
 
             return JsonResponse({
                 'success': True,
@@ -1307,15 +1316,19 @@ class InventoryItemViews:
     @classmethod
     def permanent_delete(cls, request, trash_id, trash_model):
         """Generic permanent delete from trash"""
+        if request.method != 'POST':
+            return JsonResponse({'error': 'Use POST to delete a record.'}, status=405)
         try:
             trash_item = get_object_or_404(trash_model, id=trash_id)
-            trash_item.delete()
-
-            Log.objects.create(
-                project=trash_item.project,
-                user=request.user,
-                action=f'Permanently deleted {getattr(trash_item, "name", "item")} from trash'
-            )
+            if not cls.can_manage_archive(request.user, trash_item.project):
+                return JsonResponse({'error': 'Only the project manager or an editor can delete archived records.'}, status=403)
+            with transaction.atomic():
+                Log.objects.create(
+                    project=trash_item.project,
+                    user=request.user,
+                    action=f'Permanently deleted {getattr(trash_item, "name", "item")} from trash'
+                )
+                trash_item.delete()
 
             return JsonResponse({
                 'success': True,
@@ -1330,15 +1343,19 @@ class InventoryItemViews:
     @classmethod
     def empty_trash(cls, request, project_name, trash_model):
         """Generic empty trash view"""
+        if request.method != 'POST':
+            return JsonResponse({'error': 'Use POST to empty trash.'}, status=405)
         try:
             project = get_object_or_404(Project, name=project_name)
-            count, _ = trash_model.objects.filter(project=project).delete()
-
-            Log.objects.create(
-                project=project,
-                user=request.user,
-                action=f'Emptied trash ({count} items)'
-            )
+            if not cls.can_manage_archive(request.user, project):
+                return JsonResponse({'error': 'Only the project manager or an editor can empty trash.'}, status=403)
+            with transaction.atomic():
+                count, _ = trash_model.objects.filter(project=project).delete()
+                Log.objects.create(
+                    project=project,
+                    user=request.user,
+                    action=f'Emptied trash ({count} items)'
+                )
 
             return JsonResponse({
                 'success': True,
@@ -1349,6 +1366,10 @@ class InventoryItemViews:
         except Exception as e:
             security_logger.error(f"Empty trash error: {str(e)}")
             return JsonResponse({'error': str(e)}, status=500)
+
+    @staticmethod
+    def can_manage_archive(user, project):
+        return project.project_manager_id == user.pk or project.project_editors.filter(pk=user.pk).exists()
 
     @classmethod
     def export_csv(cls, request, project_name, model, fields, filename):
@@ -2506,19 +2527,19 @@ def delete_equipment(request, project_name, equipment_id):
 
 @login_required
 def trash_equipment_(request, project_name):
-    """View trashed consumables"""
+    """View archived equipment for the current project."""
     try:
         project = get_object_or_404(Project, name=project_name)
-        trash_items = TrashConsumable.objects.filter(project=project)
+        trash_items = TrashEquipment.objects.filter(project=project)
 
         context = {
             'project': project,
             'projects': get_user_projects(request.user),
             'trash_items': trash_items,
-            'item_type': 'consumables',
+            'item_type': 'equipment_',
             **get_sidebar_urls(project_name)
         }
-        return render(request, 'inventory/trash_consumables.html', context)
+        return render(request, 'inventory/trash_equipment_.html', context)
 
     except Exception as e:
         security_logger.error(f"Trash consumables view error: {str(e)}")

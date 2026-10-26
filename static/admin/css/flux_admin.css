@@ -720,3 +720,16 @@ body.login #content-main {
         flex: 1 1 100%;
     }
 }
+
+/* Consistent tables and forms across model administration pages. */
+#changelist .results { border: 1px solid var(--hairline-color); border-radius: 10px; }
+#result_list thead th { padding-top: 14px; padding-bottom: 14px; }
+#result_list tbody td, #result_list tbody th { padding-top: 14px; padding-bottom: 14px; }
+#content .form-row input:not([type=checkbox]):not([type=radio]), #content .form-row select, #content .form-row textarea { border-radius: 7px; }
+#content .errornote { border-radius: 8px; padding: 14px 18px; }
+#content .submit-row { border-radius: 10px; }
+@media (max-width: 600px) {
+    #changelist-search { flex-wrap: wrap; }
+    #changelist-search input[type=search] { width: 100%; max-width: 100%; font-size: 16px; }
+    #content .submit-row input, #content .submit-row a { min-height: 42px; }
+}

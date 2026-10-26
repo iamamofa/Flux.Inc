@@ -429,7 +429,7 @@ function filterTable() {
   const maxServiceEndFilterValue = elements.maxServiceEndFilter.value || '9999-12-31';
   const storageLocationFilterValue = elements.storageLocationFilter.value.toLowerCase();
 
-  const tableRows = elements.table.querySelectorAll('tbody tr');
+  const tableRows = elements.table.querySelectorAll('tbody tr[data-id]');
 
   tableRows.forEach((row) => {
       const cells = row.querySelectorAll('td');
@@ -499,7 +499,7 @@ function sortTableByColumn() {
     return;
   }
 
-  const rows = Array.from(elements.table.querySelectorAll('tr'));
+  const rows = Array.from(elements.table.querySelectorAll('tbody tr[data-id]'));
   const tbody = elements.table.querySelector('tbody');
   
   rows.sort((row1, row2) => {

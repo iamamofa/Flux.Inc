@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="{% static '/images/Icon.png' %}">
+    <link rel="icon" type="image/png" href="{% static 'images/Icon.png' %}">
     <link rel="stylesheet" href="{% static 'css/inventory_style.css' %}">
     <link rel="stylesheet" href="{% static 'css/flux_design_system.css' %}">
     <script src="{% static 'js/flux_preferences.js' %}" defer></script>
@@ -133,14 +133,17 @@
             font-size: 0.9rem;
         }
     </style>
+    <link rel="stylesheet" href="{% static 'css/flux_pages.css' %}?v=1">
+    <script src="{% static 'js/flux_pages.js' %}" defer></script>
 </head>
 
 <body class="flux-inventory-layout relative min-h-screen font-poppins antialiased text-sm bg-white flex text-gray-800 h-full 2xl:max-w-[1920px] 2xl:mx-auto 2xl:border-r-2"
     x-data="{ showMenu: false }">
+    <a class="flux-skip-link" href="#workspaceContent">Skip to content</a>
 
     {% include "inventory/partials/sidebar.html" %}
 
-    <main class="bg-white min-h-screen lg:ml-60 flex w-full">
+    <main id="workspaceContent" tabindex="-1" class="bg-white min-h-screen lg:ml-60 flex w-full">
         <!-- Screen Overlay shows on small screen showMenu -->
         <div class="absolute lg:hidden left-0 top-0 h-full w-full bg-black/30 z-[15]"
             @click="showMenu = false"
@@ -151,37 +154,17 @@
 
         <!-- Main Content -->
         <section class="flex-1 py-6 px-4 md:px-4 lg:px-8">
+            {% include "inventory/partials/messages.html" %}
             <!-- Header -->
             <div class="flex items-center justify-between">
                 <div>
-                    <div class="text-gray-700 flex items-center justify-between mb-3">
-                        <span>PROJECT</span>
-                    </div>
-                    <div class="dropdown">
-                        <div class="project-name-container">
-                            <span class="project-name-text text-gray-900 text-xl font-semibold">{{ project.name }}</span>
-                            <svg class="dropdown-arrow" width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                                <rect width="8" height="8" fill="url(#pattern7)"/>
-                                <defs>
-                                    <pattern id="pattern7" patternContentUnits="objectBoundingBox" width="1" height="1">
-                                        <use xlink:href="#image0_240_2" transform="scale(0.0625)"/>
-                                    </pattern>
-                                    <image id="image0_240_2" width="16" height="16" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAwgAAAMIBT4kc1wAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAACASURBVDiN1dOxDcIwEEDRf2QtOqgYIx0gyIgRsyCxA00+zVEgMIodGiy5839XWBcqS85qUf0LIIAtsG7sLwA3wMZ77YA7sGuYLjCQvzBUTp6AXgX1iZxr4xcgkVNN/AYkcpwbfwQSOcyJi0Ai+wyLsUp824WI2ACTOhbf/P8yPQAoP83ZkoVsJgAAAABJRU5ErkJggg=="/>
-                                </defs>
-                            </svg>
-                        </div> 
-                        <div class="dropdown-content">
-                            {% for project in projects %}
-                            <a href="{% url 'log' project_name=project.name %}">{{ project.name }}</a>
-                            {% endfor %}   
-                        </div>
-                    </div>
+                    {% include 'inventory/partials/project_switcher.html' with project_route='log' %}
                 </div>
                 <div class="flex items-center space-x-4 ">
                     <!-- Menu button on small screen -->
                     <button
                         class="lg:hidden bg-gray-50 p-2 text-gray-600 rounded hover:bg-gray-300 focus:text-primary outline-none focus:drop-shadow"
-                        @click="showMenu = !showMenu">
+                        @click="showMenu = !showMenu" aria-label="Toggle menu" :aria-expanded="showMenu">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
                             <path fill-rule="evenodd"
                                 d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm7 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
@@ -191,6 +174,8 @@
                 </div>
             </div>
         
+<header class="flux-page-heading"><div><p class="flux-eyebrow">{{ project.name }}</p><h1 id="logsTableDescription">Project activity</h1><p>Follow the inventory updates and actions recorded for your project.</p></div></header>
+<div class="flux-table-toolbar"><div><h2>Activity history <span class="flux-search-result" data-table-search-status role="status"></span></h2><p>Latest events appear first.</p></div><label class="flux-table-search"><span aria-hidden="true">⌕</span><input type="search" aria-label="Search logs" placeholder="Search logs…" data-table-search=".logs-table"></label></div>
             <div class="table-container">
                 {% if user == project.project_manager %}
                 <div class="logs-table-wrapper">
@@ -204,14 +189,14 @@
                         </thead>
                         <tbody id="logsTable">
                             {% for log in logs %}
-                            <tr>
+                            <tr data-search-row>
                                 <td>{{ log.action }}</td>
-                                <td>{{ log.user.first_name }} {{ log.user.last_name }}</td>
+                                <td>{{ log.user.get_full_name|default:log.user.username }}</td>
                                 <td><time datetime="{{ log.timestamp|date:'c' }}">{{ log.timestamp }}</time></td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="3">No logs available</td>
+                                <td colspan="3" class="inventory-empty-state"><strong>No activity yet</strong><span>Inventory updates will appear here as your team works.</span></td>
                             </tr>
                             {% endfor %}
                         </tbody>

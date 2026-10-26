@@ -284,6 +284,8 @@ class NewProjectForm(forms.Form):
 
     def clean_project_name(self):
         project_name = self.cleaned_data['project_name']
+        if '/' in project_name:
+            raise ValidationError('Project names cannot include a slash (/).')
         if Project.objects.filter(name=project_name).exists():
             raise ValidationError("Project name already exists.")
         return project_name

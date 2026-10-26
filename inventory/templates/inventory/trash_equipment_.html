@@ -1,60 +1,15 @@
-{% extends "inventory/trash_base.html" %}
+{% extends 'inventory/trash_base.html' %}
+{% block empty_url %}{% url 'delete_all_equipment__in_trash' project_name=project.name %}{% endblock %}
+{% block category_title %}equipment{% endblock %}
 {% block navigation %}
-<a href="{% url 'trash_consumables' project_name=project.name %}"
-    class="flex items-center space-x-1 pb-3 border-b-2 border-transparent hover:border-b-primary hover:text-gray-600">
-    <span>Consumables</span>
-</a>
-<a href="{% url 'trash_reagents' project_name=project.name %}"
-    class="flex items-center space-x-1 pb-3 border-b-2 border-transparent hover:border-b-primary hover:text-gray-600">
-    <span>Reagents</span>
-</a>
-<a href="{% url 'trash_equipment_' project_name=project.name %}"
-    class="flex items-center space-x-1 text-gray-600 border-b-2 border-b-primary pb-3">
-    <span>Equipment</span>
-</a>
-<a href="{% url 'trash_samples' project_name=project.name %}"
-    class="flex items-center space-x-1 pb-3 border-b-2 border-transparent hover:border-b-primary hover:text-gray-600">
-    <span>Samples</span>
-</a>
+<a href="{% url 'trash_consumables' project_name=project.name %}" class="nav-link">Consumables</a>
+<a href="{% url 'trash_reagents' project_name=project.name %}" class="nav-link">Reagents</a>
+<a href="{% url 'trash_equipment_' project_name=project.name %}" class="nav-link active" aria-current="page">Equipment</a>
+<a href="{% url 'trash_samples' project_name=project.name %}" class="nav-link">Samples</a>
 {% endblock %}
-
-{% block content %}
-{% if user == project.project_manager or user in project.project_editors.all %}
-<table class="wide-inventory-table w-full table-auto">
-    <thead class="uppercase tracking-wider border-b h-7 align-top text-xs font-semibold">
-        <tr>
-            <th class="min-w-fit w-3/5 md:w-1/2 lg:w-fit text-left">Name</th>
-            <th class="text-left">Product Code</th>
-            <th class="text-left">Quantity</th>
-            <th class="text-left">Date Created</th>
-            <th class="text-left">Expiry Date</th>
-            <th class="text-left">Storage Location</th>
-            <th class="text-left"></th>
-        </tr>
-    </thead>
-    <tbody id="equipment_Table">
-        {% for trash_equipment in trash_equipment_ %}
-        <tr class="h-16 border-b border-gray-100 hover:bg-primary/5" data-id="{{ trash_equipment.id }}">
-            <td class="font-semibold text-sm">{{ trash_equipment.name }}</td>
-            <td class="text-xs space-y-1.5">{{ trash_equipment.product_code }}</td>
-            <td class="text-xs space-y-1.5">{{ trash_equipment.quantity }}</td>
-            <td class="text-xs space-y-1.5">{{ trash_equipment.date_recorded|date:"Y-m-d" }}</td>
-            <td class="text-xs space-y-1.5">{{ trash_equipment.expiry_date|date:"Y-m-d" }}</td>
-            <td class="text-xs space-y-1.5">{{ trash_equipment.storage_location }}</td>
-            <td>
-                <div class="dropdown">
-                    <button class="dropbtn">. . .</button>
-                    <div class="dropdown-content">
-                        <a href="" onclick="showRestorePopup('{{ project.name }}', '{{ trash_equipment.id }}'); return false;">Restore</a>
-                        <a href="" onclick="showDeletePopup('{{ trash_equipment.id }}'); return false;">Delete</a>
-                    </div>
-                </div>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<p>Trash information is not available for you to view for this project.</p>
-{% endif %}
+{% block archive_table %}
+<table class="wide-inventory-table w-full table-auto" id="archiveTable" aria-label="Archived equipment"><thead><tr><th scope="col">Name</th><th scope="col">Equipment ID</th><th scope="col">Quantity</th><th scope="col">Archived</th><th scope="col">Storage location</th><th scope="col">Actions</th></tr></thead><tbody>
+{% for item in trash_items %}<tr data-id="{{ item.pk }}"><td><strong>{{ item.name }}</strong></td><td>{{ item.equip_id|default:'—' }}</td><td>{{ item.quantity|default_if_none:'—' }}</td><td>{{ item.deleted_at|date:'M j, Y' }}</td><td>{{ item.storage_location|default:'—' }}</td><td><div class="flex gap-2"><button type="button" class="flux-button" data-trash-url="{% url 'restore_trash_equipment' project_name=project.name trash_id=item.pk %}" data-trash-action="restore" data-trash-name="{{ item.name }}">Restore</button><button type="button" class="flux-button flux-button-danger" data-trash-url="{% url 'delete_trash_equipment' trash_id=item.pk %}" data-trash-action="delete" data-trash-name="{{ item.name }}">Delete</button></div></td></tr>
+{% empty %}<tr><td colspan="6" class="inventory-empty-state"><strong>Nothing in this category’s trash</strong><span>Archived records will appear here. Your active inventory is unchanged.</span></td></tr>{% endfor %}
+</tbody></table>
 {% endblock %}

@@ -1,0 +1,13 @@
+{% if form.errors %}
+<div class="flux-form-summary" role="alert"><strong>Check your details</strong><p>Please correct the following before continuing.</p><ul>{% for field in form %}{% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>{% endfor %}{% endfor %}</ul>{{ form.non_field_errors }}</div>
+{% endif %}
+<div class="flux-form-fields">
+{% for field in form %}
+    <div class="flux-form-field {% if field.errors %}flux-form-field-invalid{% endif %}">
+        <label for="{{ field.id_for_label }}">{{ field.label }}{% if not field.field.required %}<span>Optional</span>{% endif %}</label>
+        <div class="flux-field-control">{{ field }}{% if field.field.widget.input_type == 'password' %}<button type="button" class="flux-password-toggle" data-password-toggle="{{ field.id_for_label }}" aria-label="Show {{ field.label|lower }}" aria-pressed="false">Show</button>{% endif %}</div>
+        {% if field.help_text %}<div class="flux-field-help" id="{{ field.id_for_label }}_help">{{ field.help_text|safe }}</div>{% endif %}
+        {% if field.errors %}<div class="flux-field-error" id="{{ field.id_for_label }}_errors">{% for error in field.errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+    </div>
+{% endfor %}
+</div>

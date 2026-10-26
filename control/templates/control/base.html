@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light"><title>{{ page_title }} | Flux.Inc</title>
-<link rel="icon" href="{% static 'images/Icon.png' %}"><link rel="stylesheet" href="{% static 'control/portal.css' %}?v=3"><link rel="stylesheet" href="{% static 'control/portal_refined.css' %}?v=1">
+<link rel="icon" href="{% static 'images/Icon.png' %}"><link rel="stylesheet" href="{% static 'control/portal.css' %}?v=3"><link rel="stylesheet" href="{% static 'control/portal_refined.css' %}?v=2">
 </head>
-<body>
+<body class="control-workspace">
 <a class="skip-link" href="#main">Skip to content</a>
 <div class="app-frame">
 <aside class="sidebar" id="navigation" aria-label="Administration navigation">
@@ -28,13 +28,13 @@
  <div class="sidebar-foot"><div class="sidebar-avatar">{{ request.user.username|first|upper }}</div><div class="sidebar-identity"><strong>{{ request.user.get_full_name|default:request.user.username|truncatechars:25 }}</strong><small>{% if request.user.is_superuser %}Super administrator{% else %}Administrator{% endif %}</small></div><a href="{% url 'control:profile' %}" class="sidebar-profile" title="Profile" aria-label="My profile">↗</a></div>
 </aside>
 <div class="workspace"><header class="topbar">
-<div class="topbar-left"><button type="button" id="sidebar-open" class="icon-button menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button><span class="breadcrumb">Administration <span>/</span> <strong>{{ page_title }}</strong></span></div>
+<div class="topbar-left"><button type="button" id="sidebar-open" class="icon-button menu-toggle" aria-label="Open navigation" aria-expanded="false" aria-controls="navigation">☰</button><span class="breadcrumb">{{ portal_name }} <span>/</span> <strong>{{ page_title }}</strong></span></div>
 <div class="topbar-right"><form class="global-search" action="{% url 'control:search' %}" method="get" role="search"><label class="sr-only" for="global-q">Search administrators records</label><span>⌕</span><input id="global-q" name="q" placeholder="Search users, projects..." value="{{ query|default:'' }}"></form><a class="icon-button notification-button" href="{% url 'control:notifications' %}" aria-label="Notifications">♧{% if unread_count %}<i></i>{% endif %}</a><a class="top-avatar" href="{% url 'control:profile' %}" aria-label="Open profile">{{ request.user.username|first|upper }}</a></div>
 </header>
 <main id="main" class="main-area" tabindex="-1">
- {% if messages %}<div class="flash-group" aria-live="polite">{% for message in messages %}<div class="flash {% if message.tags == 'error' %}flash-error{% endif %}">{{ message }}</div>{% endfor %}</div>{% endif %}
+ {% if messages %}<div class="flash-group" aria-live="polite">{% for message in messages %}<div role="status" class="flash {% if message.tags == 'error' %}flash-error{% endif %}">{{ message }}</div>{% endfor %}</div>{% endif %}
  {% block content %}{% endblock %}
  <footer class="main-footer"><span>FLUX.INC · Institutional management</span><span>Administrative access is audited</span></footer>
-</main></div></div><div id="screen-shade" class="screen-shade"></div>
-<script src="{% static 'control/portal.js' %}" defer></script>
+</main></div></div><div id="screen-shade" class="screen-shade" aria-hidden="true"></div>
+<script src="{% static 'control/portal.js' %}?v=2" defer></script>
 </body></html>

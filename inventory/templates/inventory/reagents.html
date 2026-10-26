@@ -203,31 +203,12 @@
 <!-- Header -->
 <div class="flex items-center justify-between">
     <div>
-        <div class="text-gray-700 mb-3">PROJECT</div>
-        <div class="dropdown">
-            <div class="project-name-container">
-                <span class="project-name-text">{{ project.name }}</span>
-                <svg class="dropdown-arrow" width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                    <rect width="8" height="8" fill="url(#pattern7)"/>
-                    <defs>
-                        <pattern id="pattern7" patternContentUnits="objectBoundingBox" width="1" height="1">
-                              <use xlink:href="#image0_240_2" transform="scale(0.0625)"/>
-                        </pattern>
-                        <image id="image0_240_2" width="16" height="16" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAwgAAAMIBT4kc1wAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAACASURBVDiN1dOxDcIwEEDRf2QtOqgYIx0gyIgRsyCxA00+zVEgMIodGiy5839XWBcqS85qUf0LIIAtsG7sLwA3wMZ77YA7sGuYLjCQvzBUTp6AXgX1iZxr4xcgkVNN/AYkcpwbfwQSOcyJi0Ai+wyLsUp824WI2ACTOhbf/P8yPQAoP83ZkoVsJgAAAABJRU5ErkJggg=="/>
-                    </defs>
-                </svg>
-            </div> 
-            <div class="dropdown-content">
-                {% for project in projects %}
-                <a href="{% url 'reagents' project_name=project.name %}">{{ project.name }}</a>
-                {% endfor %}   
-            </div>
-        </div>
+        {% include 'inventory/partials/project_switcher.html' with project_route='reagents' %}
     </div>
     <div class="flex items-center space-x-4">
         {% if user == project.project_manager or user in project.project_editors.all %}
         <div class="dropdown">
-            <button class="btn btn-icon">
+            <button type="button" class="btn btn-icon" aria-label="Export inventory">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                     stroke="currentColor" class="w-5 h-5">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -262,7 +243,8 @@
 </div>
 
 <!-- Navigation View -->
-<nav class="flex items-center mt-8 border-b space-x-10 text-gray-400 font-medium">
+<header class="flux-page-heading"><div><p class="flux-eyebrow">PROJECT INVENTORY</p><h1>Reagents</h1><p>Manage reagent stocks, safety information and storage conditions.</p></div></header>
+<nav aria-label="Inventory categories" class="flex items-center mt-8 border-b space-x-10 text-gray-400 font-medium">
     <a href="{% url 'consumables' project_name=project.name %}" class="nav-link">Consumables</a>
     <a href="{% url 'reagents' project_name=project.name %}" class="nav-link active">Reagents</a>
     <a href="{% url 'equipment_' project_name=project.name %}" class="nav-link">Equipment</a>
@@ -270,8 +252,9 @@
 </nav>
 
 <!-- Table -->
+<div class="flux-table-toolbar"><div><h2>All reagents <span class="flux-search-result" data-table-search-status role="status"></span></h2><p>Search the records on this page, or use filters to narrow your view.</p></div><label class="flux-table-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search reagents…" aria-label="Search reagents on this page" data-table-search="table[aria-label='Reagents inventory']"></label></div>
 <div class="table-container mt-8">
-    <table id="reagentsTable" class="wide-inventory-table w-full table-auto" aria-label="Reagents Inventory">
+    <table id="reagentsTable" class="wide-inventory-table w-full table-auto" aria-label="Reagents inventory">
         <thead>
             <tr>
                 <th scope="col">Name</th>

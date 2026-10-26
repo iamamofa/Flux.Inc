@@ -1759,13 +1759,13 @@ html[data-density="compact"] .flux-inventory-layout .stat-card {
     padding: 0.75rem;
 }
 
-html[data-sidebar="collapsed"] .flux-inventory-layout > aside:first-child {
+html[data-sidebar="collapsed"] .flux-inventory-layout > aside.flux-sidebar {
     width: 5rem;
     padding-right: 0.75rem;
     padding-left: 0.75rem;
 }
 
-html[data-sidebar="collapsed"] .flux-inventory-layout > aside:first-child .flex-1.pl-2 {
+html[data-sidebar="collapsed"] .flux-inventory-layout > aside.flux-sidebar .flex-1.pl-2 {
     display: none;
 }
 

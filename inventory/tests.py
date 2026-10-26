@@ -21,11 +21,15 @@ from .models import (
     Consumable,
     Equipment,
     LowStockEmailDelivery,
+    Log,
     MSDSFile,
     ProjectLoginEvent,
     Project,
     Reagent,
     Sample,
+    TrashConsumable,
+    TrashEquipment,
+    TrashSample,
     UserProfile,
 )
 
@@ -1306,3 +1310,116 @@ class DashboardChartDataTests(TestCase):
         self.assertContains(response, 'low-stock-row')
         self.assertContains(response, 'low-stock-indicator')
         self.assertContains(response, 'id="sample-form"', count=1)
+
+
+class WorkspacePageWorkflowTests(TestCase):
+    def setUp(self):
+        self.manager = User.objects.create_user('page-manager', 'manager@example.invalid', 'test-password')
+        self.member = User.objects.create_user('page-member', 'member@example.invalid', 'test-password')
+        self.project = Project.objects.create(name='Page Project', project_manager=self.manager)
+        self.project.project_members.add(self.member)
+        self.client.force_login(self.manager)
+
+    def test_public_pages_render_and_invalid_login_preserves_email(self):
+        self.client.logout()
+        for route in ('home', 'login', 'registration_page', 'register_user', 'register_project_manager', 'user_application'):
+            with self.subTest(route=route):
+                response = self.client.get(reverse(route))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, '<h1')
+                self.assertContains(response, 'flux_pages.css')
+        response = self.client.post(reverse('login'), {'email': 'remember@example.invalid', 'password': 'incorrect'})
+        self.assertContains(response, 'Invalid credentials.')
+        self.assertContains(response, 'value="remember@example.invalid"')
+
+    def test_dashboard_create_project_form_posts_and_returns_inventory_url(self):
+        csrf_client = Client(enforce_csrf_checks=True)
+        csrf_client.force_login(self.manager)
+        page = csrf_client.get(reverse('dashboard_consumables', kwargs={'project_name': self.project.name}))
+        self.assertContains(page, 'js/dashboard.js')
+        self.assertContains(page, 'action="/create_project/"')
+        response = csrf_client.post(reverse('create_project'), {
+            'project_name': 'New project & team',
+            'csrfmiddlewaretoken': page.cookies['csrftoken'].value,
+        })
+        self.assertEqual(response.status_code, 200)
+        project = Project.objects.get(name='New project & team')
+        self.assertEqual(project.project_manager, self.manager)
+        self.assertEqual(response.json()['redirect'], reverse('consumables', kwargs={'project_name': project.name}))
+        self.assertTrue(UserProfile.objects.get(user=self.manager).managed_projects.filter(pk=project.pk).exists())
+
+    def test_project_name_errors_do_not_create_records(self):
+        before = Project.objects.count()
+        for name in ('', '   ', 'Invalid/project', self.project.name):
+            with self.subTest(name=name):
+                response = self.client.post(reverse('create_project'), {'project_name': name})
+                self.assertEqual(response.status_code, 400)
+                self.assertIn('error', response.json())
+        self.assertEqual(Project.objects.count(), before)
+
+    def archived_consumable(self):
+        return TrashConsumable.objects.create(
+            project=self.project, original_id='previous-record', name='Archived tips',
+            items_per_pack=10, items_left_in_pack=5, pack_count=2,
+            date_recorded=timezone.localdate(), cold_storage='Room',
+        )
+
+    def test_archive_pages_render_real_records_and_correct_equipment_category(self):
+        item = self.archived_consumable()
+        equipment = TrashEquipment.objects.create(
+            project=self.project, original_id='old-equipment', name='Archived centrifuge',
+            equip_id='ARCH-001', status='operational', date_installed=timezone.localdate(),
+        )
+        response = self.client.get(reverse('trash_consumables', kwargs={'project_name': self.project.name}))
+        self.assertContains(response, item.name)
+        self.assertContains(response, reverse('restore_trash_consumable', kwargs={'project_name': self.project.name, 'trash_id': item.pk}))
+        response = self.client.get(reverse('trash_equipment_', kwargs={'project_name': self.project.name}))
+        self.assertContains(response, equipment.name)
+        self.assertNotContains(response, item.name)
+        for route in ('trash_reagents', 'trash_samples'):
+            response = self.client.get(reverse(route, kwargs={'project_name': self.project.name}))
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, 'Nothing in this category’s trash')
+
+    def test_restore_consumable_uses_inventory_fields_and_removes_archive(self):
+        item = self.archived_consumable()
+        response = self.client.post(reverse('restore_trash_consumable', kwargs={'project_name': self.project.name, 'trash_id': item.pk}))
+        self.assertEqual(response.status_code, 200, response.content)
+        restored = Consumable.objects.get(name=item.name, project=self.project)
+        self.assertEqual(restored.pack_count, 2)
+        self.assertFalse(TrashConsumable.objects.filter(pk=item.pk).exists())
+
+    def test_archive_mutations_require_post_and_project_management_access(self):
+        item = self.archived_consumable()
+        routes = (
+            reverse('restore_trash_consumable', kwargs={'project_name': self.project.name, 'trash_id': item.pk}),
+            reverse('delete_trash_consumable', kwargs={'trash_id': item.pk}),
+            reverse('delete_all_consumables_in_trash', kwargs={'project_name': self.project.name}),
+        )
+        for url in routes:
+            self.assertEqual(self.client.get(url).status_code, 405)
+        self.client.force_login(self.member)
+        for url in routes:
+            self.assertEqual(self.client.post(url).status_code, 403)
+        self.assertTrue(TrashConsumable.objects.filter(pk=item.pk).exists())
+
+    def test_legacy_sample_restore_preserves_archive_when_required_data_is_missing(self):
+        item = TrashSample.objects.create(
+            project=self.project, original_id='archived-sample', sample_id='ARCH-SAMPLE',
+            sample_type='Blood', date_recorded=timezone.localdate(),
+        )
+        response = self.client.post(reverse('restore_trash_sample', kwargs={'project_name': self.project.name, 'trash_id': item.pk}))
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('collection date', response.json()['error'])
+        self.assertTrue(TrashSample.objects.filter(pk=item.pk).exists())
+
+    def test_activity_history_is_paginated(self):
+        Log.objects.bulk_create([
+            Log(project=self.project, user=self.manager, action=f'Inventory update {index}')
+            for index in range(55)
+        ])
+        response = self.client.get(reverse('log', kwargs={'project_name': self.project.name}))
+        self.assertEqual(len(response.context['logs']), 50)
+        self.assertContains(response, '?page=2')
+        response = self.client.get(reverse('log', kwargs={'project_name': self.project.name}), {'page': '2'})
+        self.assertEqual(len(response.context['logs']), 5)

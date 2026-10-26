@@ -6,21 +6,24 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="{% static '/images/Icon.png' %}">
+    <link rel="icon" type="image/png" href="{% static 'images/Icon.png' %}">
     <link rel="stylesheet" href="{% static 'css/inventory_style.css' %}">
     <link rel="stylesheet" href="{% static 'css/flux_design_system.css' %}">
     <link rel="stylesheet" href="{% static 'css/team.css' %}">
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="{% static 'js/flux_preferences.js' %}" defer></script>
     <title>Flux - Team Management</title>
+    <link rel="stylesheet" href="{% static 'css/flux_pages.css' %}?v=1">
+    <script src="{% static 'js/flux_pages.js' %}" defer></script>
 </head>
 
 <body class="flux-inventory-layout relative min-h-screen font-poppins antialiased text-sm bg-white flex text-gray-800 h-full 2xl:max-w-[1920px] 2xl:mx-auto 2xl:border-r-2"
     x-data="{ showMenu: false }">
+    <a class="flux-skip-link" href="#workspaceContent">Skip to content</a>
 
     {% include "inventory/partials/sidebar.html" %}
 
-    <main class="bg-white min-h-screen lg:ml-60 flex w-full">
+    <main id="workspaceContent" tabindex="-1" class="bg-white min-h-screen lg:ml-60 flex w-full">
         <!-- Screen Overlay -->
         <div class="absolute lg:hidden left-0 top-0 h-full w-full bg-black/30 z-[15]" 
             @click="showMenu = false"
@@ -31,25 +34,11 @@
 
         <!-- Main Content -->
         <section class="flex-1 py-6 px-4 md:px-4 lg:px-8">
+            {% include "inventory/partials/messages.html" %}
             <!-- Header -->
             <div class="flex items-center justify-between">
                 <div>
-                    <div class="text-gray-700 flex items-center justify-between mb-3">
-                        <span>PROJECT</span>
-                    </div>
-                    <div class="dropdown">
-                        <div class="project-name-container">
-                            <span class="project-name-text text-gray-900 text-xl font-semibold">{{ project.name }}</span>
-                            <svg class="dropdown-arrow" width="8" height="8" viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M4 6L0 2H8L4 6Z" fill="#6B7280"/>
-                            </svg>
-                        </div> 
-                        <div class="dropdown-content">
-                            {% for project in projects %}
-                            <a href="{% url 'team' project_name=project.name %}">{{ project.name }}</a>
-                            {% endfor %}   
-                        </div>
-                    </div>
+                    {% include 'inventory/partials/project_switcher.html' with project_route='team' %}
                 </div>
                 <div class="flex items-center space-x-4">
                     {% if user == project.project_manager %}
@@ -80,6 +69,8 @@
             </div>
 
             <!-- Team Table -->
+<header class="flux-page-heading"><div><p class="flux-eyebrow">{{ project.name }}</p><h1 id="teamTableTitle">Your project team</h1><p>Manage who can work in this project and what they can change.</p></div></header>
+<div class="flux-table-toolbar"><div><h2>Team members <span class="flux-search-result" data-table-search-status role="status"></span></h2><p>Full access lets editors update shared project records.</p></div><label class="flux-table-search"><span aria-hidden="true">⌕</span><input type="search" aria-label="Search team" placeholder="Search team…" data-table-search="table[aria-labelledby=teamTableTitle]"></label></div>
             <div class="table-container">
                 <div class="mt-8 text-gray-500">
                     {% if user == project.project_manager %}
@@ -96,7 +87,7 @@
                             {% for team_member in team_members %}
                             <tr class="h-16 border-b border-gray-100 hover:bg-primary/5" data-id="{{ team_member.id }}">
                                 <td class="font-semibold text-sm">
-                                    {{ team_member.first_name }} {{ team_member.last_name }} 
+                                    {{ team_member.get_full_name|default:team_member.username }}
                                 </td>
                                 <td class="text-xs space-y-1.5">
                                     {{ team_member.email }}
@@ -129,6 +120,7 @@
                                     </div>
                                 </td>
                             </tr>
+                            {% empty %}<tr><td colspan="4" class="inventory-empty-state"><strong>Your team starts here</strong><span>Add a member using their Flux account email address.</span></td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -163,7 +155,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="inputBox button">
+                        <div class="inputBox button"><button type="button" class="flux-button" onclick="closeAddPopup()">Cancel</button>
                             <button type="submit" class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90">
                                 Add
                             </button>
@@ -194,7 +186,7 @@
                         </div>
                     </div>
                     <br>
-                    <div class="inputBox button">
+                    <div class="inputBox button"><button type="button" class="flux-button" onclick="closeEditPopup()">Cancel</button>
                         <button type="submit" class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90">
                             OK
                         </button>

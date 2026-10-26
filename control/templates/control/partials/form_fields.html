@@ -1,1 +1,12 @@
-{% if form.non_field_errors %}<div class="form-error" role="alert">{{ form.non_field_errors }}</div>{% endif %}<div class="form-grid">{% for field in form %}<div class="form-field {% if field.name == 'permissions' or field.name == 'description' %}form-wide{% endif %}"><label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span aria-hidden="true">*</span>{% endif %}</label>{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<span class="form-error">{{ error }}</span>{% endfor %}</div>{% endfor %}</div>
+{% if form.errors %}
+<div class="form-error-summary" role="alert"><strong>Your changes haven’t been saved.</strong><p>Correct these fields and try again.</p><ul>{% for field in form %}{% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>{% endfor %}{% endfor %}</ul>{{ form.non_field_errors }}</div>
+{% endif %}
+<div class="form-grid">
+{% for field in form %}
+<div class="form-field {% if field.name == 'permissions' or field.name == 'description' %}form-wide{% endif %} {% if field.errors %}form-field-invalid{% endif %}">
+    <label for="{{ field.id_for_label }}">{{ field.label }}{% if not field.field.required %}<span class="form-optional">Optional</span>{% endif %}</label>{{ field }}
+    {% if field.help_text %}<small id="{{ field.id_for_label }}_help">{{ field.help_text }}</small>{% endif %}
+    {% if field.errors %}<span class="form-error" id="{{ field.id_for_label }}_errors">{{ field.errors|join:' ' }}</span>{% endif %}
+</div>
+{% endfor %}
+</div>

@@ -1,0 +1,5 @@
+{% if messages %}
+<div class="flux-flashes" aria-label="Updates">
+    {% for message in messages %}<p class="flux-flash {% if message.tags == 'error' %}flux-flash-error{% endif %}" role="{% if message.tags == 'error' %}alert{% else %}status{% endif %}">{{ message }}</p>{% endfor %}
+</div>
+{% endif %}
