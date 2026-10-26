@@ -1137,7 +1137,7 @@ class DashboardChartDataTests(TestCase):
                 self.assertContains(response, 'id="addPopup"')
                 self.assertContains(response, f'id="{add_button_id}"')
                 self.assertContains(response, 'showInventoryPopup')
-                self.assertContains(response, 'flux_design_system.css?v=3')
+                self.assertContains(response, 'flux_design_system.css?v=6')
                 self.assertContains(response, 'id="stockActionDialog"')
                 self.assertContains(response, 'data-stock-action="remove"')
                 self.assertContains(response, 'data-stock-action="add"')

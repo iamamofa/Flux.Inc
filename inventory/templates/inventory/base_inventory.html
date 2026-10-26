@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="{% static '/images/Icon.png' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <link rel="stylesheet" href="{% static 'css/inventory_style.css' %}">
-    <link rel="stylesheet" href="{% static 'css/flux_design_system.css' %}?v=3">
+    <link rel="stylesheet" href="{% static 'css/flux_design_system.css' %}?v=6">
     <style>
         /* Popup Styles */
         .popup-overlay {
@@ -191,12 +191,12 @@
             transition: color 0.3s ease;
         }
         .nav-link:hover {
-            color: #3b82f6; /* blue-500 */
+            color: var(--flux-accent);
         }
 
         .nav-link.active {
             color: #000; /* black */
-            border-bottom: 2px solid #3b82f6; /* blue-500 */
+            border-bottom: 2px solid var(--flux-accent);
         }
 
         @keyframes slideIn {
