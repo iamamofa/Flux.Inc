@@ -215,6 +215,37 @@ and allow GitHub Actions to create pull requests under **Settings → Actions �
 General → Workflow permissions**. The workflow requires the project
 dependencies listed in `requirements-runtime.txt` and runs on Python 3.11.
 
+## Weekly AI dashboard upgrades
+
+The separate **Weekly AI dashboard upgrades** workflow runs each Monday at
+**10:43 UTC / Accra time**, or manually through the repository's Actions tab. It
+uses the [Codex GitHub Action](https://learn.chatgpt.com/docs/github-action) to
+implement one dashboard feature from the
+[feature roadmap](docs/dashboard-roadmap.md) and record the work in the
+[upgrade log](docs/dashboard-upgrade-log.md).
+
+The first priorities are accessible chart data, chart controls, attention
+summaries, summary exports and saved display preferences. The agent checks what
+already exists before selecting the next feature. It preserves the original
+five-photo home screen and its updated copy.
+
+Each proposal is tested on a fresh runner before a pull request is created on
+`codex/weekly-dashboard-upgrades`. Validation includes the full Django suite,
+migration drift, JavaScript syntax and a production static-file build. The AI job
+has read-only repository permissions; a separate publishing job receives the
+permissions to open the pull request. A scope checker rejects changes to the home
+screen, dependencies, stored application data, migrations and automation files.
+The next run waits while a dashboard proposal is still open. Review and merge
+the pull request to release the feature; upgrades are never merged or deployed
+automatically.
+
+To enable the workflow, configure the repository's `OPENAI_API_KEY` Actions
+secret and allow GitHub Actions to create pull requests under **Settings →
+Actions → General → Workflow permissions**, as for the existing bug-fix agent.
+Runs use the configured OpenAI API account. Missing credentials produce a clear
+setup error without generating a proposal. After setup, choose **Actions →
+Weekly AI dashboard upgrades → Run workflow** to start the first upgrade.
+
 ## Configuration
 
 Flux reads configuration from environment variables and loads a local `.env` file when present. See [.env.example](.env.example) for the available variable names and placeholder values.

@@ -1,0 +1,281 @@
+name: Weekly AI dashboard upgrades
+
+on:
+  schedule:
+    # Monday at 10:43 UTC (10:43 in Accra), after the weekly bug-fix run.
+    - cron: '43 10 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-dashboard-upgrades
+  cancel-in-progress: false
+
+jobs:
+  propose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      base-sha: ${{ steps.base.outputs.sha }}
+      has-changes: ${{ steps.patch.outputs.has-changes }}
+    steps:
+      - name: Check for a proposal awaiting review
+        id: pending
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data } = await github.rest.pulls.list({
+              ...context.repo,
+              state: 'open',
+              base: context.payload.repository.default_branch,
+              head: `${context.repo.owner}:codex/weekly-dashboard-upgrades`,
+              per_page: 1,
+            });
+            core.setOutput('exists', String(data.length > 0));
+            if (data.length) {
+              await core.summary.addRaw(`A dashboard upgrade is already awaiting review: ${data[0].html_url}`).write();
+            }
+
+      - name: Check agent credentials
+        if: steps.pending.outputs.exists == 'false'
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo '::error::Add the OPENAI_API_KEY repository Actions secret to enable weekly dashboard upgrades.'
+            exit 1
+          fi
+
+      - name: Check out source without stored application data
+        if: steps.pending.outputs.exists == 'false'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /.gitignore
+            /README.md
+            /manage.py
+            /requirements-runtime.txt
+            /inventory/
+            /inventory_system/
+            /control/
+            /static/
+            /templates/
+            /docs/
+            /.github/codex/
+            /.github/scripts/
+
+      - name: Record source revision
+        if: steps.pending.outputs.exists == 'false'
+        id: base
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Python
+        if: steps.pending.outputs.exists == 'false'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements-runtime.txt
+
+      - name: Set up Node for JavaScript checks
+        if: steps.pending.outputs.exists == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install application dependencies
+        if: steps.pending.outputs.exists == 'false'
+        run: python -m pip install -r requirements-runtime.txt
+
+      - name: Use an isolated database for checks
+        if: steps.pending.outputs.exists == 'false'
+        run: |
+          cat > "$RUNNER_TEMP/dashboard_ci_settings.py" <<'PY'
+          import os
+          from pathlib import Path
+          from inventory_system.settings import *
+          DATABASES = {'default': {
+              'ENGINE': 'django.db.backends.sqlite3',
+              'NAME': Path(os.environ['RUNNER_TEMP']) / 'dashboard-validation.sqlite3',
+          }}
+          EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+          PY
+          echo "PYTHONPATH=$RUNNER_TEMP:$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
+          echo "DJANGO_SETTINGS_MODULE=dashboard_ci_settings" >> "$GITHUB_ENV"
+
+      - name: Check the baseline
+        if: steps.pending.outputs.exists == 'false'
+        run: |
+          python manage.py check
+          python manage.py test --noinput
+
+      - name: Implement this week's dashboard feature
+        if: steps.pending.outputs.exists == 'false'
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: .github/codex/weekly-dashboard-upgrades.md
+          sandbox: workspace-write
+          safety-strategy: drop-sudo
+          output-file: ${{ runner.temp }}/dashboard-agent-report.md
+
+      - name: Export only permitted dashboard changes
+        if: steps.pending.outputs.exists == 'false'
+        id: patch
+        env:
+          BASE_SHA: ${{ steps.base.outputs.sha }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/dashboard-proposal"
+          python .github/scripts/dashboard_changes.py export \
+            --base "$BASE_SHA" \
+            --patch "$RUNNER_TEMP/dashboard-proposal/changes.patch"
+          cp "$RUNNER_TEMP/dashboard-agent-report.md" "$RUNNER_TEMP/dashboard-proposal/report.md"
+
+      - name: Save the proposal for a fresh validation runner
+        if: steps.patch.outputs.has-changes == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-proposal
+          path: ${{ runner.temp }}/dashboard-proposal/
+          retention-days: 14
+          if-no-files-found: error
+
+  verify:
+    needs: propose
+    if: needs.propose.outputs.has-changes == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the proposal's source revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.propose.outputs.base-sha }}
+          persist-credentials: false
+
+      - name: Download the proposal
+        uses: actions/download-artifact@v4
+        with:
+          name: dashboard-proposal
+          path: ${{ runner.temp }}/dashboard-proposal
+
+      - name: Apply changes after checking their scope
+        run: python .github/scripts/dashboard_changes.py apply --patch "$RUNNER_TEMP/dashboard-proposal/changes.patch"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements-runtime.txt
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install application dependencies
+        run: python -m pip install -r requirements-runtime.txt
+
+      - name: Use an isolated database for checks
+        run: |
+          cat > "$RUNNER_TEMP/dashboard_ci_settings.py" <<'PY'
+          import os
+          from pathlib import Path
+          from inventory_system.settings import *
+          DATABASES = {'default': {
+              'ENGINE': 'django.db.backends.sqlite3',
+              'NAME': Path(os.environ['RUNNER_TEMP']) / 'dashboard-validation.sqlite3',
+          }}
+          EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+          PY
+          echo "PYTHONPATH=$RUNNER_TEMP:$GITHUB_WORKSPACE" >> "$GITHUB_ENV"
+          echo "DJANGO_SETTINGS_MODULE=dashboard_ci_settings" >> "$GITHUB_ENV"
+
+      - name: Validate the upgrade
+        env:
+          FLUX_ALLOWED_HOSTS: localhost,127.0.0.1,testserver
+        run: |
+          python -m unittest discover -s .github/scripts -p 'test_*.py'
+          python manage.py check
+          python manage.py makemigrations --check --dry-run
+          python manage.py test --noinput
+          git diff --check
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import subprocess
+          from tempfile import TemporaryDirectory
+          for directory in ('static/js', 'control/static/control'):
+              for script in sorted(Path(directory).rglob('*.js')):
+                  subprocess.run(['node', '--check', str(script)], check=True)
+          os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'inventory_system.settings')
+          import django
+          from django.conf import settings
+          with TemporaryDirectory() as static_root:
+              settings.DEBUG = False
+              settings.STATIC_ROOT = static_root
+              settings.STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+              django.setup()
+              from django.core.management import call_command
+              call_command('collectstatic', interactive=False, verbosity=0)
+          PY
+
+  publish:
+    needs: [propose, verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out verified source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.propose.outputs.base-sha }}
+          persist-credentials: false
+
+      - name: Download the verified proposal
+        uses: actions/download-artifact@v4
+        with:
+          name: dashboard-proposal
+          path: ${{ runner.temp }}/dashboard-proposal
+
+      - name: Apply the verified patch
+        run: python .github/scripts/dashboard_changes.py apply --patch "$RUNNER_TEMP/dashboard-proposal/changes.patch"
+
+      - name: Prepare the pull request description
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          directory = Path(os.environ['RUNNER_TEMP']) / 'dashboard-proposal'
+          report = (directory / 'report.md').read_text()
+          body = 'Weekly dashboard feature proposal. Review and merge to release it.\n\n'
+          body += report
+          body += '\n\nValidation passed on a fresh runner: Django checks, migration drift, full test suite, JavaScript syntax, production static build, and patch scope.\n'
+          body += '\nWorkflow run: ' + os.environ['RUN_URL'] + '\n'
+          (directory / 'pull-request.md').write_text(body)
+          PY
+
+      - name: Open a dashboard-upgrade pull request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: ${{ github.event.repository.default_branch }}
+          branch: codex/weekly-dashboard-upgrades
+          delete-branch: true
+          title: 'Weekly dashboard upgrade and new feature'
+          commit-message: 'Implement weekly dashboard upgrade'
+          body-path: ${{ runner.temp }}/dashboard-proposal/pull-request.md
