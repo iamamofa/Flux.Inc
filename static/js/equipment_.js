@@ -1,7 +1,16 @@
 // equipment.js - Improved Equipment Management Script
 
-// Get CSRF token from meta tag (NEW: More reliable than template variable)
-const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+function getCSRFToken(form) {
+  const formToken = form?.querySelector('[name="csrfmiddlewaretoken"]')?.value
+    || document.querySelector('[name="csrfmiddlewaretoken"]')?.value
+    || '';
+  if (formToken) return formToken.trim();
+
+  const cookie = document.cookie
+    .split('; ')
+    .find((entry) => entry.startsWith('csrftoken='));
+  return cookie ? decodeURIComponent(cookie.slice('csrftoken='.length)) : '';
+}
 
 // Constants
 const POPUP_IDS = {
@@ -68,7 +77,7 @@ function handlePopup(containerClass, popupId) {
 
   container.addEventListener("click", (event) => {
     if (event.target === container) {
-      document.getElementById(popupId).style.display = 'none';
+      setPopupVisibility(popupId, false);
     }
   });
 }
@@ -168,78 +177,123 @@ async function submitForm(formId, url, method, successCallback) {
   if (!form) return;
 
   try {
+    const csrfToken = getCSRFToken(form);
+    if (!csrfToken) {
+      throw new Error('CSRF token is missing. Reload the equipment page and try again.');
+    }
     const formData = new FormData(form);
+    const isFormPost = method.toUpperCase() === 'POST';
     const response = await fetch(url, {
       method,
       headers: {
         'X-CSRFToken': csrfToken,
-        'Content-Type': 'application/json',
+        ...(isFormPost ? {} : { 'Content-Type': 'application/json' }),
       },
-      body: JSON.stringify(Object.fromEntries(formData)),
+      body: isFormPost
+        ? formData
+        : JSON.stringify(Object.fromEntries(formData)),
     });
 
-    if (!response.ok) throw new Error('Network response was not ok');
-    
-    const data = await response.json();
+    const responseText = await response.text();
+    let data = {};
+    if (responseText) {
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        data = { error: responseText };
+      }
+    }
+    if (!response.ok) {
+      const formErrors = Object.entries(data.errors || {})
+        .flatMap(([field, errors]) => errors.map((error) => (
+          `${field.replace(/_/g, ' ')}: ${error.message}`
+        )));
+      throw new Error(
+        formErrors.join(' ') || data.error || `Request failed (${response.status}).`
+      );
+    }
+
     successCallback(data);
   } catch (error) {
     console.error('Error:', error);
-    showNotification('An error occurred. Please try again.', 'error');
+    showNotification(error.message || 'An error occurred. Please try again.', 'error');
   }
 }
 
 // Show notification to user
 function showNotification(message, type = 'success') {
-  // Implement your notification system here
-  console.log(`${type}: ${message}`);
-  // Example: toastr[type](message);
+  const container = document.getElementById('notification-container');
+  if (!container) {
+    window.alert(message);
+    return;
+  }
+
+  const notification = document.createElement('div');
+  notification.className = `notification ${type} show`;
+  notification.setAttribute('role', type === 'error' ? 'alert' : 'status');
+  notification.textContent = message;
+  container.appendChild(notification);
+  window.setTimeout(() => notification.remove(), 7000);
 }
 
 // Popup functions
+function setPopupVisibility(id, isVisible) {
+  const popupHandler = isVisible ? window.showInventoryPopup : window.hideInventoryPopup;
+  if (popupHandler) {
+    popupHandler(id);
+    return;
+  }
+  const popup = document.getElementById(id);
+  if (!popup) return;
+  popup.classList.toggle('popup-active', isVisible);
+  popup.setAttribute('aria-hidden', String(!isVisible));
+  document.body.style.overflow = isVisible ? 'hidden' : '';
+}
+
 function showAddPopup() {
-  document.getElementById(POPUP_IDS.ADD).style.display = 'flex';
+  setPopupVisibility(POPUP_IDS.ADD, true);
 }
 
 function closeAddPopup() {
-  document.getElementById(POPUP_IDS.ADD).style.display = 'none';
+  setPopupVisibility(POPUP_IDS.ADD, false);
 }
 
 function showEditPopup(id) {
   currentItemId = id;
-  document.getElementById(POPUP_IDS.EDIT).style.display = 'flex';
+  setPopupVisibility(POPUP_IDS.EDIT, true);
   getItemInfo();
 }
 
 function closeEditPopup() {
-  document.getElementById(POPUP_IDS.EDIT).style.display = 'none';
+  setPopupVisibility(POPUP_IDS.EDIT, false);
 }
 
 function showRetrievePopup(id) {
   currentItemId = id;
-  document.getElementById(POPUP_IDS.RETRIEVE).style.display = 'flex';
+  setPopupVisibility(POPUP_IDS.RETRIEVE, true);
 }
 
 function closeRetrievePopup() {
-  document.getElementById(POPUP_IDS.RETRIEVE).style.display = 'none';
+  setPopupVisibility(POPUP_IDS.RETRIEVE, false);
 }
 
 function showReturnPopup(id) {
   currentItemId = id;
-  document.getElementById(POPUP_IDS.RETURN).style.display = 'flex';
+  setPopupVisibility(POPUP_IDS.RETURN, true);
 }
 
 function closeReturnPopup() {
-  document.getElementById(POPUP_IDS.RETURN).style.display = 'none';
+  setPopupVisibility(POPUP_IDS.RETURN, false);
 }
 
 function showDeletePopup(projectName, id) {
   currentItemId = id;
   currentProject = projectName;
-  document.getElementById(POPUP_IDS.DELETE).style.display = 'flex';
+  setPopupVisibility(POPUP_IDS.DELETE, true);
 }
 
 function closeDeletePopup() {
-  document.getElementById(POPUP_IDS.DELETE).style.display = 'none';
+  setPopupVisibility(POPUP_IDS.DELETE, false);
 }
 
 // Get item information for editing
@@ -276,10 +330,14 @@ async function getItemInfo() {
 // Delete item
 async function deleteItem() {
   try {
+    const csrfToken = getCSRFToken(document.getElementById('delete-form'));
+    if (!csrfToken) {
+      throw new Error('CSRF token is missing. Reload the equipment page and try again.');
+    }
     const response = await fetch(`/delete_equipment/${currentProject}/${currentItemId}`, {
       method: 'DELETE',
       headers: {
-        'X-CSRFToken': csrfToken,
+        'X-CSRFToken': getCSRFToken(document.getElementById('delete-form')),
         'Content-Type': 'application/json',
       },
     });

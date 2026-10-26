@@ -1,7 +1,15 @@
 # forms.py
 from django import forms
 from django.utils import timezone
-from .models import UserApplication, Project, Consumable, Reagent, MSDSFile
+from .models import (
+    UserApplication,
+    Project,
+    Consumable,
+    Reagent,
+    Equipment,
+    MSDSFile,
+    UserProfile,
+)
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -67,6 +75,29 @@ class ReagentForm(forms.ModelForm):
         return items_per_pack
 
 
+class EquipmentForm(forms.ModelForm):
+    service_contract_start = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    service_contract_end = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+
+    class Meta:
+        model = Equipment
+        fields = (
+            'name',
+            'equip_id',
+            'serial_num',
+            'quantity',
+            'status',
+            'service_contract_start',
+            'service_contract_end',
+            'donated_by',
+            'storage_location',
+        )
 class UserApplicationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -163,6 +194,76 @@ class EditorMemberSignUpForm(UserCreationForm):
 class LoginForm(forms.Form):
     email = forms.EmailField(label='Email', max_length=254)
     password = forms.CharField(label='Password', widget=forms.PasswordInput)
+
+
+class UserProfileForm(forms.ModelForm):
+    username = forms.CharField(max_length=150)
+    first_name = forms.CharField(max_length=150, required=False)
+    last_name = forms.CharField(max_length=150, required=False)
+    email = forms.EmailField(max_length=254)
+    remove_profile_picture = forms.BooleanField(required=False)
+
+    class Meta:
+        model = UserProfile
+        fields = (
+            'username',
+            'first_name',
+            'last_name',
+            'email',
+            'department',
+            'phone_number',
+            'bio',
+            'profile_picture',
+        )
+        widgets = {
+            'bio': forms.Textarea(attrs={'rows': 4, 'maxlength': 500}),
+            'profile_picture': forms.ClearableFileInput(
+                attrs={'accept': 'image/*'}
+            ),
+        }
+
+    def __init__(self, *args, user, **kwargs):
+        self.account = user
+        super().__init__(*args, **kwargs)
+        self.fields['username'].initial = user.username
+        self.fields['first_name'].initial = user.first_name
+        self.fields['last_name'].initial = user.last_name
+        self.fields['email'].initial = user.email
+
+    def clean_username(self):
+        username = self.cleaned_data['username'].strip()
+        if User.objects.exclude(pk=self.account.pk).filter(
+            username__iexact=username
+        ).exists():
+            raise forms.ValidationError('That username is already in use.')
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data['email'].strip()
+        if User.objects.exclude(pk=self.account.pk).filter(
+            email__iexact=email
+        ).exists():
+            raise forms.ValidationError('That email address is already in use.')
+        return email
+
+    def save(self, commit=True):
+        profile = super().save(commit=False)
+        if self.cleaned_data.get('remove_profile_picture'):
+            profile.profile_picture = ''
+        account = self.account
+        account.username = self.cleaned_data['username']
+        account.first_name = self.cleaned_data['first_name']
+        account.last_name = self.cleaned_data['last_name']
+        account.email = self.cleaned_data['email']
+        if commit:
+            account.save(update_fields=[
+                'username',
+                'first_name',
+                'last_name',
+                'email',
+            ])
+            profile.save()
+        return profile
 
 
 class NewProjectForm(forms.Form):

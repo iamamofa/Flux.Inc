@@ -1,0 +1,83 @@
+{{ chart_data|json_script:"dashboardChartData" }}
+<section class="dashboard-kpis" aria-label="Inventory summary">
+    {% for kpi in chart_data.kpis %}
+    <article class="dashboard-kpi dashboard-kpi-{{ kpi.tone }}">
+        <span>{{ kpi.label }}</span>
+        <strong>{{ kpi.value }}</strong>
+    </article>
+    {% endfor %}
+</section>
+
+<section class="dashboard-chart-grid" aria-label="Inventory charts">
+    <article class="dashboard-visual-card dashboard-chart-primary">
+        <div class="dashboard-visual-heading">
+            <div>
+                <h2>{{ chart_data.primary_title }}</h2>
+                <p>
+                    {% if chart_data.category == 'equipment' %}
+                    Equipment grouped by current status.
+                    {% elif chart_data.category == 'samples' %}
+                    Sample volumes compared with configured minimums.
+                    {% else %}
+                    Current packs compared with configured low-stock thresholds.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        <div class="dashboard-chart-canvas">
+            <canvas id="dashboardPrimaryChart" role="img" aria-label="{{ chart_data.primary_title }}"></canvas>
+        </div>
+    </article>
+
+    <article class="dashboard-visual-card">
+        <div class="dashboard-visual-heading">
+            <div>
+                <h2>{{ chart_data.distribution_title }}</h2>
+                <p>Items grouped by current status.</p>
+            </div>
+        </div>
+        <div class="dashboard-chart-canvas dashboard-chart-canvas-compact">
+            <canvas id="dashboardDistributionChart" role="img" aria-label="{{ chart_data.distribution_title }}"></canvas>
+        </div>
+    </article>
+
+    <article class="dashboard-visual-card">
+        <div class="dashboard-visual-heading">
+            <div>
+                <h2>{{ chart_data.secondary_title }}</h2>
+                <p>
+                    {% if chart_data.category == 'stock' %}
+                    Items grouped by time to expiry.
+                    {% elif chart_data.category == 'equipment' %}
+                    Equipment grouped by next calibration date.
+                    {% else %}
+                    Samples grouped by type.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        <div class="dashboard-chart-canvas dashboard-chart-canvas-compact">
+            <canvas id="dashboardSecondaryChart" role="img" aria-label="{{ chart_data.secondary_title }}"></canvas>
+        </div>
+    </article>
+
+    <article class="dashboard-visual-card">
+        <div class="dashboard-visual-heading">
+            <div>
+                <h2>{{ chart_data.tertiary_title }}</h2>
+                <p>
+                    {% if chart_data.category == 'stock' %}
+                    Items grouped by vendor.
+                    {% elif chart_data.category == 'equipment' %}
+                    Equipment grouped by source.
+                    {% else %}
+                    Samples grouped by country.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        <div class="dashboard-chart-canvas dashboard-chart-canvas-compact">
+            <canvas id="dashboardTertiaryChart" role="img" aria-label="{{ chart_data.tertiary_title }}"></canvas>
+        </div>
+    </article>
+</section>

@@ -12,29 +12,41 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
+
+
+def env_bool(name, default):
+    return os.getenv(name, str(default)).strip().lower() in {'1', 'true', 'yes', 'on'}
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-i53-z!lwdqs$)-k)u=7!9*i$ko7etx3vb8kib20lw(zgogn3ds'
+# The uploaded source contained embedded production credentials. These are intentionally
+# replaced with environment variables. Set FLUX_SECRET_KEY before deployment and rotate
+# any email credentials previously embedded in the old source.
+DEBUG = env_bool('FLUX_DEBUG', True)
+SECRET_KEY = os.environ.get('FLUX_SECRET_KEY', 'flux-development-only-not-for-production')
+if not DEBUG and SECRET_KEY == 'flux-development-only-not-for-production':
+    from django.core.exceptions import ImproperlyConfigured
+    raise ImproperlyConfigured('FLUX_SECRET_KEY is required when FLUX_DEBUG=false')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'nanaamofa297@gmail.com'
-EMAIL_HOST_PASSWORD = 'xjrxaspwwjzkyrql'
-EMAIL_PORT = 465
-EMAIL_USE_TLS = False
-EMAIL_USE_SSL = True
+SITE_URL = os.getenv('FLUX_SITE_URL', 'http://127.0.0.1:8000').rstrip('/')
+EMAIL_HOST = os.getenv('FLUX_EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_HOST_USER = os.getenv('FLUX_EMAIL_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('FLUX_EMAIL_PASSWORD', '')
+EMAIL_PORT = int(os.getenv('FLUX_EMAIL_PORT', '465'))
+EMAIL_USE_SSL = env_bool('FLUX_EMAIL_SSL', True)
+EMAIL_USE_TLS = env_bool('FLUX_EMAIL_TLS', not EMAIL_USE_SSL)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+DEFAULT_FROM_EMAIL = os.getenv('FLUX_FROM_EMAIL', EMAIL_HOST_USER or 'noreply@example.invalid')
 
-ALLOWED_HOSTS = ['flux-inc.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('FLUX_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
 
 
 # Application definition
@@ -47,6 +59,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'inventory',
+    'control',
 ]
 
 MIDDLEWARE = [
@@ -65,10 +78,9 @@ CSRF_COOKIE_HTTPONLY = False  # Should be False to allow JavaScript access
 
 # Trusted Web origins
 CSRF_TRUSTED_ORIGINS = [
-    'https://flux-inc.onrender.com',
-    'https://github.com',
-    'https://github.com/iamamofa/Flux.Inc/'
-    # Add any other domains you trust
+    origin.strip()
+    for origin in os.getenv('FLUX_CSRF_TRUSTED_ORIGINS', '').split(',')
+    if origin.strip()
 ]
 
 
@@ -79,7 +91,7 @@ ROOT_URLCONF = 'inventory_system.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -87,6 +99,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'inventory.context_processors.admin_dashboard_projects',
             ],
         },
     },
@@ -150,7 +163,8 @@ STATICFILES_DIRS = [
 ]
 
 # Enable compression and caching support
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = ('whitenoise.storage.CompressedManifestStaticFilesStorage'
+                       if not DEBUG else 'django.contrib.staticfiles.storage.StaticFilesStorage')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
@@ -162,3 +176,18 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
     'inventory_system.backends.EmailBackend',
 ]
+LOGIN_URL = '/login/'
+
+# Secure production defaults. Proxy trust is opt-in as deployments differ.
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_SSL_REDIRECT = (not DEBUG and env_bool('FLUX_SSL_REDIRECT', True))
+SECURE_HSTS_SECONDS = (
+    int(os.getenv('FLUX_HSTS_SECONDS', '31536000'))
+    if (not DEBUG and SECURE_SSL_REDIRECT) else 0
+)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SESSION_COOKIE_HTTPONLY = True
+if env_bool('FLUX_TRUST_PROXY', False):
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

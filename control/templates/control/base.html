@@ -1,0 +1,40 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light"><title>{{ page_title }} | Flux.Inc</title>
+<link rel="icon" href="{% static 'images/Icon.png' %}"><link rel="stylesheet" href="{% static 'control/portal.css' %}?v=3"><link rel="stylesheet" href="{% static 'control/portal_refined.css' %}?v=1">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="app-frame">
+<aside class="sidebar" id="navigation" aria-label="Administration navigation">
+ <div class="brand"><a href="{% url 'control:overview' %}" aria-label="Flux admin home"><span class="brand-icon">F</span><span><strong>FLUX<span class="brand-dot">.</span>INC</strong><small>ADMINISTRATOR</small></span></a><button type="button" id="sidebar-close" aria-label="Close navigation">✕</button></div>
+ <nav class="side-links">
+ <span class="nav-label">WORKSPACE</span>
+ <a class="nav-link {% if section == 'overview' %}selected{% endif %}" href="{% url 'control:overview' %}"><span class="nav-icon">◫</span> Overview</a>
+ {% if perms.auth.view_user %}<a class="nav-link {% if section == 'users' or section == 'user_detail' or section == 'user_form' %}selected{% endif %}" href="{% url 'control:users' %}"><span class="nav-icon">♙</span> User management</a>{% endif %}
+ {% if perms.auth.view_group %}<a class="nav-link {% if section == 'roles' or section == 'role_form' %}selected{% endif %}" href="{% url 'control:roles' %}"><span class="nav-icon">▦</span> Roles & permissions</a>{% endif %}
+ {% if perms.control.view_department %}<a class="nav-link {% if section == 'departments' or section == 'department_form' %}selected{% endif %}" href="{% url 'control:departments' %}"><span class="nav-icon">▤</span> Departments & units</a>{% endif %}
+ {% if perms.inventory.view_project %}<span class="nav-label spaced">RESEARCH & INVENTORY</span><a class="nav-link" href="{% url 'admin:inventory_project_changelist' %}"><span class="nav-icon">▣</span> Research projects</a>{% endif %}
+ <span class="nav-label spaced">MONITOR & CONFIGURE</span>
+ <a class="nav-link {% if section == 'notifications' %}selected{% endif %}" href="{% url 'control:notifications' %}"><span class="nav-icon">♧</span> Notifications{% if unread_count %}<span class="nav-count">{{ unread_count }}</span>{% endif %}</a>
+ <a class="nav-link {% if section == 'reports' %}selected{% endif %}" href="{% url 'control:reports' %}"><span class="nav-icon">▥</span> Reports & exports</a>
+ {% if perms.control.view_adminaudit %}<a class="nav-link {% if section == 'audit_logs' %}selected{% endif %}" href="{% url 'control:audit' %}"><span class="nav-icon">◷</span> Audit logs</a>{% endif %}
+ {% if perms.control.view_portalsettings %}<a class="nav-link {% if section == 'settings' %}selected{% endif %}" href="{% url 'control:settings' %}"><span class="nav-icon">⚙</span> System settings</a>{% endif %}
+ {% if request.user.is_superuser %}<a class="nav-link {% if section == 'security' %}selected{% endif %}" href="{% url 'control:security' %}"><span class="nav-icon">◇</span> Security settings</a>{% endif %}
+ <a class="nav-link" href="{% url 'home' %}"><span class="nav-icon">↗</span> Open Flux site</a>
+ </nav>
+ <div class="sidebar-foot"><div class="sidebar-avatar">{{ request.user.username|first|upper }}</div><div class="sidebar-identity"><strong>{{ request.user.get_full_name|default:request.user.username|truncatechars:25 }}</strong><small>{% if request.user.is_superuser %}Super administrator{% else %}Administrator{% endif %}</small></div><a href="{% url 'control:profile' %}" class="sidebar-profile" title="Profile" aria-label="My profile">↗</a></div>
+</aside>
+<div class="workspace"><header class="topbar">
+<div class="topbar-left"><button type="button" id="sidebar-open" class="icon-button menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button><span class="breadcrumb">Administration <span>/</span> <strong>{{ page_title }}</strong></span></div>
+<div class="topbar-right"><form class="global-search" action="{% url 'control:search' %}" method="get" role="search"><label class="sr-only" for="global-q">Search administrators records</label><span>⌕</span><input id="global-q" name="q" placeholder="Search users, projects..." value="{{ query|default:'' }}"></form><a class="icon-button notification-button" href="{% url 'control:notifications' %}" aria-label="Notifications">♧{% if unread_count %}<i></i>{% endif %}</a><a class="top-avatar" href="{% url 'control:profile' %}" aria-label="Open profile">{{ request.user.username|first|upper }}</a></div>
+</header>
+<main id="main" class="main-area" tabindex="-1">
+ {% if messages %}<div class="flash-group" aria-live="polite">{% for message in messages %}<div class="flash {% if message.tags == 'error' %}flash-error{% endif %}">{{ message }}</div>{% endfor %}</div>{% endif %}
+ {% block content %}{% endblock %}
+ <footer class="main-footer"><span>FLUX.INC · Institutional management</span><span>Administrative access is audited</span></footer>
+</main></div></div><div id="screen-shade" class="screen-shade"></div>
+<script src="{% static 'control/portal.js' %}" defer></script>
+</body></html>

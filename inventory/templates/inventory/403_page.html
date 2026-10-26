@@ -1,0 +1,12 @@
+{% extends "inventory/base_auth.html" %}
+
+{% block title %}Access denied{% endblock %}
+
+{% block content %}
+<section class="box" aria-labelledby="accessDeniedTitle">
+    <p class="dashboard-eyebrow">FLUX · 403</p>
+    <h1 id="accessDeniedTitle">You don’t have access to this project</h1>
+    <p>Ask a project manager to grant access, or return to your workspace.</p>
+    <a href="{% url 'home' %}" class="flux-settings-reset">Return to Flux</a>
+</section>
+{% endblock %}

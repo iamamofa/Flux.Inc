@@ -9,11 +9,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="{% static '/images/Icon.png' %}">
     <link rel="stylesheet" href="{% static 'css/inventory_style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/flux_design_system.css' %}">
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="{% static 'js/flux_preferences.js' %}" defer></script>
     <title>Flux - Trash</title>
 </head>
 
-<body class="relative min-h-screen font-poppins antialiased text-sm bg-white flex text-gray-800 h-full 2xl:max-w-[1920px] 2xl:mx-auto 2xl:border-r-2"
+<body class="flux-inventory-layout relative min-h-screen font-poppins antialiased text-sm bg-white flex text-gray-800 h-full 2xl:max-w-[1920px] 2xl:mx-auto 2xl:border-r-2"
     x-data="{ showMenu: false }">
 
     {% include "inventory/partials/sidebar.html" %}

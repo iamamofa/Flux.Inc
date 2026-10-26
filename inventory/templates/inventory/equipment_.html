@@ -185,7 +185,7 @@
         </div>
         {% endif %}
         <!-- Add Item Button -->
-        <button id="addItemBtn" class="btn btn-primary" onclick="showAddPopup()">
+        <button type="button" id="addItemBtn" class="btn btn-primary" onclick="showInventoryPopup('addPopup')">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
                 <path fill-rule="evenodd"
                     d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"
@@ -213,7 +213,7 @@
 
 <!-- Table -->
 <div class="table-container mt-8">
-    <table class="w-full table-auto" aria-label="Equipment inventory" id="equipmentTable">
+    <table class="wide-inventory-table w-full table-auto" aria-label="Equipment inventory" id="equipmentTable">
         <thead>
             <tr>
                 <th scope="col">Name</th>
@@ -243,7 +243,9 @@
                 data-date-recorded="{{ equipment.date_recorded|date:"Y-m-d" }}"
                 data-donated-by="{{ equipment.donated_by }}"
                 data-storage-location="{{ equipment.storage_location }}">
-                <td data-fulltext="{{ equipment.name }}">{{ equipment.name }}</td>
+                <td data-fulltext="{{ equipment.name }}">
+                    <button type="button" class="inventory-item-action" data-stock-item data-id="{{ equipment.id }}" data-name="{{ equipment.name }}" aria-label="Update stock for {{ equipment.name }}">{{ equipment.name }}</button>
+                </td>
                 <td>{{ equipment.equip_id }}</td>
                 <td>{{ equipment.serial_num }}</td>
                 <td>{{ equipment.quantity }}</td>
@@ -266,14 +268,14 @@
 
                         <!-- Hidden action buttons -->
                         <div class="dropdown-actions">
-                            <button class="retrieve-action" onclick="showRetrievePopup()" data-id="{{ consumable.id }}">Retrieve</button>
-                            <button class="return-action" onclick="showReturnPopup()" data-id="{{ consumable.id }}">Return</button>
+                            <button class="retrieve-action" onclick="showRetrievePopup()" data-id="{{ equipment.id }}">Retrieve</button>
+                            <button class="return-action" onclick="showReturnPopup()" data-id="{{ equipment.id }}">Return</button>
                                             
                             {% if user == project.project_manager or user in project.project_editors.all %}
                                             
                             <hr role="separator">
-                            <button class="edit-action" onclick="showEditPopup()" data-id="{{ consumable.id }}">Edit</a>
-                            <button class="delete-action" onclick="showDeletePopup()" data-project="{{ project.name }}" data-id="{{ consumable.id }}">Delete</button>
+                            <button class="edit-action" onclick="showEditPopup()" data-id="{{ equipment.id }}">Edit</button>
+                            <button type="button" class="delete-action" onclick="showDeletePopup(this.dataset.project, this.dataset.id); showInventoryPopup('deletePopup')" data-project="{{ project.name }}" data-id="{{ equipment.id }}">Delete</button>
                                 
                             {% endif %}
                         </div>
@@ -304,9 +306,9 @@
                     <label>ID</label>
                 </div>
                 <div class="inputBox">
-                    <input type="text" name="serial_num" id="serial_num" required=""
+                    <input type="text" name="serial_num" id="serial_num"
                         onkeyup="this.setAttribute('value', this.value);" value="{{ form.serial_num }}">
-                    <label>Serial Number</label>
+                    <label>Serial Number (optional)</label>
                 </div>
                 <div class="inputBox">
                     <input type="text" name="quantity" id="quantity" required=""
@@ -318,29 +320,29 @@
                     <div class="inputBox">
                         <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" id="status" name="status" required=""
                         onkeyup="this.setAttribute('value', this.value);" value="{{ form.status }}">
-                            <option value="Functional">Functional</option>
-                            <option value="Faulty">Faulty</option>
+                            <option value="operational">Operational</option>
+                            <option value="faulty">Faulty</option>
                         </select>
                     </div>
                 </div>
                 <div class="form-row">
-                    <label for="service_contract_start">Service Contract Start</label>
+                    <label for="service_contract_start">Service Contract Start (optional)</label>
                     <div class="inputBox">
-                        <input type="date" name="service_contract_start" id="service_contract_start" required=""
+                        <input type="date" name="service_contract_start" id="service_contract_start"
                             value="{{ form.service_contract_start }}">
                     </div>
                 </div>
                 <div class="form-row">
-                    <label for="service_contract_end">Service Contract End</label>
+                    <label for="service_contract_end">Service Contract End (optional)</label>
                     <div class="inputBox">
-                        <input type="date" name="service_contract_end" id="service_contract_end" required=""
+                        <input type="date" name="service_contract_end" id="service_contract_end"
                             value="{{ form.service_contract_end }}">
                     </div>
                 </div>
                 <div class="inputBox">
-                    <input type="text" name="donated_by" id="donated_by" required=""
+                    <input type="text" name="donated_by" id="donated_by"
                         onkeyup="this.setAttribute('value', this.value);" value="{{ form.donated_by }}">
-                    <label>Donated By</label>
+                    <label>Donated By (optional)</label>
                 </div>
                 <div class="inputBox">
                     <input type="text" name="storage_location" id="storage_location" required=""
@@ -386,8 +388,8 @@
                     <div class="inputBox">
                         <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" id="status" name="status" required=""
                         onkeyup="this.setAttribute('value', this.value);" value="{{ form.status }}">
-                            <option value="Functional">Functional</option>
-                            <option value="Faulty">Faulty</option>
+                            <option value="operational">Operational</option>
+                            <option value="faulty">Faulty</option>
                         </select>
                     </div>
                 </div>
@@ -461,7 +463,7 @@
     </div>
 </div>
 
-<div class="popup-container1" id="deletePopup">
+<div class="popup-container5" id="deletePopup" aria-hidden="true">
     <div class="popup-card">
         <h2>Confirm Deletion</h2>
         <br>
@@ -475,5 +477,5 @@
 {% endblock %}
 
 {% block inventory_scripts %}
-<script src="{% static 'js/equipment_.js' %}"></script>
+<script src="{% static 'js/equipment_.js' %}?v=6"></script>
 {% endblock %}

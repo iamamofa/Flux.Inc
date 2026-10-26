@@ -1,134 +1,259 @@
-# **Facility Logistics Utilization Xpert** - Genomics and Bioinformatics Core Facility Lab
+<p align="center">
+  <img src="https://img.shields.io/badge/Framework-Django-092e20" alt="Django" />
+  <img src="https://img.shields.io/badge/Python-3.11%20recommended-3776ab" alt="Python 3.11 recommended" />
+  <img src="https://img.shields.io/badge/Database-SQLite-003b57" alt="SQLite" />
+  <img src="https://img.shields.io/badge/License-See%20LICENSE-lightgrey" alt="See LICENSE" />
+</p>
 
-## Inventory System
+<h1 align="center">Flux</h1>
 
-Welcome to the **Facility Logistics Utilization Xpert** (Flux), a comprehensive inventory management solution developed for the **Genomics and Bioinformatics Core Facility Lab**. Flux is designed to optimize inventory operations, ensuring seamless tracking, organization, and accessibility of lab materials, equipment, and consumables. This Django-based system offers a robust and intuitive platform that supports the day-to-day logistics of managing products, stock levels, and reporting across various scientific endeavors, particularly in genomics and bioinformatics.
+<p align="center">
+  Research inventory management and an integrated administrator portal for laboratory operations.
+</p>
 
-Whether you're managing reagents, consumables, or lab equipment, Flux provides the tools necessary to maintain accurate stock levels, streamline workflow, and make data-driven decisions. It is tailored to enhance operational efficiency, minimize errors, and improve the overall management of resources in both the Noguchi facility and beyond.
-
----
-
-## Key Features
-
-Flux integrates a wide range of features designed to provide flexibility, control, and insight into your inventory management process. Below are the core functionalities that make Flux a powerful tool for laboratory operations:
-
-- **Product Management**  
-  Easily manage inventory items. Users can add, edit, and delete products with detailed information like name, description, quantity, supplier, and expiration date.
-
-- **Stock Tracking**  
-  Real-time tracking of product stock levels. Avoid shortages or overstock with configurable low-stock alerts.
-
-- **User Authentication**  
-  Role-based access control.  
-  - **Admin**: Full access, user and product management, reporting.  
-  - **Staff**: Access limited to assigned responsibilities.
-
-- **Reports**  
-  Generate comprehensive inventory reports (graphical and tabular) on usage and stock levels. Export in CSV or PDF.
-
-- **Search and Filtering**  
-  Powerful search and filtering options by product name, category, or quantity.
-
-- **Barcode Scanning Support**  
-  Integrated barcode scanning for fast product updates and accurate stock handling.
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#application-routes">Application routes</a> ·
+  <a href="ADMIN_PORTAL_README.md">Administrator portal guide</a>
+</p>
 
 ---
 
-## Getting Started
+## Overview
 
-### Prerequisites
+**Flux** is a Django application for research inventory and facility administration. It combines the existing research-user application with a dedicated administrator workspace, while preserving the existing projects, inventory, and login.
 
-Ensure the following tools are installed before proceeding:
+The application is designed for genomics and bioinformatics laboratories to organize research projects and track reagents, consumables, equipment, and samples. The administrator portal adds user, role, department, notification, audit, settings, and reporting workflows.
 
-- **Python 3.6+**: [https://www.python.org/downloads/](https://www.python.org/downloads/)
-- **Git**: [https://git-scm.com/](https://git-scm.com/)
-- **Virtual Environment**: Recommended to isolate dependencies.
+## Key features
 
----
+### Research inventory
 
-### Installation Instructions
+- Manage reagents, consumables, equipment, and samples by project.
+- Track project teams and access.
+- Review inventory dashboards and low-stock alerts.
+- Export selected inventory data and manage applicable trash/recovery workflows.
+- Upload and manage reagent safety data sheet files.
 
-#### Step 1: Clone the Repository
+### Administrator portal
+
+- View an operational overview of users, applications, projects, and inventory.
+- Search, filter, create, and manage user accounts.
+- Configure roles, permissions, departments, and department heads.
+- Review database-backed notifications and administrator audit records.
+- Export permission-checked CSV reports.
+- Configure institutional details and account security workflows.
+
+> **Scope:** Procurement, purchase orders, receiving, accounts/payments, and finance approvals are not implemented. Refer to the [Administrator Portal Guide](ADMIN_PORTAL_README.md) for details on implemented capabilities and limitations.
+
+## Technology
+
+| Component | Technology |
+| --- | --- |
+| Web framework | Django 4.1.7 |
+| Recommended Python version | Python 3.11 |
+| Database | SQLite by default |
+| Front end | Django templates, HTML, CSS, and JavaScript |
+| Static files | WhiteNoise |
+| Configuration | Environment variables and optional `.env` file |
+
+## Project structure
+
+```text
+Flux/
+├── control/                     # Administrator portal
+│   ├── migrations/
+│   ├── templates/
+│   └── tests.py
+├── inventory/                   # Research inventory application
+│   ├── management/commands/     # Django management commands
+│   ├── migrations/
+│   ├── templates/
+│   └── tests.py
+├── inventory_system/            # Django project settings and URL configuration
+├── templates/                   # Shared templates and admin customization
+├── user_applications/           # User-submitted application uploads
+├── .env.example                 # Placeholder environment configuration
+├── manage.py
+├── requirements-runtime.txt     # Curated application dependencies
+└── ADMIN_PORTAL_README.md       # Detailed portal and deployment guide
+```
+
+## Requirements
+
+- Python 3.11 recommended
+- `pip`
+- Git
+
+The project uses Django 4.1.7, a legacy release. Review the [security and deployment notes](#security-and-deployment) before exposing an installation to users.
+
+## Quick start
+
+### 1. Get the project
 
 ```bash
 git clone https://github.com/iamamofa/flux.git
 cd flux
 ```
 
-#### Step 2: Create a Virtual Environment
+### 2. Create and activate a virtual environment
+
+macOS/Linux:
 
 ```bash
-python -m venv venv
+python3.11 -m venv .venv
+source .venv/bin/activate
 ```
 
-#### Step 3: Activate the Virtual Environment
+Windows PowerShell:
 
-- **Linux/macOS**:
-
-  ```bash
-  source venv/bin/activate
-  ```
-
-- **Windows**:
-
-  ```bash
-  venv\Scripts\activate
-  ```
-
-#### Step 4: Install Dependencies
-
-```bash
-pip install -r requirements.txt
+```powershell
+py -3.11 -m venv .venv
+.venv\Scripts\Activate.ps1
 ```
 
-#### Step 5: Apply Migrations
+### 3. Install dependencies
 
 ```bash
+python -m pip install --upgrade pip
+pip install -r requirements-runtime.txt
+```
+
+Use `requirements-runtime.txt` for the application. `requirements.txt` is a legacy environment export and is not the recommended installation file.
+
+### 4. Configure and initialize
+
+For a local development setup, Django defaults to debug mode when `FLUX_DEBUG` is not set. You can run locally without creating a `.env` file, or copy `.env.example` to `.env` and set development values there. Do not use the example placeholder values in a production deployment.
+
+```bash
+python manage.py check
 python manage.py migrate
 ```
 
-#### Step 6: Create a Superuser
+Create an administrator account if this is a new installation without existing accounts:
 
 ```bash
 python manage.py createsuperuser
 ```
 
-Enter a username, email, and password as prompted.
-
-#### Step 7: Run the Development Server
+### 5. Start the development server
 
 ```bash
 python manage.py runserver
 ```
 
-The development server will start at:
+The application is available at:
 
-- [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
-- Admin Panel: [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/)
+- Research application: [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+- Django administration: [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/)
+- Administrator portal: [http://127.0.0.1:8000/control/](http://127.0.0.1:8000/control/)
 
----
+Sign in with an authorized super-administrator account to access the administrator portal. Standard research accounts do not automatically receive portal access.
 
-## Additional Configuration and Customization
+## Application routes
 
-Flux is flexible and customizable to suit your lab's unique requirements.
+| Area | Route | Description |
+| --- | --- | --- |
+| Research application | `/` | Existing research-user application |
+| Sign in | `/login/` | Research application login |
+| Registration | `/registration/` | User registration |
+| Project workspace | Project-specific routes | Project team, settings, logs, and inventory |
+| Django administration | `/admin/` | Django administrative interface |
+| Portal overview | `/control/` | Administrator workspace |
+| Users and roles | `/control/users/`, `/control/roles/` | User and role management |
+| Departments | `/control/departments/` | Department administration |
+| Reports and audit | `/control/reports/`, `/control/audit/` | Portal reports and audit records |
+| Portal settings | `/control/settings/` | Institutional and portal settings |
 
-### Some additional configurations include:
+Inventory and project routes are defined in the application and may require an authenticated user with access to the relevant project.
 
-- **Email Notifications**  
-  Set up email in `settings.py` to receive alerts for low-stock items or important events.
+## Useful commands
 
-- **Custom Reports**  
-  Extend the reporting module for more detailed lab-specific analytics.
+Run Django configuration checks:
 
-- **UI Modifications or Integrations**  
-  Modify templates or connect with other systems as needed.
+```bash
+python manage.py check
+```
 
----
+Apply database migrations:
 
-## Conclusion
+```bash
+python manage.py migrate
+```
 
-The **Facility Logistics Utilization Xpert (Flux)** is a powerful inventory management system tailored for the logistics needs of genomics and bioinformatics labs. With features like real-time stock tracking, barcode support, role-based access, and detailed reporting, Flux helps your lab stay organized, minimize errors, and focus on scientific innovation.
+Run portal tests:
 
-Whether at Noguchi or another facility, Flux ensures your inventory is reliable, trackable, and ready to support high-impact research.
+```bash
+python manage.py test control
+```
 
----
+Collect static files for deployment:
+
+```bash
+python manage.py collectstatic --noinput
+```
+
+Send scheduled low-stock email summaries:
+
+```bash
+python manage.py send_scheduled_low_stock_alerts
+```
+
+The low-stock command must be scheduled externally, typically once per minute, and requires the application email environment variables. See the [Administrator Portal Guide](ADMIN_PORTAL_README.md) for scheduling and delivery behavior.
+
+## Configuration
+
+Flux reads configuration from environment variables and loads a local `.env` file when present. See [.env.example](.env.example) for the available variable names and placeholder values.
+
+Important settings include:
+
+| Variable | Purpose |
+| --- | --- |
+| `FLUX_DEBUG` | Enables or disables Django debug mode |
+| `FLUX_SECRET_KEY` | Django signing key; required when debug mode is disabled |
+| `FLUX_ALLOWED_HOSTS` | Comma-separated allowed host names |
+| `FLUX_CSRF_TRUSTED_ORIGINS` | Comma-separated trusted origins |
+| `FLUX_SITE_URL` | Base site URL used by application links |
+| `FLUX_EMAIL_HOST`, `FLUX_EMAIL_PORT` | SMTP server connection |
+| `FLUX_EMAIL_USER`, `FLUX_EMAIL_PASSWORD` | SMTP credentials |
+| `FLUX_FROM_EMAIL` | Sender address for application email |
+
+Never commit real credentials or secrets. The `.env` file is excluded from Git; `.env.example` is intended for placeholders only.
+
+## Security and deployment
+
+**Do not deploy this project publicly using development defaults.** Before a live deployment:
+
+- Set `FLUX_DEBUG=false` and configure a new, randomly generated `FLUX_SECRET_KEY`.
+- Set correct allowed hosts, trusted origins, and HTTPS settings for the deployment.
+- Upgrade legacy Django and dependencies to supported security releases after compatibility testing.
+- Use a supported production database for multi-user institutional deployments; the default configuration uses SQLite.
+- Configure an HTTPS reverse proxy, durable upload storage, protected backups, and production logging.
+- Review existing research-application endpoints and file handling separately; the administrator portal does not remediate all legacy application behavior.
+- Protect the included database and any uploaded user data. Do not publish databases containing account or institutional information.
+
+For full deployment prerequisites, security boundaries, database notes, and known limitations, read [ADMIN_PORTAL_README.md](ADMIN_PORTAL_README.md).
+
+## Troubleshooting
+
+### Django reports that `FLUX_SECRET_KEY` is required
+
+When `FLUX_DEBUG=false`, set `FLUX_SECRET_KEY` to a new, secure value before starting the application.
+
+### Administrator portal access is denied
+
+The portal requires an authorized staff administrator. Sign in at `/admin/login/` with an authorized super-administrator, then open `/control/`. A research account alone does not grant portal access.
+
+### Scheduled low-stock emails are not sent
+
+Confirm that SMTP configuration is present, then configure an external scheduler to run `python manage.py send_scheduled_low_stock_alerts` once per minute. The command reports configuration or delivery failures.
+
+## License
+
+See [LICENSE](LICENSE) for the project's usage terms. Review those terms before copying, modifying, or distributing Flux.
+
+## Documentation
+
+- [Administrator Portal Guide](ADMIN_PORTAL_README.md): implementation details, quick start, security, deployment, and limitations.
+- [.env.example](.env.example): placeholder environment configuration.
+

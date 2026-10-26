@@ -242,7 +242,7 @@
         </div>
         {% endif %}
         <!-- Add Item Button -->
-        <button id="addItemBtn" class="btn btn-primary">
+        <button type="button" id="addItemBtn" class="btn btn-primary" onclick="showInventoryPopup('addPopup')">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
                 <path fill-rule="evenodd"
                     d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"
@@ -258,31 +258,6 @@
                                 clip-rule="evenodd" />
             </svg>
         </button> -->
-        <div class="stats-cards">
-            <div class="stat-card">
-                <h3>Total Reagents</h3>
-                <div class="value">{{ total_count }}</div>
-            </div>
-            <div class="stat-card">
-                <h3>Expiring Soon</h3>
-                <div class="value">{{ expiring_soon_count }}</div>
-            </div>
-            <div class="stat-card">
-                <h3>Low Stock</h3>
-                <div class="value">{{ low_stock_count }}</div>
-            </div>
-        </div>
-
-        <div class="legend">
-            <div class="legend-item">
-                <div class="legend-color" style="background-color: #fef3c7; border: 1px solid #eab308;"></div>
-                <span>Expires in < 1 month</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background-color: #fecaca; border: 1px solid #ef4444;"></div>
-                <span>Expires in < 1 week</span>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -296,7 +271,7 @@
 
 <!-- Table -->
 <div class="table-container mt-8">
-    <table id="reagentsTable" class="w-full table-auto" aria-label="Reagents Inventory">
+    <table id="reagentsTable" class="wide-inventory-table w-full table-auto" aria-label="Reagents Inventory">
         <thead>
             <tr>
                 <th scope="col">Name</th>
@@ -324,7 +299,7 @@
                 data-project="{{ project.name }}"
                 data-name="{{ reagent.name }}"
                 data-product-code="{{ reagent.product_code }}"
-                data-items-left-in-pack="{{ reagent.items_left_in_per_pack }}"
+                data-items-left-in-pack="{{ reagent.items_left_in_pack }}"
                 data-items-per-pack="{{ reagent.items_per_pack }}"
                 data-pack-count="{{ reagent.pack_count }}"
                 data-date-created="{{ reagent.date_recorded|date:'Y-m-d' }}"
@@ -338,13 +313,16 @@
                 data-msds="{{ reagent.msds_files }}"
                 data-threshold-value="{{ reagent.threshold_value }}"
                 data-notes="{{ reagent.notes }}"
-                class="{% if reagent.is_expiring_in_30_days %}expiry-warning{% endif %}
+                class="{% if reagent.is_low_stock %}low-stock-row{% endif %}
+                        {% if reagent.is_expiring_in_30_days %}expiry-warning{% endif %}
                         {% if reagent.is_expiring_in_7_days %}expiry-critical{% endif %}">
-                <td class="{% if reagent.is_reagent_low_stock %}low-stock-indicator{% endif %}">{{ reagent.name }}</td>
+                <td class="{% if reagent.is_low_stock %}low-stock-indicator{% endif %}">
+                    <button type="button" class="inventory-item-action" data-stock-item data-id="{{ reagent.id }}" data-name="{{ reagent.name }}" aria-label="Update stock for {{ reagent.name }}">{{ reagent.name }}</button>
+                </td>
                 <td>{{ reagent.product_code }}</td>
-                <td>{{ reagent.items_left_in_per_pack }}</td>
+                <td>{{ reagent.items_left_in_pack }}</td>
                 <td>{{ reagent.items_per_pack }}</td>
-                <td>{{ reagent.pack_count }}</td>
+                <td class="{% if reagent.is_low_stock %}low-stock-indicator{% endif %}">{{ reagent.pack_count }}</td>
                 <td>{{ reagent.date_recorded|date:"Y-m-d" }}</td>
                 <td>{{ reagent.expiry_date|date:"Y-m-d" }}</td>
                 <td data-fulltext="{{ reagent.storage_location }}">{{ reagent.storage_location|truncatechars:20 }}</td>
@@ -386,11 +364,18 @@
                                             
                             <hr role="separator">
                             <button class="edit-action" data-id="{{ reagent.id }}">Edit</button>
-                            <button class="delete-action" data-project="{{ project.name }}" data-id="{{ reagent.id }}">Delete</button>
+                            <button type="button" class="delete-action" onclick="showDeletePopup(this.dataset.project, this.dataset.id); showInventoryPopup('deletePopup')" data-project="{{ project.name }}" data-id="{{ reagent.id }}">Delete</button>
                                 
                             {% endif %}
                         </div>
                     </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="17" class="inventory-empty-state">
+                    <strong>No reagents recorded yet</strong>
+                    <span>Add your first reagent to track stock, storage, hazards, and expiry.</span>
                 </td>
             </tr>
             {% endfor %}
@@ -459,7 +444,6 @@
                     <label for="expiry_date">Expiry Date</label>
                     <div class="inputBox">
                         <input type="date" name="expiry_date" id="expiry_date" required min="{{ current_date|date:'Y-m-d' }}" onchange="validateExpiryDate(this)">
-                        <label>Expiry Date</label>
                         <small class="text-red-500 hidden" id="date-error">Expiry date must be in the future</small>
                     </div>
                 </div>
@@ -710,7 +694,7 @@
     </div>
 </div>
 
-<div class="popup-container1" id="deletePopup">
+<div class="popup-container5" id="deletePopup" aria-hidden="true">
     <div class="popup-card">
         <h2>Confirm Deletion</h2>
         <br>
@@ -724,5 +708,5 @@
 {% endblock %}
 
 {% block inventory_scripts %}
-<script src="{% static 'js/reagents.js' %}"></script>
+<script src="{% static 'js/reagents.js' %}?v=4"></script>
 {% endblock %}

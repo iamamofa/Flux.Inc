@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Low-stock summary</title>
+</head>
+<body style="margin:0;background:#f5f5f7;color:#1d1d1f;font-family:Arial,sans-serif">
+    <main style="max-width:620px;margin:24px auto;padding:24px;background:#fff;border:1px solid #e5e5e7;border-radius:12px">
+        <p style="margin:0 0 20px;text-align:center">
+            <img src="cid:Logo_Orange" width="92" alt="Flux" style="display:block;width:92px;height:auto;margin:0 auto;border:0">
+        </p>
+        <p style="margin:0 0 16px;text-align:center">
+            <img src="cid:Bell" width="180" alt="Low-stock notification" style="display:block;width:180px;max-width:100%;height:auto;margin:0 auto;border:0">
+        </p>
+        <p style="margin:0 0 8px;color:#b42318;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:.08em">Scheduled inventory alert</p>
+        <h1 style="margin:0 0 8px;font-size:24px">Low stock in {{ project.name }}</h1>
+        <p style="margin:0 0 20px;color:#6e6e73">Your {{ scheduled_time }} {{ time_zone }} inventory summary:</p>
+        <ul style="margin:0;padding:0;list-style:none">
+            {% for alert in alerts %}
+            <li style="padding:12px 0;border-top:1px solid #e5e5e7">
+                <strong>{{ alert.name }}</strong>
+                <span style="color:#6e6e73"> · {{ alert.category }} · {{ alert.quantity }} {{ alert.unit }} remaining</span>
+                <span style="display:block;margin-top:4px;color:#6e6e73">Low-stock threshold: {{ alert.threshold }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        <p style="margin:20px 0 0">
+            <a href="{{ inventory_url }}" style="display:inline-block;padding:11px 16px;border-radius:7px;background:#1267d6;color:#fff;text-decoration:none;font-weight:bold">Open inventory</a>
+        </p>
+    </main>
+</body>
+</html>

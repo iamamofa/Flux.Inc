@@ -377,16 +377,27 @@ function validateTemperatureValue(input, unit) {
 // MODAL FUNCTIONS
 // ==============================================
 function showModal(id) {
+  if (window.showInventoryPopup) {
+    window.showInventoryPopup(id);
+    document.body.style.overflow = 'hidden';
+    return;
+  }
   const modal = document.getElementById(id);
   if (!modal) return;
-  modal.style.display = 'flex';
+  modal.classList.add('popup-active');
+  modal.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
 }
 
 function closeModal(id) {
+  if (window.hideInventoryPopup) {
+    window.hideInventoryPopup(id);
+    return;
+  }
   const modal = document.getElementById(id);
   if (!modal) return;
-  modal.style.display = 'none';
+  modal.classList.remove('popup-active');
+  modal.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
 }
 
@@ -484,17 +495,14 @@ async function submitForm(formId, url, method, successCallback) {
 
   try {
     const formData = new FormData(form);
-    const msdsFile = formData.get('msds_file');
-
     showLoading(formId.includes('add') ? POPUP_IDS.ADD : POPUP_IDS.EDIT);
 
     const response = await fetch(url, {
       method,
       headers: {
         'X-CSRFToken': CSRF_TOKEN,
-        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(Object.fromEntries(formData)),
+      body: formData,
     });
 
     if (!response.ok) {
@@ -523,6 +531,7 @@ async function submitForm(formId, url, method, successCallback) {
 
 function handleAddSuccess(data) {
   showNotification('Reagent added successfully', 'success');
+  showLowStockAlert(data);
   closeAddPopup();
   if (data.refresh) {
     setTimeout(() => location.reload(), 1000);
@@ -532,12 +541,14 @@ function handleAddSuccess(data) {
 function handleEditSuccess(data) {
   updateTableRow(STATE.currentItemId, data);
   showNotification('Reagent updated successfully', 'success');
+  showLowStockAlert(data);
   closeEditPopup();
 }
 
 function handleRetrieveSuccess(data) {
   updateTableRow(STATE.currentItemId, data);
   showNotification('Reagent retrieved successfully', 'success');
+  showLowStockAlert(data);
   closeRetrievePopup();
 }
 
@@ -545,6 +556,15 @@ function handleReturnSuccess(data) {
   updateTableRow(STATE.currentItemId, data);
   showNotification('Reagent returned successfully', 'success');
   closeReturnPopup();
+}
+
+function showLowStockAlert(data) {
+  if (data.low_stock_alert) {
+    showNotification(
+      `Low stock: ${data.name || 'Reagent'} has ${data.pack_count} packs remaining.`,
+      'warning'
+    );
+  }
 }
 
 async function handleDeleteConfirm() {
@@ -581,6 +601,7 @@ async function handleDeleteConfirm() {
 function updateTableRow(id, data) {
   const row = DOM.table?.querySelector(`tr[data-id="${id}"]`);
   if (!row) return;
+  setLowStockAppearance(row, data.low_stock);
 
   // Update MSDS cell
   const msdsCell = row.querySelector('td:nth-child(14)'); // Adjust column index as needed
@@ -599,7 +620,14 @@ function updateTableRow(id, data) {
       `;
     }
   }
-  
+
+  function setLowStockAppearance(row, isLowStock) {
+    row.classList.toggle('low-stock-row', Boolean(isLowStock));
+    const cells = row.querySelectorAll('td');
+    cells[0]?.classList.toggle('low-stock-indicator', Boolean(isLowStock));
+    cells[4]?.classList.toggle('low-stock-indicator', Boolean(isLowStock));
+  }
+
   // Highlight update
   row.classList.add('updated');
   setTimeout(() => row.classList.remove('updated'), 1000);
@@ -630,7 +658,6 @@ function updateTableRow(id, data) {
     cells[2].textContent = data.items_left_in_pack || 0;
     cells[3].textContent = data.items_per_pack || 0;
     cells[4].textContent = data.pack_count || 0;
-    /cells[5].textContent = data.date_created || '';
     cells[6].textContent = data.expiry_date || '';
     cells[7].setAttribute('data-fulltext', data.storage_location);
     cells[7].textContent = truncateText(escapeHtml(data.storage_location), 20);

@@ -158,19 +158,19 @@ function setupFormHandlers() {
   // Edit form
   DOM.forms.edit?.addEventListener('submit', (e) => {
     e.preventDefault();
-    submitForm('edit-form', `/edit_sample/${STATE.currentItemId}`, 'PUT', handleEditSuccess);
+    submitForm('edit-form', `/edit_sample/${STATE.currentItemId}`, 'POST', handleEditSuccess);
   });
   
   // Retrieve form
   DOM.forms.retrieve?.addEventListener('submit', (e) => {
     e.preventDefault();
-    submitForm('retrieve-form', `/retrieve_sample/${STATE.currentItemId}`, 'PUT', handleRetrieveSuccess);
+    submitForm('retrieve-form', `/retrieve_sample/${STATE.currentItemId}`, 'POST', handleRetrieveSuccess);
   });
   
   // Return form
   DOM.forms.return?.addEventListener('submit', (e) => {
     e.preventDefault();
-    submitForm('return-form', `/return_sample/${STATE.currentItemId}`, 'PUT', handleReturnSuccess);
+    submitForm('return-form', `/return_sample/${STATE.currentItemId}`, 'POST', handleReturnSuccess);
   });
 }
 
@@ -199,16 +199,27 @@ function handleTableClick(e) {
 // MODAL FUNCTIONS
 // ==============================================
 function showModal(id) {
+  if (window.showInventoryPopup) {
+    window.showInventoryPopup(id);
+    document.body.style.overflow = 'hidden';
+    return;
+  }
   const modal = document.getElementById(id);
   if (!modal) return;
-  modal.style.display = 'flex';
+  modal.classList.add('popup-active');
+  modal.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
 }
 
 function closeModal(id) {
+  if (window.hideInventoryPopup) {
+    window.hideInventoryPopup(id);
+    return;
+  }
   const modal = document.getElementById(id);
   if (!modal) return;
-  modal.style.display = 'none';
+  modal.classList.remove('popup-active');
+  modal.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
 }
 
@@ -308,12 +319,14 @@ async function submitForm(formId, url, method, successCallback) {
       method,
       headers: {
         'X-CSRFToken': CSRF_TOKEN,
-        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(Object.fromEntries(formData)),
+      body: formData,
     });
 
-    if (!response.ok) throw new Error('Network response was not ok');
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Network response was not ok');
+    }
     
     const data = await response.json();
     successCallback(data);
@@ -325,6 +338,7 @@ async function submitForm(formId, url, method, successCallback) {
 
 function handleAddSuccess(data) {
   showNotification('Sample added successfully', 'success');
+  showLowStockAlert(data);
   closeAddPopup();
   if (data.refresh) {
     setTimeout(() => location.reload(), 1000);
@@ -334,18 +348,29 @@ function handleAddSuccess(data) {
 function handleEditSuccess(data) {
   updateTableRow(STATE.currentItemId, data);
   showNotification('Sample updated successfully', 'success');
+  showLowStockAlert(data);
   closeEditPopup();
 }
 
 function handleRetrieveSuccess(data) {
   updateTableRow(STATE.currentItemId, data);
   showNotification('Sample retrieved successfully', 'success');
+  showLowStockAlert(data);
   closeRetrievePopup();
 }
 
 function handleReturnSuccess(data) {
   updateTableRow(STATE.currentItemId, data);
   showNotification('Sample returned successfully', 'success');
+}
+
+function showLowStockAlert(data) {
+  if (data.low_stock_alert) {
+    showNotification(
+      `Low stock: ${data.sample_id || 'Sample'} has ${data.volume} ${data.volume_unit} remaining.`,
+      'warning'
+    );
+  }
   closeReturnPopup();
 }
 
@@ -383,6 +408,7 @@ async function handleDeleteConfirm() {
 function updateTableRow(id, data) {
   const row = DOM.table?.querySelector(`tr[data-id="${id}"]`);
   if (!row) return;
+  setLowStockAppearance(row, data.low_stock);
   
   // Highlight update
   row.classList.add('updated');
@@ -402,6 +428,13 @@ function updateTableRow(id, data) {
     cells[7].setAttribute('data-fulltext', data.storage_location);
     cells[7].textContent = truncateText(data.storage_location, 15);
   }
+}
+
+function setLowStockAppearance(row, isLowStock) {
+  row.classList.toggle('low-stock-row', Boolean(isLowStock));
+  const cells = row.querySelectorAll('td');
+  cells[0]?.classList.toggle('low-stock-indicator', Boolean(isLowStock));
+  cells[5]?.classList.toggle('low-stock-indicator', Boolean(isLowStock));
 }
 
 function removeTableRow(id) {

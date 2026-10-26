@@ -1,0 +1,56 @@
+{% extends "admin/base_site.html" %}
+{% load i18n log %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+    <section class="flux-admin-welcome" aria-labelledby="flux-admin-title">
+        <div>
+            <p class="flux-admin-eyebrow">FLUX · INSTITUTIONAL OPERATIONS</p>
+            <h1 id="flux-admin-title">Administration, at a glance.</h1>
+            <p>Manage research records and system data from one workspace.</p>
+        </div>
+        <nav class="flux-admin-shortcuts" aria-label="Administration shortcuts">
+            <a href="{% url 'admin:inventory_project_changelist' %}">Research projects <span aria-hidden="true">↗</span></a>
+            <a href="{% url 'admin:auth_user_changelist' %}">User accounts <span aria-hidden="true">↗</span></a>
+            <a href="{% url 'control:overview' %}">Admin workspace <span aria-hidden="true">↗</span></a>
+        </nav>
+    </section>
+
+    <div class="flux-admin-dashboard-grid">
+        <section id="content-main" aria-label="{% translate 'Available administration areas' %}">
+            {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+        </section>
+        <aside class="flux-admin-activity" aria-labelledby="recent-actions-title">
+            <section class="module">
+                <h2 id="recent-actions-title">{% translate 'Recent actions' %}</h2>
+                <h3>{% translate 'My actions' %}</h3>
+                {% get_admin_log 8 as admin_log for_user user %}
+                {% if admin_log %}
+                    <ul class="actionlist">
+                        {% for entry in admin_log %}
+                            <li class="{% if entry.is_addition %}addlink{% endif %}{% if entry.is_change %}changelink{% endif %}{% if entry.is_deletion %}deletelink{% endif %}">
+                                {% if entry.is_deletion or not entry.get_admin_url %}
+                                    {{ entry.object_repr }}
+                                {% else %}
+                                    <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+                                {% endif %}
+                                <br>
+                                <span class="mini quiet">
+                                    {% if entry.content_type %}
+                                        {{ entry.content_type.name|capfirst }}
+                                    {% else %}
+                                        {% translate 'Unknown content' %}
+                                    {% endif %}
+                                </span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="flux-admin-empty">{% translate 'No recent activity to show.' %}</p>
+                {% endif %}
+            </section>
+        </aside>
+    </div>
+{% endblock %}

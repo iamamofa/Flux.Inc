@@ -8,14 +8,20 @@
     <meta name="description" content="Equipment inventory dashboard">
     <link rel="icon" type="image/png" href="{% static '/images/Icon.png' %}">
     <link rel="stylesheet" href="{% static 'css/inventory_style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/flux_design_system.css' %}">
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="{% static 'js/flux_preferences.js' %}" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
+    <script src="{% static 'js/dashboard_charts.js' %}" defer></script>
     <title>Flux - Equipment Dashboard</title>
 </head>
 
-<body class="relative min-h-screen font-poppins antialiased text-sm bg-white flex text-gray-800 h-full 2xl:max-w-[1920px] 2xl:mx-auto 2xl:border-r-2"
-    x-data="{ showMenu: false }">
+<body class="flux-dashboard relative min-h-screen font-poppins antialiased text-sm bg-white flex text-gray-800 h-full 2xl:max-w-[1920px] 2xl:mx-auto 2xl:border-r-2"
+    x-data="{ showMenu: false, sidebarCollapsed: localStorage.getItem('flux.dashboardSidebar') === 'hidden' }"
+    :class="{ 'dashboard-sidebar-collapsed': sidebarCollapsed }">
 
-    <aside class="flex flex-col lg:flex lg:flex-col justify-between shadow-xl lg:shadow-none lg:fixed min-h-screen top-0 z-20 bg-[#151e29] w-fit bottom-0 lg:w-60 px-3 lg:px-6 pt-6 pb-0"
+    <aside id="dashboardSidebar" class="flex flex-col lg:flex lg:flex-col justify-between shadow-xl lg:shadow-none lg:fixed min-h-screen top-0 z-20 bg-[#151e29] w-fit bottom-0 lg:w-60 px-3 lg:px-6 pt-6 pb-0"
         :class="showMenu ? 'fixed' : 'hidden'" x-transition.duration.500ms>
         <div>
             <a href="{% url 'home' %}" aria-label="Home">
@@ -122,22 +128,8 @@
                         <span class="flex-1 pl-2 ">Team</span>
                     </a>
                     {% endif %}
-                    <a class=" rounded-md px-3 py-3 text-gray-300 flex items-center hover:bg-gray-700 hover:text-white  transition ease-in-out justify-between space-x-2"
-                        href="{% url 'change_password' %}">
-                        <span>
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
-                                xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                                <rect width="24" height="24" fill="url(#pattern5)" />
-                                <defs>
-                                    <pattern id="pattern5" patternContentUnits="objectBoundingBox" width="1" height="1">
-                                        <use xlink:href="#image0_220_10" transform="scale(0.0416667)" />
-                                    </pattern>
-                                    <image id="image0_220_10" width="24" height="24"
-                                        xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYEAQAAAAa7ikwAAAAIGNIUk0AAHomAACAhAAA+gAAAIDoAAB1MAAA6mAAADqYAAAXcJy6UTwAAAACYktHRAAAqo0jMgAAAAlwSFlzAAAAYAAAAGAA8GtCzwAAAAd0SU1FB+cGDA0DJvP7ju8AAAGlSURBVEjHtVYxsgFBEG0bENlAsIqM+la0CScg2CqbsZRLELkDLiBwCI5AyBGwqiirihsoSb8fLJ+yO2ZK+S/s6dc986a7Z4gkAIpF4HxGCOcz2DRlfE3mQOQ4ROl02J5OU8xxvpDg50e8VigoJwDH4+BOB6jVAE272wilkli/chmcSARSalrA7XbB8XjYl/v9h777PTAcApsNpPC8wHe3e9gGg5eLzOeBy0UeTBXXK/hJPmA6/V7wO6bTW/Bq9fvBb2Db1ojabXkl+T5Rs0nQdYKuEzUaROu1lBZrNAhsWYDvi7dxOACpVKgokEq95/k+2LJuFWQYwGwW7ei6wirlViuaM5uBDeNlR5lMtI7JpDiBrkcnyGZDjfYZYjElt/cS1etCHlw3+tTz+Z9E8ktercSX/K7Tj0ewZREwHssL2vfBrRZY1wPdXVdtjIzHBFQqcscPwbZ9k2ky+X7wyeRJz1zuX4ddcIqoce158mAK4zpIcH9wHOfx4CQS4MVCLMNyGX5wer27Ta1HMBqJdz8ayfgKnbzdframegI2zehvy+mk8m35Bdnx4EMUbTJlAAAAAElFTkSuQmCC" />
-                                </defs>
-                            </svg>
-                        </span>
-                        <span class="flex-1 pl-2 ">Security</span>
+                    <a href="{% url 'project_settings' project_name=project.name %}" class="rounded-md px-3 py-3 text-gray-300 flex items-center justify-between space-x-2 hover:bg-gray-700 hover:text-white transition" {% if request.path == settings_url %}aria-current="page"{% endif %}>
+                        <span aria-hidden="true">⚙</span><span class="flex-1 pl-2">Settings</span>
                     </a>
                 </div>
             </div>
@@ -188,6 +180,12 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
+                    <button type="button" class="dashboard-sidebar-toggle hidden lg:inline-flex"
+                        @click="sidebarCollapsed = !sidebarCollapsed; localStorage.setItem('flux.dashboardSidebar', sidebarCollapsed ? 'hidden' : 'visible')"
+                        :aria-expanded="!sidebarCollapsed" aria-controls="dashboardSidebar">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16M4 12h16M4 18.5h16M8 5.5v13" /></svg>
+                        <span x-text="sidebarCollapsed ? 'Show navigation' : 'Hide navigation'">Hide navigation</span>
+                    </button>
                     <!--Add Item Button -->
                     {% if user == project.project_manager %}
                     <button id="addItemBtn" onclick="showAddPopup()"
@@ -210,6 +208,12 @@
                 </div>
             </div>
         
+            <header class="dashboard-page-heading">
+                <p class="dashboard-eyebrow">INVENTORY OVERVIEW</p>
+                <h1>Equipment</h1>
+                <p>Keep track of equipment quantities and status for {{ project.name }}.</p>
+            </header>
+
             <!-- Navigation View -->
             <nav class="flex items-center mt-8 border-b space-x-10 text-gray-400 font-medium" aria-label="Dashboard navigation">
                 <a href="{% url 'dashboard_consumables' project_name=project.name %}"
@@ -229,13 +233,9 @@
                     <span>Samples</span>
                 </a>
             </nav>
-            <div class="container">
-                <div class="card plot-card">
-                    <div class="card-body">
-                        <div id="plotContainer"></div>
-                    </div>
-                </div>
-            </div>
+
+            {% include "inventory/partials/low_stock_alerts.html" %}
+            {% include "inventory/partials/dashboard_charts.html" %}
         </section>
 
         <!-- Add Project Popup -->
@@ -266,8 +266,6 @@
             </div>
         </div>
 
-        <script src="https://cdn.plot.ly/plotly-3.1.0-rc.0.min.js" charset="utf-8"></script>
-
         <script>
             function showAddPopup() {
                 const popup = document.getElementById('addPopup');
@@ -279,46 +277,6 @@
                 const popup = document.getElementById('addPopup');
                 popup.style.display = 'none';
                 document.getElementById('errorContainer').textContent = '';
-            }
-
-            // Equipment-specific chart initialization
-            function initializeChart() {
-                try {
-                    const plotContainer = document.getElementById('plotContainer');
-                    if (!plotContainer) {
-                        console.error('plotContainer element not found');
-                        return;
-                    }
-
-                    const plotData = JSON.parse('{{ plot_data|escapejs }}') || {};
-                    const names = plotData.names || [];
-                    const quantities = plotData.quantities || [];
-                    
-                    if (names.length === 0 || quantities.length === 0) {
-                        document.getElementById('plotContainer').innerHTML = '<p class="text-center py-8 text-gray-500">No equipment data available</p>';
-                        return;
-                    }
-
-                    const trace = {
-                        x: names,
-                        y: quantities,
-                        type: 'bar',
-                        marker: { color: 'rgba(255, 92, 0, 1)' }
-                    };
-                    
-                    const layout = {
-                        title: 'Inventory by Equipment',
-                        xaxis: { title: 'Equipment' },
-                        yaxis: { title: 'Quantity' },
-                        responsive: true
-                    };
-
-                    document.getElementById('chartLoading').style.display = 'none';
-                    Plotly.newPlot('plotContainer', [trace], layout);
-                } catch (error) {
-                    console.error('Error initializing equipment chart:', error);
-                    document.getElementById('plotContainer').innerHTML = '<p class="text-center py-8 text-gray-500">Error loading equipment data</p>';
-                }
             }
 
             document.addEventListener('DOMContentLoaded', function() {
@@ -369,8 +327,6 @@
                     });
                 }
 
-                // Initialize chart
-                initializeChart();
             });
         </script>
     </main>

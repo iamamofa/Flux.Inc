@@ -1,0 +1,19 @@
+{% if low_stock_alerts %}
+<div class="low-stock-notice" role="alert" aria-live="polite">
+    <div class="low-stock-notice-heading">
+        <strong>Low stock alert</strong>
+        <span>{{ low_stock_alerts|length }} item{{ low_stock_alerts|length|pluralize }} {{ low_stock_alerts|length|pluralize:"needs,need" }} restocking.</span>
+    </div>
+    <ul>
+        {% for alert in low_stock_alerts %}
+        <li>
+            <a href="{{ alert.url }}">{{ alert.name }}</a>
+            <span class="low-stock-alert-details">
+                <span>{{ alert.category }}</span>
+                <span>{{ alert.quantity }} {{ alert.unit }} remaining</span>
+            </span>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}

@@ -225,7 +225,7 @@
 													<table class="image_block block-2" width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 														<tr>
 															<td class="pad" style="padding-left:40px;padding-right:40px;width:100%;">
-																<div class="alignment" align="center" style="line-height:10px"><img class="big" src="cid:Bell" style="display: block; height: auto; border: 0; width: 352px; max-width: 100%;" width="352" height="auto" loading="lazy" alt="Notification" title="Notification"></div>
+																<div class="alignment" align="center" style="line-height:10px"><img class="big" src="cid:Bell" style="display: block; height: auto; border: 0; width: 352px; max-width: 100%;" width="352" height="auto" alt="Notification" title="Notification"></div>
 															</td>
 														</tr>
 													</table>
@@ -313,15 +313,15 @@
                                                             <td class="pad" style="padding-bottom:40px;padding-left:30px;padding-right:30px;padding-top:20px;">
                                                                 <div style="font-family: sans-serif">
                                                                     <div class style="font-size: 12px; font-family: Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif; mso-line-height-alt: 18px; color: #555555; line-height: 1.5;">
-                                                                        <p style="margin: 0; font-size: 15px; mso-line-height-alt: 22.5px;"><span style="font-size:15px;">We would like to inform you that your <strong>{{ consumable.project.name }}</strong> inventory is running low on the following consumable:</span></p>
+                                                                        <p style="margin: 0; font-size: 15px; mso-line-height-alt: 22.5px;"><span style="font-size:15px;">The <strong>{{ project.name }}</strong> inventory is running low on the following item:</span></p>
                                                                         <p style="margin: 0; font-size: 15px; mso-line-height-alt: 18px;">&nbsp;</p>
                                                                         <table class="mobile-table" style="width: 100%; table-layout: fixed; background-color: #fff9f2; border-radius: 4px; padding: 10px;">
                                                                             <tr>
                                                                                 <td style="width: 40%; text-align: left; font-size: 14px; mso-line-height-alt: 22.5px; padding: 8px;">
-                                                                                    <span style="color:#2b303a; font-size: 16px;"><strong>Consumable</strong></span>
+                                                                                    <span style="color:#2b303a; font-size: 16px;"><strong>{{ item_type|title }}</strong></span>
                                                                                 </td>
                                                                                 <td style="width: 60%; text-align: right; font-size: 14px; mso-line-height-alt: 22.5px; padding: 8px;">
-                                                                                    <span style="color:#2b303a; font-size: 16px;">{{ consumable.name }}</span>
+                                                                                    <span style="color:#2b303a; font-size: 16px;">{{ item_name }}</span>
                                                                                 </td>
                                                                             </tr>
                                                                             <tr>
@@ -329,7 +329,7 @@
                                                                                     <span style="color:#2b303a; font-size: 16px;"><strong>Quantity Left</strong></span>
                                                                                 </td>
                                                                                 <td style="width: 60%; text-align: right; font-size: 14px; mso-line-height-alt: 22.5px; padding: 8px;">
-                                                                                    <span style="color:#2b303a; font-size: 16px;">{{ consumable.quantity }} units</span>
+                                                                                    <span style="color:#2b303a; font-size: 16px;">{{ quantity }} {{ unit }}</span>
                                                                                 </td>
                                                                             </tr>
                                                                         </table>
@@ -365,7 +365,7 @@
 													<table class="button_block block-1" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 														<tr>
 															<td class="pad">
-																<div class="alignment" align="center"><!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://flux-inc.onrender.com/consumables/{{ consumable.project.name }}" style="height:42px;width:110px;v-text-anchor:middle;" arcsize="10%" stroke="false" fillcolor="#ff5c00"><w:anchorlock/><v:textbox inset="0px,0px,0px,0px"><center style="color:#ffffff; font-family:Tahoma, sans-serif; font-size:16px"><![endif]--><a href="https://flux-inc.onrender.com/consumables/{{ consumable.project.name }}" target="_blank" style="text-decoration:none;display:inline-block;color:#ffffff;background-color:#ff5c00;border-radius:4px;width:auto;border-top:0px solid transparent;font-weight:400;border-right:0px solid transparent;border-bottom:0px solid transparent;border-left:0px solid transparent;padding-top:5px;padding-bottom:5px;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:16px;text-align:center;mso-border-alt:none;word-break:keep-all;"><span style="padding-left:20px;padding-right:20px;font-size:16px;display:inline-block;letter-spacing:normal;"><span style="word-break: break-word; line-height: 32px;">Visit Site</span></span></a><!--[if mso]></center></v:textbox></v:roundrect><![endif]--></div>
+																<div class="alignment" align="center"><!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ site_url }}{{ inventory_url }}" style="height:42px;width:110px;v-text-anchor:middle;" arcsize="10%" stroke="false" fillcolor="#ff5c00"><w:anchorlock/><v:textbox inset="0px,0px,0px,0px"><center style="color:#ffffff; font-family:Tahoma, sans-serif; font-size:16px"><![endif]--><a href="{{ site_url }}{{ inventory_url }}" target="_blank" style="text-decoration:none;display:inline-block;color:#ffffff;background-color:#ff5c00;border-radius:4px;width:auto;border-top:0px solid transparent;font-weight:400;border-right:0px solid transparent;border-bottom:0px solid transparent;border-left:0px solid transparent;padding-top:5px;padding-bottom:5px;font-family:Montserrat, Trebuchet MS, Lucida Grande, Lucida Sans Unicode, Lucida Sans, Tahoma, sans-serif;font-size:16px;text-align:center;mso-border-alt:none;word-break:keep-all;"><span style="padding-left:20px;padding-right:20px;font-size:16px;display:inline-block;letter-spacing:normal;"><span style="word-break: break-word; line-height: 32px;">Visit Inventory</span></span></a><!--[if mso]></center></v:textbox></v:roundrect><![endif]--></div>
 															</td>
 														</tr>
 													</table>

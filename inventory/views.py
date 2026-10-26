@@ -1,38 +1,51 @@
-from datetime import date, datetime
+from datetime import date, datetime, time, timedelta
 import io
+import io
+import html
+import os
+import zipfile
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError, available_timezones
 from PyPDF2 import PdfReader
 from PyPDF2.errors import PdfReadError
+from django.core import serializers
 from django.core.files import File
 from django.core.files.uploadedfile import tempfile
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.forms import ValidationError
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.utils.crypto import hashlib
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt, csrf_protect, ensure_csrf_cookie
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.http import JsonResponse, HttpResponse
+from django.http import FileResponse, JsonResponse, HttpResponse
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
+from django.utils.html import strip_tags
+from django.utils.text import get_valid_filename, slugify
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
 
 from .models import (
     UserApplication, Project, UserProfile, Log,
     Consumable, Reagent, Equipment, Sample,
-    Shelf, Rack, Box, MSDSFile,
-    TrashConsumable, TrashReagent, TrashEquipment, TrashSample
+    Shelf, Rack, Box, Rooms, Storages, Sample_Locations,
+    MSDSFile, MSDSSection, MSDSValidationResult, ProjectLoginEvent,
+    TrashConsumable, TrashReagent, TrashEquipment, TrashSample,
+    LowStockEmailDelivery,
 )
+from .low_stock import get_low_stock_alerts
+from .email_utils import attach_inline_email_images
 from .forms import (
     UserApplicationForm, ProjectManagerSignUpForm,
-    EditorMemberSignUpForm, LoginForm
+    EditorMemberSignUpForm, LoginForm, UserProfileForm, EquipmentForm,
 )
 
 from .tasks import scan_file_for_viruses
@@ -44,14 +57,10 @@ import os
 import threading
 import bleach
 import logging
-from email.mime.image import MIMEImage
 from openpyxl import Workbook
 import uuid
 
 security_logger = logging.getLogger('django.security')
-
-static_img_path = os.path.join(settings.BASE_DIR, 'static')
-
 
 # Helper functions
 def get_sidebar_urls(project_name):
@@ -64,7 +73,8 @@ def get_sidebar_urls(project_name):
         'trash_url': reverse('trash_reagents',
                              kwargs={'project_name': project_name}),
         'team_url': reverse('team', kwargs={'project_name': project_name}),
-        'security_url': reverse('change_password'),
+        'settings_url': reverse('project_settings',
+                                kwargs={'project_name': project_name}),
     }
 
 
@@ -89,31 +99,106 @@ def get_user_projects(user):
 def send_email_notification(subject, template, context, recipient_list):
     """Generic email notification sender"""
     try:
-        html_message = render_to_string(template, context)
+        html_message = render_to_string(
+            template, {**context, 'site_url': settings.SITE_URL}
+        )
+        text_message = html.unescape(strip_tags(html_message))
+        if context.get('inventory_url'):
+            text_message = (
+                f'{text_message.rstrip()}\n\nOpen inventory: '
+                f'{settings.SITE_URL}{context["inventory_url"]}\n'
+            )
         msg = EmailMultiAlternatives(
             subject,
-            html_message,
+            text_message,
             settings.EMAIL_HOST_USER,
             recipient_list
         )
-        msg.mixed_subtype = 'related'
         msg.attach_alternative(html_message, "text/html")
-
-        # Attach email images
-        email_images = ["check.png", "Logo_Orange.png", "Logo_White.png",
-                       "facebook2x.png", "instagram2x.png", "linkedin2x.png", "twitter2x.png"]
-        for root, _, files in os.walk(f"{static_img_path}/images/"):
-            for file in files:
-                if file in email_images:
-                    file_path = os.path.join(root, file)
-                    filename = os.path.splitext(file)[0]
-                    with open(file_path, 'rb') as img_file:
-                        img = MIMEImage(img_file.read())
-                        img.add_header('Content-Id', f'<{filename}>')
-                        msg.attach(img)
+        msg.mixed_subtype = 'related'
+        attach_inline_email_images(msg, [
+            'check.png',
+            'Logo_Orange.png',
+            'Logo_White.png',
+            'Bell.png',
+            'facebook2x.png',
+            'instagram2x.png',
+            'linkedin2x.png',
+            'twitter2x.png',
+        ])
         msg.send()
     except Exception as e:
         security_logger.error(f"Failed to send email: {str(e)}")
+
+
+def is_low_stock(item):
+    threshold = getattr(item, 'threshold_value', None)
+    if threshold is None:
+        return False
+    if isinstance(item, Sample):
+        return item.volume < threshold
+    if isinstance(item, (Consumable, Reagent)):
+        return item.pack_count < threshold
+    return False
+
+
+def send_low_stock_notification(item, was_low=False):
+    """Notify the project team once when an item enters low-stock status."""
+    if was_low or not is_low_stock(item):
+        return
+
+    if isinstance(item, Sample):
+        item_type = 'sample'
+        item_name = item.sample_id
+        quantity = item.volume
+        unit = item.volume_unit
+        inventory_url = reverse('samples', kwargs={'project_name': item.project.name})
+    elif isinstance(item, Reagent):
+        item_type = 'reagent'
+        item_name = item.name
+        quantity = item.pack_count
+        unit = 'packs'
+        inventory_url = reverse('reagents', kwargs={'project_name': item.project.name})
+    else:
+        item_type = 'consumable'
+        item_name = item.name
+        quantity = item.pack_count
+        unit = 'packs'
+        inventory_url = reverse('consumables', kwargs={'project_name': item.project.name})
+
+    project = item.project
+    recipients = set()
+    if project.project_manager and project.project_manager.email:
+        recipients.add(project.project_manager.email)
+    recipients.update(
+        email for email in project.project_editors.values_list('email', flat=True)
+        if email
+    )
+    recipients.update(
+        email for email in project.project_members.values_list('email', flat=True)
+        if email
+    )
+    if not recipients:
+        security_logger.warning(
+            "Low-stock alert not sent because project %s has no email recipients",
+            project.pk,
+        )
+        return
+
+    send_email_notification(
+        subject=f"Low stock alert: {item_name}",
+        template='inventory/shortage_email_template.html',
+        context={
+            'item_type': item_type,
+            'item_name': item_name,
+            'quantity': quantity,
+            'unit': unit,
+            'threshold_value': item.threshold_value,
+            'project': project,
+            'inventory_url': inventory_url,
+        },
+        recipient_list=sorted(recipients),
+    )
 
 
 # Authentication Views
@@ -175,7 +260,7 @@ def register_project_manager(request):
                 login(request, user, backend='inventory_system.backends.EmailBackend')
 
                 # Create a user profile and project
-                user_profile = UserProfile.objects.create(user=user)
+                user_profile, _ = UserProfile.objects.get_or_create(user=user)
                 project = Project.objects.create(name=project_name, project_manager=user)
                 user_profile.managed_projects.add(project)
 
@@ -199,8 +284,8 @@ def register_user(request):
         form = EditorMemberSignUpForm(request.POST, request=request)
         if form.is_valid():
             user = form.save()
-            login(request, user)
-            UserProfile.objects.create(user=user)
+            login(request, user, backend='inventory_system.backends.EmailBackend')
+            UserProfile.objects.get_or_create(user=user)
 
             return render(request, 'inventory/user_account_created.html')
     else:
@@ -276,6 +361,272 @@ def change_password(request):
     })
 
 
+@login_required
+def project_settings(request, project_name):
+    """Show project settings and save supported notification preferences."""
+    project = get_object_or_404(Project, name=project_name)
+    has_access = (
+        project.project_manager_id == request.user.id
+        or project.project_editors.filter(id=request.user.id).exists()
+        or project.project_members.filter(id=request.user.id).exists()
+    )
+    if not has_access:
+        return render(request, 'inventory/403_page.html', status=403)
+
+    can_manage_alert_schedule = (
+        project.project_manager_id == request.user.id
+        or project.project_editors.filter(id=request.user.id).exists()
+    )
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    profile_form = UserProfileForm(user=request.user, instance=profile)
+
+    if request.method == 'POST':
+        action = request.POST.get('notification_action')
+        if action == 'profile':
+            profile_form = UserProfileForm(
+                request.POST,
+                request.FILES,
+                user=request.user,
+                instance=profile,
+            )
+            if profile_form.is_valid():
+                old_picture_name = profile.profile_picture.name
+                old_picture_storage = profile.profile_picture.storage
+                with transaction.atomic():
+                    profile_form.save()
+                if (
+                    old_picture_name
+                    and old_picture_name != profile.profile_picture.name
+                ):
+                    old_picture_storage.delete(old_picture_name)
+                messages.success(request, 'Your profile was updated.')
+                return redirect('project_settings', project_name=project.name)
+            messages.error(request, 'Please correct the profile details below.')
+        elif action == 'clear_login_history':
+            if project.project_manager_id != request.user.id:
+                return render(request, 'inventory/403_page.html', status=403)
+            ProjectLoginEvent.objects.filter(project=project).delete()
+            messages.success(request, 'This project’s login history was cleared.')
+        elif action == 'timezone':
+            selected_time_zone = request.POST.get('time_zone', '')
+            try:
+                ZoneInfo(selected_time_zone)
+            except (ZoneInfoNotFoundError, ValueError):
+                messages.error(request, 'Select a valid time zone.')
+            else:
+                profile.time_zone = selected_time_zone
+                profile.save(update_fields=['time_zone'])
+                messages.success(request, 'Your time zone was updated.')
+        elif action == 'schedule':
+            if not can_manage_alert_schedule:
+                return render(request, 'inventory/403_page.html', status=403)
+            try:
+                morning_time = datetime.strptime(
+                    request.POST.get('morning_time', ''), '%H:%M'
+                ).time()
+                evening_time = datetime.strptime(
+                    request.POST.get('evening_time', ''), '%H:%M'
+                ).time()
+            except ValueError:
+                messages.error(request, 'Enter valid morning and evening times.')
+            else:
+                project.low_stock_morning_time = morning_time
+                project.low_stock_evening_time = evening_time
+                project.save(update_fields=[
+                    'low_stock_morning_time',
+                    'low_stock_evening_time',
+                ])
+                messages.success(request, 'Low-stock email times were updated.')
+        else:
+            messages.error(request, 'Choose a valid notification setting.')
+        if action != 'profile' or profile_form.is_valid():
+            return redirect('project_settings', project_name=project.name)
+
+    can_view_login_history = project.project_manager_id == request.user.id
+    login_events_page = None
+    if can_view_login_history:
+        team_accounts = User.objects.filter(
+            Q(edited_projects=project) | Q(member_projects=project)
+        ).distinct()
+        login_events_page = Paginator(
+            ProjectLoginEvent.objects.filter(
+                project=project,
+                user__in=team_accounts,
+            ).select_related('user'),
+            25,
+        ).get_page(request.GET.get('login_page'))
+
+    return render(request, 'inventory/settings.html', {
+        'project': project,
+        'projects': get_user_projects(request.user),
+        'profile': profile,
+        'profile_form': profile_form,
+        'is_project_manager': project.project_manager_id == request.user.id,
+        'can_view_login_history': can_view_login_history,
+        'login_events_page': login_events_page,
+        'time_zones': sorted(available_timezones()),
+        'can_manage_alert_schedule': can_manage_alert_schedule,
+        'email_alerts_configured': bool(settings.EMAIL_HOST_USER),
+        **get_sidebar_urls(project_name),
+    })
+
+
+@login_required
+@require_GET
+def export_project_backup(request, project_name):
+    """Download an in-memory ZIP backup containing data for one project."""
+    project = get_object_or_404(Project, name=project_name)
+    has_access = (
+        project.project_manager_id == request.user.id
+        or project.project_editors.filter(id=request.user.id).exists()
+        or project.project_members.filter(id=request.user.id).exists()
+    )
+    if not has_access:
+        return render(request, 'inventory/403_page.html', status=403)
+
+    msds_files = MSDSFile.objects.filter(
+        reagent__project=project
+    ).select_related('reagent')
+    validation_results = MSDSValidationResult.objects.filter(
+        msds_file__reagent__project=project
+    )
+    shelf_queryset = Shelf.objects.filter(project=project)
+    storage_ids = shelf_queryset.values_list('storage_id', flat=True).distinct()
+    storage_queryset = Storages.objects.filter(pk__in=storage_ids)
+    room_ids = storage_queryset.values_list('room_id', flat=True).distinct()
+
+    datasets = [
+        ('project', Project.objects.filter(pk=project.pk)),
+        ('logs', Log.objects.filter(project=project)),
+        ('consumables', Consumable.objects.filter(project=project)),
+        ('reagents', Reagent.objects.filter(project=project)),
+        ('equipment', Equipment.objects.filter(project=project)),
+        ('samples', Sample.objects.filter(project=project)),
+        (
+            'sample_locations',
+            Sample_Locations.objects.filter(sample__project=project),
+        ),
+        ('shelves', shelf_queryset),
+        ('racks', Rack.objects.filter(project=project)),
+        ('boxes', Box.objects.filter(project=project)),
+        ('rooms', Rooms.objects.filter(pk__in=room_ids)),
+        ('storages', storage_queryset),
+        ('trash_consumables', TrashConsumable.objects.filter(project=project)),
+        ('trash_reagents', TrashReagent.objects.filter(project=project)),
+        ('trash_equipment', TrashEquipment.objects.filter(project=project)),
+        ('trash_samples', TrashSample.objects.filter(project=project)),
+        ('low_stock_email_deliveries', LowStockEmailDelivery.objects.filter(
+            project=project
+        )),
+        (
+            'msds_files',
+            msds_files,
+            [
+                field.name for field in MSDSFile._meta.fields
+                if field.name != 'file'
+            ],
+        ),
+        ('msds_validation_results', validation_results),
+        (
+            'msds_sections',
+            MSDSSection.objects.filter(
+                validation_results__in=validation_results
+            ).distinct(),
+        ),
+    ]
+
+    archive_buffer = io.BytesIO()
+    attachment_manifest = []
+    try:
+        with zipfile.ZipFile(
+            archive_buffer,
+            mode='w',
+            compression=zipfile.ZIP_DEFLATED,
+        ) as archive:
+            exported_datasets = []
+            for dataset in datasets:
+                name, queryset, *field_options = dataset
+                serializer_options = {}
+                if field_options:
+                    serializer_options['fields'] = field_options[0]
+                serialized_data = serializers.serialize(
+                    'json',
+                    queryset,
+                    indent=2,
+                    **serializer_options,
+                )
+                archive.writestr(f'data/{name}.json', serialized_data)
+                exported_datasets.append({
+                    'name': name,
+                    'record_count': queryset.count(),
+                })
+
+            for msds_file in msds_files:
+                safe_filename = get_valid_filename(
+                    msds_file.original_filename or 'msds.pdf'
+                )
+                attachment_path = (
+                    f'files/msds/{msds_file.pk}/'
+                    f'{safe_filename}'
+                )
+                with msds_file.file.open('rb') as source:
+                    with archive.open(attachment_path, 'w') as destination:
+                        for chunk in iter(lambda: source.read(64 * 1024), b''):
+                            destination.write(chunk)
+                attachment_manifest.append({
+                    'msds_file_id': msds_file.pk,
+                    'original_filename': msds_file.original_filename,
+                    'archive_path': attachment_path,
+                })
+
+            archive.writestr(
+                'manifest.json',
+                json.dumps({
+                    'format_version': 1,
+                    'generated_at': timezone.now().isoformat(),
+                    'project_name': project.name,
+                    'datasets': exported_datasets,
+                    'attachments': attachment_manifest,
+                }, indent=2, ensure_ascii=False),
+            )
+            archive.writestr(
+                'README.txt',
+                (
+                    f'Flux project backup for {project.name}\n'
+                    'This archive is a downloadable snapshot, not an automatic '
+                    'restore package.\n'
+                    'Save this file to a local, USB, or external drive. Flux '
+                    'does not retain this generated archive.\n'
+                    'Project records are in data/*.json. Attached MSDS files '
+                    'are in files/msds/.\n'
+                ),
+            )
+    except OSError:
+        security_logger.exception(
+            'Project backup generation failed for project %s',
+            project.pk,
+        )
+        return HttpResponse(
+            'The project backup could not be generated. Please try again or '
+            'contact your administrator.',
+            status=500,
+        )
+
+    archive_buffer.seek(0)
+    filename = (
+        f'flux-project-backup-{slugify(project.name) or "project"}-'
+        f'{timezone.now():%Y%m%dT%H%M%SZ}.zip'
+    )
+    response = FileResponse(
+        archive_buffer,
+        as_attachment=True,
+        filename=filename,
+        content_type='application/zip',
+    )
+    response['Cache-Control'] = 'private, no-store'
+    return response
+
+
 # Project Team Views
 @login_required
 def team(request, project_name):
@@ -313,41 +664,66 @@ def add_user_to_project(request, project_name):
     if request.method != 'POST':
         return JsonResponse({'error': "Invalid request method"}, status=405)
 
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     try:
-        email = clean_text_field(request.POST.get('email'))
-        role = clean_text_field(request.POST.get('role'))
         project = get_object_or_404(Project, name=project_name)
-        user = get_object_or_404(User, email=email)
+        if project.project_manager_id != request.user.id:
+            return JsonResponse(
+                {'success': False, 'message': 'Only the project manager can add team members.'},
+                status=403,
+            )
+
+        email = request.POST.get('email', '').strip()
+        role = request.POST.get('role', '')
+        if not email or role not in {'Full', 'Limited'}:
+            return JsonResponse(
+                {'success': False, 'message': 'Enter an account email and access type.'},
+                status=400,
+            )
+
+        user = User.objects.filter(email__iexact=email).first()
+        if user is None:
+            return JsonResponse(
+                {'success': False, 'message': 'No account was found with that email address.'},
+                status=404,
+            )
 
         # Check if user is already in project
-        if (project.project_editors.filter(email=email).exists() or 
-            project.project_members.filter(email=email).exists()):
-            message1 = "User is already part of the project."
-            message2 = "Contact support if this is an error."
-            return render(request, 'inventory/404_page.html', 
-                         {'message1': message1, 'message2': message2})
+        if (
+            project.project_editors.filter(pk=user.pk).exists()
+            or project.project_members.filter(pk=user.pk).exists()
+        ):
+            return JsonResponse(
+                {'success': False, 'message': 'This user is already part of the project.'},
+                status=409,
+            )
 
-        # Add user based on role
-        if role == 'Full':
-            project.project_editors.add(user)
-        elif role == 'Limited':
-            project.project_members.add(user)
+        with transaction.atomic():
+            if role == 'Full':
+                project.project_editors.add(user)
+            else:
+                project.project_members.add(user)
 
-        # Add project to user's profile
-        user_profile, _ = UserProfile.objects.get_or_create(user=user)
-        user_profile.managed_projects.add(project)
+            user_profile, _ = UserProfile.objects.get_or_create(user=user)
+            user_profile.managed_projects.add(project)
 
-        Log.objects.create(
-            project=project,
-            user=request.user,
-            action=f'Added {user.get_full_name()} to project'
-        )
+            Log.objects.create(
+                project=project,
+                user=request.user,
+                action=f'Added {user.get_full_name()} to project'
+            )
 
-        return redirect(f'/team/{project_name}')
+        if is_ajax:
+            return JsonResponse({'success': True})
+        return redirect('team', project_name=project.name)
 
     except Exception as e:
-        security_logger.error(f"Add user error: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
+        security_logger.exception(f"Add user error: {str(e)}")
+        return JsonResponse(
+            {'success': False, 'message': 'The team member could not be added.'},
+            status=500,
+        )
 
 
 @login_required
@@ -473,6 +849,7 @@ class InventoryItemViews:
         try:
             project = get_object_or_404(Project, name=project_name)
             items = model.objects.filter(project__name=project_name)
+            low_stock_alerts = get_low_stock_alerts(project)
 
             # Pagination
             page = request.GET.get('page', 1)
@@ -494,6 +871,7 @@ class InventoryItemViews:
                     'expiring_soon_count': model.objects.get_project_stats(project_name)['expiring_soon_count'],
                     'low_stock_count': model.objects.get_project_stats(project_name)['low_stock_count'],
                     'page_obj': items_page,
+                    'low_stock_alerts': low_stock_alerts,
                     **get_sidebar_urls(project_name)
                 }
             else:
@@ -503,6 +881,7 @@ class InventoryItemViews:
                     template_name: items,
                     'user': request.user,
                     'page_obj': items_page,
+                    'low_stock_alerts': low_stock_alerts,
                     **get_sidebar_urls(project_name)
                 }
 
@@ -513,22 +892,224 @@ class InventoryItemViews:
             return JsonResponse({'error': str(e)}, status=500)
 
     @classmethod
-    def dashboard_view(cls, request, project_name, template_name, model, value_field):
+    def dashboard_view(cls, request, project_name, template_name, model):
         """Generic dashboard view"""
         try:
             project = get_object_or_404(Project, name=project_name)
-            items = model.objects.filter(project=project, is_active=True)
+            items = list(model.objects.filter(project=project, is_active=True))
+            today = timezone.localdate()
 
-            # Prepare chart data
-            names = [item.name for item in items]
-            values = [getattr(item, value_field) for item in items]
-            plot_data = json.dumps({'names': names, 'values': values})
+            if model in (Consumable, Reagent):
+                low_items = [
+                    item for item in items
+                    if item.threshold_value is not None
+                    and item.pack_count < item.threshold_value
+                ]
+                stock_labels = [item.name for item in items]
+                stock_values = [item.pack_count for item in items]
+                stock_thresholds = [
+                    item.threshold_value if item.threshold_value is not None else None
+                    for item in items
+                ]
+                status_counts = {
+                    'Low stock': len(low_items),
+                    'Healthy': sum(
+                        item.threshold_value is not None
+                        and item.pack_count >= item.threshold_value
+                        for item in items
+                    ),
+                    'No threshold': sum(
+                        item.threshold_value is None for item in items
+                    ),
+                }
+                expiry_counts = {
+                    'Expired': 0,
+                    '0–7 days': 0,
+                    '8–30 days': 0,
+                    '31–90 days': 0,
+                    'Over 90 days': 0,
+                    'No expiry date': 0,
+                }
+                for item in items:
+                    if not item.expiry_date:
+                        expiry_counts['No expiry date'] += 1
+                        continue
+                    days_left = (item.expiry_date - today).days
+                    if days_left < 0:
+                        expiry_counts['Expired'] += 1
+                    elif days_left <= 7:
+                        expiry_counts['0–7 days'] += 1
+                    elif days_left <= 30:
+                        expiry_counts['8–30 days'] += 1
+                    elif days_left <= 90:
+                        expiry_counts['31–90 days'] += 1
+                    else:
+                        expiry_counts['Over 90 days'] += 1
+                vendors = {}
+                for item in items:
+                    vendor = item.vendor.strip() or 'Not specified'
+                    vendors[vendor] = vendors.get(vendor, 0) + 1
+                vendor_items = sorted(
+                    vendors.items(), key=lambda pair: (-pair[1], pair[0])
+                )[:8]
+                inventory_title = 'Consumables' if model is Consumable else 'Reagents'
+                chart_data = {
+                    'category': 'stock',
+                    'primary_title': f'{inventory_title} stock by item',
+                    'primary_labels': stock_labels,
+                    'primary_values': stock_values,
+                    'primary_thresholds': stock_thresholds,
+                    'distribution_title': 'Stock health',
+                    'distribution_labels': list(status_counts),
+                    'distribution_values': list(status_counts.values()),
+                    'secondary_title': 'Expiry outlook',
+                    'secondary_labels': list(expiry_counts),
+                    'secondary_values': list(expiry_counts.values()),
+                    'kpis': [
+                        {'label': 'Active items', 'value': len(items), 'tone': 'neutral'},
+                        {'label': 'Low stock', 'value': len(low_items), 'tone': 'danger'},
+                        {
+                            'label': 'Expiring in 30 days',
+                            'value': expiry_counts['0–7 days'] + expiry_counts['8–30 days'],
+                            'tone': 'warning',
+                        },
+                        {'label': 'Vendors', 'value': len(vendors), 'tone': 'neutral'},
+                    ],
+                    'tertiary_title': 'Items by vendor',
+                    'tertiary_labels': [pair[0] for pair in vendor_items],
+                    'tertiary_values': [pair[1] for pair in vendor_items],
+                }
+            elif model is Sample:
+                low_items = [
+                    item for item in items
+                    if item.threshold_value is not None and item.volume < item.threshold_value
+                ]
+                types = {}
+                for item in items:
+                    types[item.sample_type] = types.get(item.sample_type, 0) + 1
+                type_items = sorted(
+                    types.items(), key=lambda pair: (-pair[1], pair[0])
+                )[:10]
+                status_counts = {
+                    'Low volume': len(low_items),
+                    'Healthy': sum(
+                        item.threshold_value is not None
+                        and item.volume >= item.threshold_value
+                        for item in items
+                    ),
+                    'No threshold': sum(
+                        item.threshold_value is None for item in items
+                    ),
+                }
+                chart_data = {
+                    'category': 'samples',
+                    'primary_title': 'Sample volume by sample',
+                    'primary_labels': [item.sample_id for item in items],
+                    'primary_values': [float(item.volume) for item in items],
+                    'primary_thresholds': [
+                        float(item.threshold_value) if item.threshold_value is not None else None
+                        for item in items
+                    ],
+                    'distribution_title': 'Volume health',
+                    'distribution_labels': list(status_counts),
+                    'distribution_values': list(status_counts.values()),
+                    'secondary_title': 'Samples by type',
+                    'secondary_labels': [pair[0] for pair in type_items],
+                    'secondary_values': [pair[1] for pair in type_items],
+                    'kpis': [
+                        {'label': 'Active samples', 'value': len(items), 'tone': 'neutral'},
+                        {'label': 'Low volume', 'value': len(low_items), 'tone': 'danger'},
+                        {'label': 'Sample types', 'value': len(types), 'tone': 'neutral'},
+                        {
+                            'label': 'Total volume',
+                            'value': round(sum(float(item.volume) for item in items), 2),
+                            'tone': 'neutral',
+                        },
+                    ],
+                    'tertiary_title': 'Samples by country',
+                    'tertiary_labels': [],
+                    'tertiary_values': [],
+                }
+                countries = {}
+                for item in items:
+                    country = (item.country or 'Not specified').strip()
+                    countries[country] = countries.get(country, 0) + 1
+                country_items = sorted(
+                    countries.items(), key=lambda pair: (-pair[1], pair[0])
+                )[:8]
+                country_count = len(countries)
+                chart_data['tertiary_labels'] = [pair[0] for pair in country_items]
+                chart_data['tertiary_values'] = [pair[1] for pair in country_items]
+                chart_data['kpis'][3] = {
+                    'label': 'Countries',
+                    'value': country_count,
+                    'tone': 'neutral',
+                }
+            else:
+                status_counts = {
+                    status: sum(item.status == status for item in items)
+                    for status, _ in Equipment.STATUS_CHOICES
+                }
+                calibration_counts = {
+                    'Overdue': 0,
+                    'Next 30 days': 0,
+                    '31–90 days': 0,
+                    'Over 90 days': 0,
+                    'Not scheduled': 0,
+                }
+                for item in items:
+                    if not item.next_calibration_date:
+                        calibration_counts['Not scheduled'] += 1
+                        continue
+                    days_left = (item.next_calibration_date - today).days
+                    if days_left < 0:
+                        calibration_counts['Overdue'] += 1
+                    elif days_left <= 30:
+                        calibration_counts['Next 30 days'] += 1
+                    elif days_left <= 90:
+                        calibration_counts['31–90 days'] += 1
+                    else:
+                        calibration_counts['Over 90 days'] += 1
+                sources = {}
+                for item in items:
+                    source = item.source.strip() or 'Not specified'
+                    sources[source] = sources.get(source, 0) + 1
+                source_items = sorted(
+                    sources.items(), key=lambda pair: (-pair[1], pair[0])
+                )[:8]
+                chart_data = {
+                    'category': 'equipment',
+                    'primary_title': 'Equipment by status',
+                    'primary_labels': [label for label, _ in Equipment.STATUS_CHOICES],
+                    'primary_values': list(status_counts.values()),
+                    'primary_thresholds': [],
+                    'distribution_title': 'Equipment status mix',
+                    'distribution_labels': list(status_counts),
+                    'distribution_values': list(status_counts.values()),
+                    'secondary_title': 'Calibration schedule',
+                    'secondary_labels': list(calibration_counts),
+                    'secondary_values': list(calibration_counts.values()),
+                    'kpis': [
+                        {'label': 'Active equipment', 'value': len(items), 'tone': 'neutral'},
+                        {'label': 'Operational', 'value': status_counts['operational'], 'tone': 'success'},
+                        {
+                            'label': 'Needs attention',
+                            'value': status_counts['maintenance'] + status_counts['faulty'],
+                            'tone': 'warning',
+                        },
+                        {'label': 'Calibration overdue', 'value': calibration_counts['Overdue'], 'tone': 'danger'},
+                    ],
+                    'tertiary_title': 'Equipment by source',
+                    'tertiary_labels': [pair[0] for pair in source_items],
+                    'tertiary_values': [pair[1] for pair in source_items],
+                }
 
             context = {
-                'plot_data': plot_data,
+                'chart_data': chart_data,
                 'project': project,
                 'projects': get_user_projects(request.user),
                 'items': items,
+                'low_stock_alerts': get_low_stock_alerts(project),
                 **get_sidebar_urls(project_name)
             }
             return render(request, f'inventory/{template_name}.html', context)
@@ -567,6 +1148,8 @@ class InventoryItemViews:
                     items_left_in_pack=data['items_per_pack'],
                     **data
             )
+            low_stock_alert = is_low_stock(item)
+            send_low_stock_notification(item)
 
             Log.objects.create(
                 project=project,
@@ -579,6 +1162,9 @@ class InventoryItemViews:
                 'refresh': True,
                 'id': item.id,
                 'name': getattr(item, 'name', ''),
+                'sample_id': getattr(item, 'sample_id', ''),
+                'low_stock': low_stock_alert,
+                'low_stock_alert': low_stock_alert,
                 'message': success_message
             })
 
@@ -600,6 +1186,7 @@ class InventoryItemViews:
 
         try:
             item = get_object_or_404(model, id=item_id)
+            was_low = is_low_stock(item)
             old_values = {field: getattr(item, field) for field in fields.keys()}
             new_values = {}
             changed_fields = []
@@ -622,6 +1209,8 @@ class InventoryItemViews:
             for field, value in new_values.items():
                 setattr(item, field, value)
             item.save()
+            low_stock_alert = is_low_stock(item) and not was_low
+            send_low_stock_notification(item, was_low=was_low)
 
             # Log changes
             if changed_fields:
@@ -639,6 +1228,8 @@ class InventoryItemViews:
                 'success': True,
                 'refresh': bool(changed_fields),
                 'id': item.id,
+                'low_stock': is_low_stock(item),
+                'low_stock_alert': low_stock_alert,
                 **{field: new_values[field] for field in fields.keys()}
             })
 
@@ -862,7 +1453,7 @@ def consumables(request, project_name):
 def dashboard_consumables(request, project_name):
     """Consumables dashboard view"""
     return InventoryItemViews.dashboard_view(
-        request, project_name, 'dashboard_consumables', Consumable, 'items_left_in_pack'
+        request, project_name, 'dashboard_consumables', Consumable
     )
 
 
@@ -967,19 +1558,35 @@ def retrieve_consumable(request, consumable_id):
 
     try:
         consumable = get_object_or_404(Consumable, id=consumable_id)
+        was_low = is_low_stock(consumable)
         option = clean_text_field(request.POST.get('retrieve_by', ''))
-        amount = int(request.POST.get('amount', 0))
+        try:
+            amount = int(request.POST.get('amount', 0))
+        except (TypeError, ValueError):
+            return JsonResponse({'error': 'Enter a valid whole-number amount'}, status=400)
 
         if amount <= 0:
             return JsonResponse({'error': 'Amount must be positive'}, status=400)
 
         if option == 'Pack size':
+            available_items = (
+                (consumable.pack_count - 1) * consumable.items_per_pack
+                + consumable.items_left_in_pack
+                if consumable.pack_count > 0 else 0
+            )
+            if amount > available_items:
+                return JsonResponse({
+                    'error': f'Only {available_items} items are available',
+                }, status=400)
+
             # Handle partial pack retrieval logic
             tmp = consumable.items_left_in_pack - amount
 
             if tmp == 0:
                 consumable.pack_count -= 1
-                consumable.items_left_in_pack = consumable.items_per_pack
+                consumable.items_left_in_pack = (
+                    consumable.items_per_pack if consumable.pack_count > 0 else 0
+                )
                 log_msg = f"1 pack of {consumable.name} consumed"
             elif tmp > 0:
                 consumable.items_left_in_pack = tmp
@@ -993,28 +1600,28 @@ def retrieve_consumable(request, consumable_id):
                     consumable.items_per_pack if remainder == 0 
                     else consumable.items_per_pack - remainder
                 )
+                if consumable.pack_count == 0:
+                    consumable.items_left_in_pack = 0
                 log_msg = (
                     f"{amount} items removed from {consumable.name} - "
                     f"{full_packs_used + 1} packs consumed"
                 )
         else:
             # Handle full pack retrieval
+            if amount > consumable.pack_count:
+                pack_label = 'pack' if consumable.pack_count == 1 else 'packs'
+                return JsonResponse({
+                    'error': f'Only {consumable.pack_count} {pack_label} are available',
+                }, status=400)
             consumable.pack_count -= amount
+            if consumable.pack_count == 0:
+                consumable.items_left_in_pack = 0
             log_msg = f"{amount} full pack(s) of {consumable.name} consumed"
 
         consumable.save()
-
-        # Check threshold and send notification if needed
-        if consumable.pack_count < consumable.threshold_value:
-            threading.Thread(
-                target=send_email_notification,
-                args=(
-                    f"Consumable {consumable.name} below threshold",
-                    'inventory/shortage_email_template.html',
-                    {'item': consumable, 'type': 'consumable'},
-                    [consumable.project.project_manager.email]
-                )
-            ).start()
+        low_stock = is_low_stock(consumable)
+        low_stock_alert = low_stock and not was_low
+        send_low_stock_notification(consumable, was_low=was_low)
 
         Log.objects.create(
             project=consumable.project,
@@ -1040,7 +1647,9 @@ def retrieve_consumable(request, consumable_id):
             'vendor': consumable.vendor,
             'notes': consumable.notes,
             'is_active': consumable.is_active,
-            'oem_temperature': consumable.oem_temperature
+            'oem_temperature': consumable.oem_temperature,
+            'low_stock': low_stock,
+            'low_stock_alert': low_stock_alert
         })
 
     except Exception as e:
@@ -1114,7 +1723,8 @@ def restock_consumable(request, consumable_id):
             'vendor': consumable.vendor,
             'notes': consumable.notes,
             'is_active': consumable.is_active,
-            'oem_temperature': consumable.oem_temperature
+            'oem_temperature': consumable.oem_temperature,
+            'low_stock': is_low_stock(consumable)
         })
 
     except Exception as e:
@@ -1243,7 +1853,7 @@ def reagents(request, project_name):
                     ).order_by('-upload_date'),
                     to_attr='latest_msds')
         ).only(
-            'id', 'name', 'product_code', 'items_per_pack',
+            'id', 'project_id', 'name', 'product_code', 'items_per_pack',
             'items_left_in_pack', 'pack_count', 'expiry_date',
             'date_recorded', 'storage_location', 'cold_storage',
             'oem_temperature', 'temperature_unit', 'vendor',
@@ -1269,6 +1879,7 @@ def reagents(request, project_name):
             'expiring_soon_count': Reagent.objects.get_project_stats(project_name)['expiring_soon_count'],
             'low_stock_count': Reagent.objects.get_project_stats(project_name)['low_stock_count'],
             'page_obj': reagents_page,
+            'low_stock_alerts': get_low_stock_alerts(project),
             **get_sidebar_urls(project_name)
         }
         return render(request, 'inventory/reagents.html', context)
@@ -1281,7 +1892,7 @@ def reagents(request, project_name):
 @login_required
 def dashboard_reagents(request, project_name):
     return InventoryItemViews.dashboard_view(
-        request, project_name, 'dashboard_reagents', Reagent, 'items_left_in_pack'
+        request, project_name, 'dashboard_reagents', Reagent
     )
 
 
@@ -1458,19 +2069,35 @@ def retrieve_reagent(request, reagent_id):
 
     try:
         reagent = get_object_or_404(Reagent, id=reagent_id)
+        was_low = is_low_stock(reagent)
         option = clean_text_field(request.POST.get('retrieve_by', ''))
-        amount = int(request.POST.get('amount', 0))
+        try:
+            amount = int(request.POST.get('amount', 0))
+        except (TypeError, ValueError):
+            return JsonResponse({'error': 'Enter a valid whole-number amount'}, status=400)
 
         if amount <= 0:
             return JsonResponse({'error': 'Amount must be positive'}, status=400)
 
         if option == 'Pack size':
+            available_items = (
+                (reagent.pack_count - 1) * reagent.items_per_pack
+                + reagent.items_left_in_pack
+                if reagent.pack_count > 0 else 0
+            )
+            if amount > available_items:
+                return JsonResponse({
+                    'error': f'Only {available_items} items are available',
+                }, status=400)
+
             # Handle partial pack retrieval logic
             tmp = reagent.items_left_in_pack - amount
 
             if tmp == 0:
                 reagent.pack_count -= 1
-                reagent.items_left_in_pack = reagent.items_per_pack
+                reagent.items_left_in_pack = (
+                    reagent.items_per_pack if reagent.pack_count > 0 else 0
+                )
                 log_msg = f"1 pack of {reagent.name} consumed"
             elif tmp > 0:
                 reagent.items_left_in_pack = tmp
@@ -1484,28 +2111,28 @@ def retrieve_reagent(request, reagent_id):
                     reagent.items_per_pack if remainder == 0 
                     else reagent.items_per_pack - remainder
                 )
+                if reagent.pack_count == 0:
+                    reagent.items_left_in_pack = 0
                 log_msg = (
                     f"{amount} items removed from {reagent.name} - "
                     f"{full_packs_used + 1} packs consumed"
                 )
         else:
             # Handle full pack retrieval
+            if amount > reagent.pack_count:
+                pack_label = 'pack' if reagent.pack_count == 1 else 'packs'
+                return JsonResponse({
+                    'error': f'Only {reagent.pack_count} {pack_label} are available',
+                }, status=400)
             reagent.pack_count -= amount
+            if reagent.pack_count == 0:
+                reagent.items_left_in_pack = 0
             log_msg = f"{amount} full pack(s) of {reagent.name} consumed"
 
         reagent.save()
-
-        # Check threshold and send notification if needed
-        if reagent.pack_count < reagent.threshold_value:
-            threading.Thread(
-                target=send_email_notification,
-                args=(
-                    f"Reagent {reagent.name} below threshold",
-                    'inventory/shortage_email_template.html',
-                    {'item': reagent, 'type': 'reagent'},
-                    [reagent.project.project_manager.email]
-                )
-            ).start()
+        low_stock = is_low_stock(reagent)
+        low_stock_alert = low_stock and not was_low
+        send_low_stock_notification(reagent, was_low=was_low)
 
         Log.objects.create(
             project=reagent.project,
@@ -1530,7 +2157,9 @@ def retrieve_reagent(request, reagent_id):
             'oem_temperature': reagent.oem_temperature,
             'temperature_unit': reagent.temperature_unit,
             'country_of_origin': reagent.country_of_origin,
-            'hazard_level': reagent.hazard_level
+            'hazard_level': reagent.hazard_level,
+            'low_stock': low_stock,
+            'low_stock_alert': low_stock_alert
         })
 
     except Exception as e:
@@ -1603,7 +2232,8 @@ def restock_reagent(request, reagent_id):
             'oem_temperature': reagent.oem_temperature,
             'temperature_unit': reagent.temperature_unit,
             'country_of_origin': reagent.country_of_origin,
-            'hazard_level': reagent.hazard_level
+            'hazard_level': reagent.hazard_level,
+            'low_stock': is_low_stock(reagent)
         })
 
     except Exception as e:
@@ -1741,41 +2371,47 @@ def get_reagent_info(request, id):
 @login_required
 def equipment_(request, project_name):
     return InventoryItemViews.list_view(
-        request, project_name, 'equipment', Equipment, TrashEquipment
+        request, project_name, 'equipment_', Equipment, count_attr=False
     )
 
 
 @login_required
 def dashboard_equipment_(request, project_name):
     return InventoryItemViews.dashboard_view(
-        request, project_name, 'dashboard_equipment', Equipment, 'quantity'
+        request, project_name, 'dashboard_equipment_', Equipment
     )
 
 
 @login_required
 @ensure_csrf_cookie
 def add_equipment_(request, project_name):
-    fields = {
-        'name': 'text',
-        'equip_id': 'text',
-        'serial_num': 'text',
-        'status': 'text',
-        'service_contract_start': 'date',
-        'service_contract_end': 'date',
-        'source': 'text',
-        'operating_temperature': 'int',
-        'storage_location': 'text',
-        'warranty_end_date': 'date',
-        'last_calibration_date': 'date',
-        'next_calibration_date': 'date',
-        'notes': 'text',
-        'is_active': 'bool',
-        'created_at': 'date',
-        'updated_at': 'date'
-    }
-    return InventoryItemViews.add_item(
-        request, project_name, Equipment, fields, 'Equipment added successfully'
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
+
+    project = get_object_or_404(Project, name=project_name)
+    form = EquipmentForm(request.POST)
+    if not form.is_valid():
+        return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
+
+    equipment = form.save(commit=False)
+    equipment.project = project
+    equipment.status = {
+        'Functional': 'operational',
+        'Faulty': 'faulty',
+    }.get(equipment.status, equipment.status)
+    equipment.save()
+    Log.objects.create(
+        project=project,
+        user=request.user,
+        action=f'Added {equipment.name} to Equipment',
     )
+    return JsonResponse({
+        'success': True,
+        'refresh': True,
+        'id': equipment.pk,
+        'name': equipment.name,
+        'message': 'Equipment added successfully',
+    })
 
 
 @login_required
@@ -1809,7 +2445,14 @@ def edit_equipment_(request, equipment_id):
 
         # Check for status change to faulty
         new_status = new_values['status']
-        status_changed_to_faulty = (new_status == "Faulty" and old_status != "Faulty")
+        new_status = {
+            'Functional': 'operational',
+            'Faulty': 'faulty',
+        }.get(new_status, new_status)
+        new_values['status'] = new_status
+        status_changed_to_faulty = (
+            new_status == 'faulty' and old_status != 'faulty'
+        )
 
         # Update the equipment
         for field, value in new_values.items():
@@ -2051,9 +2694,9 @@ def get_storage_for_user(user, project):
     managed_projects = Project.objects.filter(project_manager=effective_manager, is_active=True)
 
     # Get storage from all these projects
-    shelves = Shelf.objects.filter(project__in=managed_projects, is_active=True)
-    racks = Rack.objects.filter(project__in=managed_projects, is_active=True)
-    boxes = Box.objects.filter(project__in=managed_projects, is_active=True)
+    shelves = Shelf.objects.filter(project__in=managed_projects)
+    racks = Rack.objects.filter(project__in=managed_projects)
+    boxes = Box.objects.filter(project__in=managed_projects)
 
     return {
         'shelves': shelves,
@@ -2073,7 +2716,7 @@ def samples(request, project_name):
         samples = Sample.objects.filter(
             project=project,
             is_active=True
-        ).select_related('shelf', 'rack', 'box')
+        ).prefetch_related('sample_locations__box__rack__shelf')
 
         # Get shared storage options for this user
         storage_options = get_storage_for_user(request.user, project)
@@ -2097,6 +2740,7 @@ def samples(request, project_name):
             'boxes': storage_options['boxes'],
             'user': request.user,
             'page_obj': samples_page,
+            'low_stock_alerts': get_low_stock_alerts(project),
             **get_sidebar_urls(project_name)
         }
         return render(request, 'inventory/samples.html', context)
@@ -2109,7 +2753,7 @@ def samples(request, project_name):
 @login_required
 def dashboard_samples(request, project_name):
     return InventoryItemViews.dashboard_view(
-        request, project_name, 'dashboard_samples', Sample, 'volume'
+        request, project_name, 'dashboard_samples', Sample
     )
 
 
@@ -2198,6 +2842,7 @@ def retrieve_sample(request, sample_id):
 
     try:
         sample = get_object_or_404(Sample, id=sample_id)
+        was_low = is_low_stock(sample)
         amount = int(request.POST.get('amount', 0))
 
         if amount <= 0:
@@ -2207,6 +2852,9 @@ def retrieve_sample(request, sample_id):
 
         sample.volume -= amount
         sample.save()
+        low_stock = is_low_stock(sample)
+        low_stock_alert = low_stock and not was_low
+        send_low_stock_notification(sample, was_low=was_low)
 
         log_msg = f"{amount} units of sample {sample.sample_id} withdrawn"
         Log.objects.create(
@@ -2214,13 +2862,6 @@ def retrieve_sample(request, sample_id):
             user=request.user,
             action=log_msg
         )
-        # Check threshold and send notification if needed
-        if sample.volume < sample.threshold_value:
-            threading.Thread(
-                target=send_sample_notification,
-                args=(sample,)
-            ).start()
-
         return JsonResponse({
             'success': True,
             'refresh': True,
@@ -2228,60 +2869,22 @@ def retrieve_sample(request, sample_id):
             'id': sample.id,
             'sample_id': sample.sample_id,
             'sample_type': sample.sample_type,
-            'description': sample.description,
             'collection_date': sample.collection_date,
             'country': sample.country,
             'volume': sample.volume,
             'volume_unit': sample.volume_unit,
             'concentration': sample.concentration,
-            'storage_location': sample.storage_location,
-            'cold_storage_id': sample.cold_storage_id,
-            'well_id': sample.well_id,
             'date_recorded': sample.date_recorded,
-            'storage_temperature': sample.storage_temperature,
             'threshold_value': sample.threshold_value,
             'is_active': sample.is_active,
-            'created_at': sample.is_active,
-            'update_at': sample.updated_at,
-            'notes': sample.notes
+            'notes': sample.notes,
+            'low_stock': low_stock,
+            'low_stock_alert': low_stock_alert
         })
 
     except Exception as e:
         security_logger.error(f"Retrieve sample error: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
-
-
-def send_sample_notification(sample):
-    subject = 'Sample Volume Below Threshold'
-    # Add the email address to send the notification
-    recipient_list = [sample.project.project_manager.email]
-
-    # Render the HTML template as a string
-    html_message = render_to_string(
-            'inventory/shortage_email_template.html', {'sample': sample}
-    )
-    msg = EmailMultiAlternatives(
-            subject,
-            html_message,
-            'settings.EMAIL_HOST_USER',
-            recipient_list
-    )
-
-    msg.mixed_subtype = 'related'
-    msg.attach_alternative(html_message, "text/html")
-    email_images = ["Bell.png", "Logo_Orange.png", "Logo_White.png",
-                    "facebook2x.png", "instagram2x.png",
-                    "linkedin2x.png", "twitter2x.png"]
-    for root, _, files in os.walk(f"{static_img_path}/images/"):
-        for file in files:
-            if file in email_images:
-                file_path = os.path.join(root, file)
-                filename = os.path.splitext(file)[0]
-                img = MIMEImage(open(file_path, 'rb').read())
-                img.add_header('Content-Id', f'<{filename}>')
-                msg.attach(img)
-
-    msg.send()
 
 
 @login_required
@@ -2321,16 +2924,11 @@ def restock_sample(request, sample_id):
             'volume': sample.volume,
             'volume_unit': sample.volume_unit,
             'concentration': sample.concentration,
-            'storage_location': sample.storage_location,
-            'cold_storage_id': sample.cold_storage_id,
-            'well_id': sample.well_id,
             'date_recorded': sample.date_recorded,
-            'storage_temperature': sample.storage_temperature,
             'threshold_value': sample.threshold_value,
             'is_active': sample.is_active,
-            'created_at': sample.is_active,
-            'update_at': sample.updated_at,
-            'notes': sample.notes
+            'notes': sample.notes,
+            'low_stock': is_low_stock(sample)
         })
 
     except Exception as e:
@@ -2553,6 +3151,7 @@ def add_sample(request, project_name):
                 box=box,
                 **data
             )
+        send_low_stock_notification(sample)
 
         Log.objects.create(
             project=project,
@@ -2564,7 +3163,10 @@ def add_sample(request, project_name):
             'success': True,
             'refresh': True,
             'id': sample.id,
-            'message': 'Sample added successfully'
+            'message': 'Sample added successfully',
+            'sample_id': sample.sample_id,
+            'low_stock': is_low_stock(sample),
+            'low_stock_alert': is_low_stock(sample)
         })
 
     except IntegrityError as e:

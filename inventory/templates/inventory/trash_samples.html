@@ -20,7 +20,7 @@
 
 {% block content %}
 {% if user == project.project_manager or user in project.project_editors.all %}
-<table class="w-full table-auto">
+<table class="wide-inventory-table w-full table-auto">
     <thead class="uppercase tracking-wider border-b h-7 align-top text-xs font-semibold">
         <tr>
             <th class="min-w-fit w-3/5 md:w-1/2 lg:w-fit text-left">Name</th>

@@ -1,0 +1,722 @@
+:root {
+    color-scheme: light;
+    --flux-admin-ink: #1d1d1f;
+    --flux-admin-muted: #6e6e73;
+    --flux-admin-accent: #ff5c00;
+    --flux-admin-accent-dark: #c74600;
+    --flux-admin-line: #e5e5e7;
+    --flux-admin-wash: #f5f5f7;
+    --flux-admin-radius: 14px;
+}
+
+body,
+input,
+textarea,
+select,
+button {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+    color: var(--flux-admin-ink);
+    background: #f5f7f6;
+}
+
+#header {
+    min-height: 68px;
+    padding: 0 28px;
+    background: #fff;
+    color: var(--flux-admin-ink);
+    border-bottom: 1px solid var(--flux-admin-line);
+    box-shadow: 0 3px 16px rgb(28 55 43 / 4%);
+}
+
+#branding {
+    display: flex;
+    align-items: center;
+    min-height: 68px;
+}
+
+.flux-admin-brand,
+.flux-admin-brand a {
+    display: flex;
+    align-items: center;
+}
+
+.flux-admin-brand {
+    gap: 12px;
+}
+
+.flux-admin-brand a {
+    gap: 9px;
+    color: var(--flux-admin-ink);
+    text-decoration: none;
+}
+
+.flux-admin-mark {
+    display: grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    color: #fff;
+    background: var(--flux-admin-accent);
+    border-radius: 11px;
+    font-size: 17px;
+    font-weight: 750;
+}
+
+.flux-admin-wordmark {
+    font-size: 16px;
+    font-weight: 760;
+    letter-spacing: .055em;
+}
+
+.flux-admin-wordmark span {
+    color: #55a37f;
+}
+
+.flux-admin-label {
+    padding-left: 12px;
+    color: var(--flux-admin-muted);
+    border-left: 1px solid var(--flux-admin-line);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+}
+
+#user-tools {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--flux-admin-muted);
+}
+
+#user-tools a,
+#user-tools button {
+    color: var(--flux-admin-accent);
+}
+
+#user-tools a:hover {
+    color: var(--flux-admin-accent-dark);
+}
+
+.flux-control-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 13px;
+    color: var(--flux-admin-accent-dark) !important;
+    background: #fff3eb;
+    border: 1px solid #ffe0cd;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.flux-control-link:hover {
+    background: #ffe8d9;
+}
+
+#content {
+    max-width: 1520px;
+    padding: 28px;
+}
+
+#content h1 {
+    color: var(--flux-admin-ink);
+    font-weight: 720;
+    letter-spacing: -.025em;
+}
+
+.flux-admin-welcome {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin: 0 0 24px;
+    padding: clamp(22px, 4vw, 36px);
+    color: var(--flux-admin-ink);
+    background: #fff;
+    border: 1px solid var(--flux-admin-line);
+    border-radius: var(--flux-admin-radius);
+    box-shadow: 0 4px 18px rgb(0 0 0 / 4%);
+}
+
+.flux-admin-welcome h1 {
+    margin: 5px 0 8px;
+    color: var(--flux-admin-ink) !important;
+    font-size: clamp(24px, 3vw, 34px);
+    line-height: 1.15;
+}
+
+.flux-admin-welcome p {
+    margin: 0;
+    color: var(--flux-admin-muted);
+    font-size: 14px;
+}
+
+.flux-admin-welcome .flux-admin-eyebrow {
+    color: var(--flux-admin-accent);
+    font-size: 10px;
+    font-weight: 750;
+    letter-spacing: .14em;
+}
+
+.flux-admin-shortcuts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 9px;
+}
+
+.flux-admin-shortcuts a {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 13px;
+    color: var(--flux-admin-ink);
+    background: #fff;
+    border: 1px solid var(--flux-admin-line);
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 650;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.flux-admin-shortcuts a:hover {
+    background: #fff3eb;
+    border-color: #ffd6bb;
+}
+
+#content-main,
+#content-related {
+    min-width: 0;
+}
+
+.module,
+.module caption,
+#changelist,
+.inline-group,
+.submit-row,
+.selector,
+.paginator {
+    border-radius: 10px;
+}
+
+.module {
+    overflow: hidden;
+    border: 1px solid var(--flux-admin-line);
+    box-shadow: 0 4px 14px rgb(25 51 40 / 3%);
+    background: #fff !important;
+    color: var(--flux-admin-ink) !important;
+}
+
+#nav-sidebar,
+#nav-sidebar .module,
+#nav-sidebar .module table,
+#nav-sidebar .module tbody,
+#nav-sidebar .module tr,
+#nav-sidebar .module th,
+#nav-sidebar .module td,
+#nav-sidebar .module ul,
+#nav-sidebar .module li {
+    color: var(--flux-admin-ink) !important;
+    background: #fff !important;
+}
+
+#nav-sidebar {
+    border-right: 1px solid var(--flux-admin-line) !important;
+    box-shadow: 2px 0 12px rgb(20 24 32 / 3%);
+}
+
+#nav-sidebar .module {
+    border: 0 !important;
+    border-bottom: 1px solid var(--flux-admin-line) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+#nav-sidebar .module caption,
+#nav-sidebar .module h2 {
+    color: var(--flux-admin-muted) !important;
+    background: #f5f5f7 !important;
+}
+
+#nav-sidebar .module a,
+#nav-sidebar .module a:link,
+#nav-sidebar .module a:visited {
+    color: var(--flux-admin-accent-dark) !important;
+    background: transparent !important;
+}
+
+#nav-sidebar .module a:hover,
+#nav-sidebar .module a:focus-visible,
+#nav-sidebar .current-model a {
+    color: var(--flux-admin-accent-dark) !important;
+    background: #fff3eb !important;
+}
+
+#nav-filter,
+#nav-sidebar input[type="search"] {
+    color: var(--flux-admin-ink) !important;
+    background: #fff !important;
+    border-color: var(--flux-admin-line) !important;
+}
+
+#nav-sidebar-toggle,
+.toggle-nav-sidebar {
+    color: var(--flux-admin-accent-dark) !important;
+    background: #fff !important;
+    border-color: var(--flux-admin-line) !important;
+}
+
+.flux-dashboard-nav {
+    margin: 10px;
+    padding: 12px;
+    border: 1px solid var(--flux-admin-line);
+    border-radius: 10px;
+    background: #fff !important;
+}
+
+.flux-dashboard-nav h2 {
+    margin: 0 0 8px;
+    color: var(--flux-admin-muted);
+    font-size: 11px;
+    font-weight: 750;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.flux-dashboard-nav-link,
+.flux-dashboard-project a {
+    display: block;
+    padding: 6px 8px;
+    color: var(--flux-admin-accent-dark) !important;
+    border-radius: 6px;
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.flux-dashboard-nav-link:hover,
+.flux-dashboard-project a:hover {
+    background: #fff3eb !important;
+}
+
+.flux-dashboard-project {
+    margin-top: 10px;
+    padding-top: 9px;
+    border-top: 1px solid var(--flux-admin-line);
+}
+
+.flux-dashboard-project > span {
+    display: block;
+    padding: 2px 8px 5px;
+    color: var(--flux-admin-ink);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.flux-dashboard-empty {
+    margin: 8px 0 0;
+    color: var(--flux-admin-muted);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.dashboard #content .module,
+.dashboard #content .module table,
+.dashboard #content .module tbody,
+.dashboard #content .module tr,
+.dashboard #content .module th,
+.dashboard #content .module td,
+.dashboard #content-related,
+.dashboard #content-related .module {
+    color: var(--flux-admin-ink) !important;
+    background: #fff !important;
+}
+
+.dashboard #content .module caption,
+.dashboard #content .module h2 {
+    color: var(--flux-admin-ink) !important;
+    background: #f5f5f7 !important;
+}
+
+.dashboard #content .module a {
+    color: var(--flux-admin-accent-dark) !important;
+}
+
+.flux-admin-dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.7fr) minmax(250px, .8fr);
+    align-items: start;
+    gap: 20px;
+}
+
+.flux-admin-dashboard-grid #content-main,
+.flux-admin-activity {
+    width: auto !important;
+    min-width: 0;
+    float: none !important;
+    margin: 0 !important;
+}
+
+.flux-admin-activity .module {
+    padding-bottom: 8px;
+}
+
+.flux-admin-activity .module h3,
+.flux-admin-activity .module .actionlist,
+.flux-admin-empty {
+    margin-right: 15px;
+    margin-left: 15px;
+}
+
+.flux-admin-activity .actionlist li {
+    padding: 9px 0;
+    border-bottom: 1px solid #edf0ee;
+}
+
+.flux-admin-empty {
+    color: var(--flux-admin-muted);
+    font-size: 13px;
+}
+
+.dashboard #content-main .app-list {
+    width: 100%;
+}
+
+.dashboard #content-main .module table {
+    width: 100%;
+}
+
+.dashboard #content-main .module table th,
+.dashboard #content-main .module table td {
+    border-color: #edf0ee;
+}
+
+.module caption,
+.module h2,
+.module h3 {
+    color: var(--flux-admin-ink);
+}
+
+.module caption,
+.module h2 {
+    padding: 12px 15px;
+    background: #edf4f0;
+    font-size: 12px;
+    font-weight: 750;
+    letter-spacing: .035em;
+}
+
+.module table {
+    width: 100%;
+}
+
+.module th,
+.module td {
+    padding: 11px 14px;
+    border-bottom: 1px solid #edf1ef;
+}
+
+.module tr:last-child th,
+.module tr:last-child td {
+    border-bottom: 0;
+}
+
+.module a,
+#content a {
+    color: var(--flux-admin-accent-dark);
+}
+
+.module a:hover,
+#content a:hover {
+    color: var(--flux-admin-accent-dark);
+}
+
+.object-tools a,
+.submit-row input,
+.submit-row a,
+.button,
+input[type="submit"],
+input[type="button"] {
+    border-radius: 8px;
+}
+
+.button.default,
+input[type="submit"].default,
+.submit-row input.default {
+    background: var(--flux-admin-accent);
+}
+
+.button.default:hover,
+input[type="submit"].default:hover,
+.submit-row input.default:hover {
+    background: var(--flux-admin-accent-dark);
+}
+
+input,
+textarea,
+select,
+.vTextField {
+    border-radius: 7px;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: #ff9b62 !important;
+    box-shadow: 0 0 0 3px rgb(255 92 0 / 12%) !important;
+    outline: none;
+}
+
+#changelist-filter {
+    border: 1px solid var(--flux-admin-line);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#changelist-filter h2 {
+    padding: 12px 14px;
+    background: #edf4f0;
+}
+
+#changelist-filter li.selected a {
+    color: var(--flux-admin-accent-dark);
+    font-weight: 700;
+}
+
+.breadcrumbs {
+    padding: 12px 28px;
+    color: var(--flux-admin-muted);
+    background: #fff;
+    border-bottom: 1px solid var(--flux-admin-line);
+}
+
+.breadcrumbs a {
+    color: var(--flux-admin-accent-dark);
+}
+
+#footer {
+    color: var(--flux-admin-muted);
+}
+
+body.login {
+    min-height: 100vh;
+    color: var(--flux-admin-ink) !important;
+    background: #f3f6f4 !important;
+}
+
+body.login #container {
+    box-sizing: border-box;
+    width: min(28rem, calc(100% - 2rem));
+    min-width: 0;
+    margin: clamp(2rem, 10vh, 6rem) auto;
+    overflow: hidden;
+    color: var(--flux-admin-ink) !important;
+    background: #fff !important;
+    border: 1px solid var(--flux-admin-line) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 18px 54px rgb(24 43 34 / 12%);
+}
+
+body.login #header {
+    box-sizing: border-box;
+    min-height: 76px;
+    justify-content: center;
+    padding: 18px 22px;
+    background: #fff !important;
+    border-bottom: 1px solid var(--flux-admin-line);
+    box-shadow: none;
+}
+
+.login #branding,
+.login .flux-admin-brand,
+.login .flux-admin-brand a {
+    min-height: 0;
+}
+
+body.login #content {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: none;
+    padding: 24px;
+    color: var(--flux-admin-ink) !important;
+    background: #fff !important;
+}
+
+body.login #content-main {
+    float: none;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+}
+
+.login #login-form,
+.login #login-form .form-row,
+.login #login-form label {
+    color: var(--flux-admin-ink) !important;
+}
+
+.login #login-form .form-row {
+    padding: 8px 0;
+    background: transparent !important;
+}
+
+.login #login-form .form-row label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1.5;
+}
+
+.login #login-form .form-row input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    color: var(--flux-admin-ink) !important;
+    background: #fff !important;
+    border: 1px solid #d8ddda !important;
+    border-radius: 9px;
+}
+
+.login #login-form .form-row input:focus {
+    border-color: var(--flux-admin-accent) !important;
+    box-shadow: 0 0 0 3px rgb(255 92 0 / 14%) !important;
+}
+
+.login #login-form .password-reset-link {
+    padding-top: 10px;
+    text-align: left;
+}
+
+.login #login-form .password-reset-link a {
+    color: var(--flux-admin-accent-dark);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.login #login-form .submit-row {
+    padding: 18px 0 0;
+    text-align: right;
+    background: transparent !important;
+    border: 0;
+}
+
+.login #login-form .submit-row input {
+    min-width: 7rem;
+    min-height: 44px;
+    padding: 10px 18px;
+    color: #fff !important;
+    background: var(--flux-admin-accent) !important;
+    border: 0;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.login #login-form .submit-row input:hover {
+    background: var(--flux-admin-accent-dark) !important;
+}
+
+.login .errornote {
+    padding: 12px 14px;
+    color: #9b2c22 !important;
+    background: #fff1ef !important;
+    border: 1px solid #f5c5bf;
+    border-radius: 9px;
+    line-height: 1.5;
+}
+
+.login .messagelist li {
+    padding: 12px 24px;
+    color: #17653c !important;
+    background: #eaf7ef !important;
+    border-bottom: 1px solid #c9e8d3;
+    line-height: 1.45;
+}
+
+@media (max-width: 800px) {
+    #header {
+        padding: 0 16px;
+    }
+
+    #user-tools {
+        gap: 8px;
+        font-size: 11px;
+    }
+
+    .flux-admin-label,
+    .flux-control-link {
+        display: none;
+    }
+
+    #content {
+        padding: 18px 14px;
+    }
+
+    .breadcrumbs {
+        padding: 10px 14px;
+    }
+
+    .flux-admin-welcome {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .flux-admin-shortcuts {
+        justify-content: flex-start;
+    }
+
+    #content-main,
+    #content-related {
+        width: 100%;
+    }
+
+    .flux-admin-dashboard-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    body.login #container {
+        margin: clamp(1.5rem, 8vh, 4rem) auto;
+    }
+}
+
+@media (max-width: 480px) {
+    #header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    #branding {
+        min-height: 38px;
+    }
+
+    body.login #header {
+        padding: 16px;
+    }
+
+    body.login #content {
+        padding: 20px 18px;
+    }
+
+    #user-tools {
+        margin: 0;
+    }
+
+    .flux-admin-shortcuts {
+        width: 100%;
+    }
+
+    .flux-admin-shortcuts a {
+        justify-content: space-between;
+        flex: 1 1 100%;
+    }
+}

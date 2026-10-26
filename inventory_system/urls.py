@@ -18,5 +18,9 @@ from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('control/', include('control.urls')), 
     path('',include('inventory.urls'))
 ]
+
+handler403 = 'control.errors.permission_denied'
+handler404 = 'control.errors.not_found'

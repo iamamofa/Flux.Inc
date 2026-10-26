@@ -215,7 +215,7 @@
             </div>
         </div>
         {% endif %}
-        <button id="addItemBtn" class="btn btn-primary flex items-center" onclick="showAddPopup()">
+        <button type="button" id="addItemBtn" class="btn btn-primary flex items-center" onclick="showInventoryPopup('addPopup')">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
                 <path fill-rule="evenodd"
                     d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"
@@ -243,7 +243,7 @@
 
 <!-- Table -->
 <div class="table-container mt-8">
-    <table id="samplesTable" class="w-full table-auto" aria-label="Samples Inventory">
+    <table id="samplesTable" class="wide-inventory-table w-full table-auto" aria-label="Samples Inventory">
         <thead>
             <tr>
                 <th scope="col">Sample ID</th>
@@ -267,7 +267,7 @@
         </thead>
         <tbody id="samplesTable">
             {% for sample in samples %}
-            <tr data-id="{{ sample.id }}"
+            <tr data-id="{{ sample.id }}" class="{% if sample.is_low_stock %}low-stock-row{% endif %}"
                 data-project="{{ project.name }}"
                 data-sample-id="{{ sample.sample_id }}"
                 data-sample-type="{{ sample.sample_type }}"
@@ -285,12 +285,14 @@
                 data-well-id="{{ sample.well_id|default:'' }}"
                 data-threshold-value="{{ sample.threshold_value }}"
                 data-notes="{{ sample.notes }}">
-                <td>{{ sample.sample_id }}</td>
+                <td class="{% if sample.is_low_stock %}low-stock-indicator{% endif %}">
+                    <button type="button" class="inventory-item-action" data-stock-item data-id="{{ sample.id }}" data-name="{{ sample.sample_id }}" aria-label="Update stock for sample {{ sample.sample_id }}">{{ sample.sample_id }}</button>
+                </td>
                 <td>{{ sample.sample_type }}</td>
                 <td>{{ sample.collection_date|date:'Y-m-d' }}</td>
                 <td>{{ sample.date_recorded|date:'Y-m-d' }}</td>
                 <td>{{ sample.country }}</td>
-                <td>{{ sample.volume }} {{sample.volume_unit}}</td>
+                <td class="{% if sample.is_low_stock %}low-stock-indicator{% endif %}">{{ sample.volume }} {{sample.volume_unit}}</td>
                 <td>{{ sample.concentration }}</td>
                 <td>{{ sample.storage_location }}</td>
                 <td>{{ sample.cold_storage_id }}</td>
@@ -322,14 +324,14 @@
 
                         <!-- Hidden action buttons -->
                         <div class="dropdown-actions">
-                            <button class="retrieve-action" onclick="showRetrievePopup()" data-id="{{ consumable.id }}">Retrieve</button>
-                            <button class="return-action" onclick="showReturnPopup()" data-id="{{ consumable.id }}">Return</button>
+                            <button class="retrieve-action" onclick="showRetrievePopup()" data-id="{{ sample.id }}">Retrieve</button>
+                            <button class="return-action" onclick="showReturnPopup()" data-id="{{ sample.id }}">Return</button>
                                             
                             {% if user == project.project_manager or user in project.project_editors.all %}
                                             
                             <hr role="separator">
-                            <button class="edit-action" onclick="showEditPopup()" data-id="{{ consumable.id }}">Edit</button>
-                            <button class="delete-action" onclick="showDeletePopup()" data-project="{{ project.name }}" data-id="{{ consumable.id }}">Delete</button>
+                            <button class="edit-action" onclick="showEditPopup()" data-id="{{ sample.id }}">Edit</button>
+                            <button type="button" class="delete-action" onclick="showDeletePopup(this.dataset.project, this.dataset.id); showInventoryPopup('deletePopup')" data-project="{{ project.name }}" data-id="{{ sample.id }}">Delete</button>
                                 
                             {% endif %}
                         </div>
@@ -354,13 +356,21 @@
     <!-- Page Numbers -->
     {% for num in page_obj.paginator.page_range %}
         {% if page_obj.number == num %}
-        </span class="px-3 py-1 bg-primary text-white rounded-md text-sm">{{ num }}</span>
+        <span class="px-3 py-1 bg-primary text-white rounded-md text-sm">{{ num }}</span>
         {% else %}
+        <a href="?page={{ num }}"
+           class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+            {{ num }}
+        </a>
+        {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
         <a href="?page={{ page_obj.next_page_number }}"
            class="px-3 py-1 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
             Next &raquo;
         </a>
-        {% endif %}
+    {% endif %}
 </div>
 
 <div class="mt-2 text-center text-sm text-gray-500">
@@ -373,193 +383,10 @@
 <!-- Add Sample Popup -->
 <div class="popup-container1" id="addPopup">
     <div class="popup-card">
-        <h2>Add Item</h2>
+        <h2>Add Sample</h2>
         <div class="modal-body">
-            <div class="entry-mode-selector" style="margin-bottom: 20px;">
-                <div style="display: flex; border-bottom: 1px solid var(--border);">
-                    <div class-"nav-tab active" data-mode="single">Single Entry"</div>
-                    <div class="nav-tab" data-mode="batch">Batch Entry</div>
-                    <div class="nav-tab" data-mode="import">Import</div>
-                </div>
-            </div>
-
-            <!-- Single Entry Form -->
             <div class="entry-form" id="single-entry-form">
-                <form id="sample-form" method="POST" action="{% url 'add_sample' project_name=project.name %}">
-                    {% csrf_token %}
-                    <div class="Form-row">
-                        <div class="form-group">
-                            <label for="sample_id">Sample ID *</label>
-                            <input type="text" name="sample_id" id="sample_id" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="sample_type">Sample Type *</label>
-                            <input type="Text" name="Sample_type" id="sample_type" placeholder="e.g.Sputum, DNA, Blood etc." required>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="notes">Notes *</label>
-                            <textarea name="notes" id="notes" rows="4"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="collection_date">Collection Date *</label>
-                            <input type="date" name="collection_date" id="collection_date" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="country">Country *</label>
-                            <input type="text" name="country" id="country" required>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="volume">Volume *</label>
-                            <input type="number" name="volume" id="volume" step="0.1" min="1" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="volume_unit">Unit *</label>
-                            <select name="volume_unit" id="volume_unit" required>
-                                <option value="mL">mL</option>
-                                <option value="μL">μL</option>
-                            </select>
-                        </div>
-                    </div>    
-                    <div class="storage-hierarchy">
-                        <div class="storage-title">Storage Location</div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <!-- Shelf Selection -->
-                                <label for="shelf">Shelf</label>
-                                <select name="shelf" id="shelfSelect" onchange="handleShelfChange(this.value)">
-                                    <option value="">Select Shelf</option>
-                                    <option value="new">+ Create New Shelf</option>
-                                        {% for shelf in shelves %}
-                                        <option value="{{ shelf.id }}" data-project="{{ shelf.project.name }}">{{ shelf.name }} ({{ shelf.location_code }}) - {{ shelf.project_name }}</option>
-                                        {% endfor %}
-                                </select>
-                            </div>
-
-                            <!-- New Shelf Form (initially hidden) -->
-                            <div id="newShelfForm" class="new-item-form" style="display: none;">
-                                <div class="inputBox">
-                                    <label>New Shelf Label</label>
-                                    <input type="text" name="new_shelf_label" id="newShelfLabel" placeholder="Shelf Label">
-                                </div>
-                                <div class="inputBox">
-                                    <label>Location Code</label>
-                                    <input type="text" name="new_shelf_code" id="newShelfCode" placeholder="Location Code">
-                                </div>
-                                <div class="inputBox">
-                                    <label class="input-label">
-                                        <span class="label-text">Capacity</span>
-                                        <span class="label-description">Max racks this shelf can hold</span>
-                                    </label>
-                                    <input type="number" name="new_shelf_capacity" id="newShelfCapacity" 
-                                        min="1" step="1" placeholder="Enter number">
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="notes">Notes</label>
-                                        <textarea name="new_shelf_notes" id="newShelfNotes" rows="4"></textarea>
-                                    </div>
-                                </div>
-                                <button type="button" onclick="createNewShelf()" class="btn btn-secondary">Create Shelf</button>
-                                <button type="button" onclick="cancelNewShelf()" class="btn btn-outline">Cancel</button>
-                            </div>
-
-                            <!-- Rack Selection -->
-                            <div class="form-group">
-                                <label>Rack</label>
-                                <select name="rack" id="rackSelect" onchange="handleRackChange(this.value)" disabled>
-                                    <option value="">Select Rack</option>
-                                    <option value="new">+ Create New Rack</option>
-                                    {% for rack in racks %}
-                                    <option value="{{ rack.id }}" data-shelf="{{ rack.shelf.id }}" data-project="{{ rack.project.name }}">
-                                    {{ rack.name }} ({{ rack.location_code }}) - {{ rack.project.name }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <!-- New Rack Form (initially hidden) -->
-                            <div id="newRackForm" class="new-item-form" style="display: none;">
-                                <div class="inputBox">
-                                    <label>New Rack Label</label>
-                                    <input type="text" name="new_rack_name" id="newRackName" placeholder="Rack Label">
-                                </div>
-                                <div class="inputBox">
-                                    <label class="input-label">
-                                        <span class="label-text">Capacity</span>
-                                        <span class="label-description">Max boxes this rack can hold</span>
-                                    </label>
-                                    <input type="number" name="new_rack_capacity" id="newRackCapacity" 
-                                    min="1" step="1" placeholder="Enter number">
-                                </div>
-                                <div class="inputBox">
-                                    <label>Notes</label>
-                                    <input type="text" name="new_rack_notes" id="newRackNotes" placeholder="Rack Notes">
-                                </div>
-                                <button type="button" onclick="createNewRack()" class="btn btn-secondary">Create Rack</button>
-                                <button type="button" onclick="cancelNewRack()" class="btn btn-outline">Cancel</button>
-                            </div>
-
-                            <!-- Box Selection -->
-                            <div class="inputBox">
-                                <label>Box</label>
-                                <select name="box" id="boxSelect" onchange="handleBoxChange(this.value)" disabled>
-                                    <option value="">Select Box</option>
-                                    <option value="new">+ Create New Box</option>
-                                    {% for box in boxes %}
-                                    <option value="{{ box.id }}" data-rack="{{ box.rack.id }}" data-project="{{ box.project.name }}">
-                                    {{ box.name }} ({{ box.location_code }}) - {{ box.project.name }}
-                                    </option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-
-                            <!-- New Box Form (initially hidden) -->
-                            <div id="newBoxForm" class="new-item-form" style="display: none;">
-                                <div class="inputBox">
-                                    <label>New Box Name</label>
-                                    <input type="text" name="new_box_name" id="newBoxName" placeholder="Box Name">
-                                </div>
-                                <div class="inputBox">
-                                    <label class="input-label">
-                                        <span class="label-text">Row Count</span>
-                                        <span class="label-description">Max number of rows in the box</span>
-                                    </label>
-                                    <input type="number" name="new_box_row_count" id="newBoxRowCount" 
-                                    min="1" step="1" placeholder="Enter number">
-                                </div>
-                                <div class="inputBox">
-                                    <label class="input-label">
-                                        <span class="label-text">Column Count</span>
-                                        <span class="label-description">Max number of columns in the box</span>
-                                    </label>
-                                    <input type="number" name="new_box_column_count" id="newBoxColumnCount" 
-                                    min="1" step="1" placeholder="Enter number">
-                                </div>
-                                <div class="inputBox">
-                                    <label>Notes</label>
-                                    <input type="text" name="new_box_notes" id="newBoxNotes" placeholder="Box Notes">
-                                </div>
-                                <button type="button" onclick="createNewBox()" class="btn btn-secondary">Create Box</button>
-                                <button type="button" onclick="cancelNewBox()" class="btn btn-outline">Cancel</button>
-                            </div>
-
-                            <!-- Well ID -->
-                             <div class="inputBox">
-                                <label>Well ID</label>
-                                <input type="text" name="well_id" id="well_id" required
-                                onkeyup="this.setAttribute('value', this.value);" value="{{ form.well_id }}">
-                            </div>
-                    </div>
-        <div class="box">
+            <div class="box">
             <form id="sample-form" method="POST" action="{% url 'add_sample' project_name=project.name %}">
                 {% csrf_token %}
                 <div class="inputBox">
@@ -571,7 +398,7 @@
                     <div>
                         <label for="sampleTypeOptions">Sample Type</label>
                         <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2"
-                            id="sample_type" name="sample_type" required">
+                            id="sample_type" name="sample_type" required>
                             <option value="">-- Please Select --</option>
                             <option value="dna">DNA</option>
                             <option value="rna">RNA</option>
@@ -591,7 +418,6 @@
                         <input type="date" name="collection_date" id="collection_date" required
                             min="{{ current_date|date:'Y-m-d' }}"
                             onchange="validateExpiryDate(this)">
-                        <label>Collection Date</label>
                         <small class="text-red-500 hidden" id="date-error">Expiry date must be in the future</small>
                     </div>
                 </div>
@@ -601,7 +427,6 @@
                         <input type="date" name="date_recorded" id="date_recorded" required
                             min="{{ current_date|date:'Y-m-d' }}"
                             onchange="validateExpiryDate(this)">
-                        <label>Date Recorded</label>
                         <small class="text-red-500 hidden" id="date-error">Expiry date must be in the future</small>
                     </div>
                 </div>
@@ -798,14 +623,17 @@
                     <button class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="submit">Add</button>
                 </div>
             </form>
+            </div>
+            </div>
         </div>
+    </div>
     </div>
 </div>
 
 <!-- Edit Sample Popup -->
 <div class="popup-container2" id="editPopup">
     <div class="popup-card">
-        <h2>Edit Item</h2>
+        <h2>Edit Sample</h2>
         <div class="box">
             <form id="edit-form" method="POST">
                 {% csrf_token %}
@@ -832,7 +660,6 @@
                         <input type="date" name="collection_date" id="edit_collection_date" required
                             min="{{ current_date|date:'Y-m-d' }}"
                             onchange="validateExpiryDate(this)">
-                        <label>Collection Date</label>
                         <small class="text-red-500 hidden" id="date-error">Expiry date must be in the future</small>
                     </div>
                 </div>
@@ -842,7 +669,6 @@
                         <input type="date" name="date_recorded" id="edit_date_recorded" required
                             min="{{ current_date|date:'Y-m-d' }}"
                             onchange="validateExpiryDate(this)">
-                        <label>Date Recorded</label>
                         <small class="text-red-500 hidden" id="date-error">Expiry date must be in the future</small>
                     </div>
                 </div>
@@ -1063,7 +889,7 @@
 </div>
 
 <!-- Delete Confirmation Popup -->
-<div class="popup-container1" id="deletePopup">
+<div class="popup-container5" id="deletePopup" aria-hidden="true">
     <div class="popup-card">
         <h2>Confirm Deletion</h2>
         <br>
@@ -1077,5 +903,5 @@
 {% endblock %}
 
 {% block inventory_scripts %}
-<script src="{% static 'js/samples.js' %}"></script>
+<script src="{% static 'js/samples.js' %}?v=4"></script>
 {%endblock %}

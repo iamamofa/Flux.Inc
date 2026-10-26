@@ -71,7 +71,7 @@ function initConsumablesManager() {
   setupRetrieveReturnForms();
   initialFilter();
   setupTemperatureUnitHandling();
-  setupStorageConditionHandling():
+  setupStorageConditionHandling();
 }
 
 // ==============================================
@@ -301,16 +301,27 @@ function validateTemperatureValue(input, unit) {
 // MODAL FUNCTIONS
 // ==============================================
 function showModal(id) {
+  if (window.showInventoryPopup) {
+    window.showInventoryPopup(id);
+    document.body.style.overflow = 'hidden';
+    return;
+  }
   const modal = document.getElementById(id);
   if (!modal) return;
-  modal.style.display = 'flex';
+  modal.classList.add('popup-active');
+  modal.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
 }
 
 function closeModal(id) {
+  if (window.hideInventoryPopup) {
+    window.hideInventoryPopup(id);
+    return;
+  }
   const modal = document.getElementById(id);
   if (!modal) return;
-  modal.style.display = 'none';
+  modal.classList.remove('popup-active');
+  modal.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
 }
 
@@ -479,6 +490,7 @@ function getCSRFToken() {
 
 function handleAddSuccess(data) {
   showNotification('Item added successfully', 'success');
+  showLowStockAlert(data);
   closeAddPopup();
   if (data.refresh) {
     setTimeout(() => location.reload(), 1000);
@@ -488,6 +500,7 @@ function handleAddSuccess(data) {
 function handleEditSuccess(data) {
   updateTableRow(STATE.currentItemId, data);
   showNotification(data.message, 'success');
+  showLowStockAlert(data);
   closeEditPopup();
 
     //const row = document.querySelector(`tr[data-id="${data.id}"]`);
@@ -510,6 +523,7 @@ function handleEditSuccess(data) {
 function handleRetrieveSuccess(data) {
   updateTableRow(STATE.currentItemId, data);
   showNotification('Item retrieved successfully', 'success');
+  showLowStockAlert(data);
   closeRetrievePopup();
 }
 
@@ -518,6 +532,15 @@ function handleReturnSuccess(data) {
     console.log(data);
   showNotification(data.message, 'success');
   closeReturnPopup();
+}
+
+function showLowStockAlert(data) {
+  if (data.low_stock_alert) {
+    showNotification(
+      `Low stock: ${data.name || 'Inventory item'} has ${data.pack_count} packs remaining.`,
+      'warning'
+    );
+  }
 }
 
 async function handleDeleteConfirm() {
@@ -554,6 +577,7 @@ async function handleDeleteConfirm() {
 function updateTableRow(id, data) {
   const row = DOM.table?.querySelector(`tr[data-id="${id}"]`);
   if (!row) return;
+  setLowStockAppearance(row, data.low_stock);
   
     // Highlight update
     row.classList.add('updated');
@@ -591,6 +615,13 @@ function updateTableRow(id, data) {
     cells[11].textContent = data.threshold || 0;
     cells[12].textContent = escapeHtml(data.notes) || '';
   }
+}
+
+function setLowStockAppearance(row, isLowStock) {
+  row.classList.toggle('low-stock-row', Boolean(isLowStock));
+  const cells = row.querySelectorAll('td');
+  cells[0]?.classList.toggle('low-stock-indicator', Boolean(isLowStock));
+  cells[4]?.classList.toggle('low-stock-indicator', Boolean(isLowStock));
 }
 
 // Helper function to escape HTML

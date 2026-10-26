@@ -1,0 +1,23 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | Flux administration{% endblock %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'admin/css/flux_admin.css' %}?v=6">
+{% endblock %}
+
+{% block branding %}
+    <div class="flux-admin-brand">
+        <a href="{% url 'admin:index' %}" aria-label="Flux administration home">
+            <span class="flux-admin-mark" aria-hidden="true">F</span>
+            <span class="flux-admin-wordmark">FLUX<span>.</span>INC</span>
+        </a>
+        <span class="flux-admin-label">ADMINISTRATION</span>
+    </div>
+{% endblock %}
+
+{% block nav-global %}
+    <a class="flux-control-link" href="{% url 'control:overview' %}">Open Admin Workspace <span aria-hidden="true">↗</span></a>
+{% endblock %}

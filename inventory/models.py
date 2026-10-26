@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import time, timedelta
 from django.contrib.auth.models import User
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -6,6 +6,7 @@ from django.forms import ValidationError
 from django.utils import timezone
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.contrib.auth.signals import user_logged_in
 from django.urls import reverse
 from django.utils.http import urlencode
 from django.core.mail import EmailMultiAlternatives
@@ -21,6 +22,7 @@ from .utils.msds_validation import validate_file_size
 import shortuuid
 from django.core.exceptions import ObjectDoesNotExist
 import logging
+import traceback
 
 
 security_logger = logging.getLogger('django.security')
@@ -38,6 +40,16 @@ def msds_upload_path(instance, filename):
     ext = filename.split('.')[-1]
     unique_filename = f"{uuid.uuid4()}.{ext}"
     return os.path.join('msds_files', unique_filename) # Change 'msds_files' to private one with auth
+
+
+def profile_picture_upload_path(instance, filename):
+    extension = os.path.splitext(filename)[1].lower()
+    return os.path.join('profile_pictures', f'{uuid.uuid4().hex}{extension}')
+
+
+def validate_profile_picture_size(image):
+    if image.size > 5 * 1024 * 1024:
+        raise ValidationError('Profile pictures must be 5 MB or smaller.')
 
 
 class UserApplication(models.Model):
@@ -124,7 +136,7 @@ def send_approval_email(sender, instance, created, **kwargs):
         # Render the HTML template as a string
         html_message = render_to_string(
                 'inventory/approved_mail_template.html',
-                {'url': url, 'params': params}
+                {'url': url, 'params': params, 'site_url': settings.SITE_URL}
         )
         msg = EmailMultiAlternatives(
                 subject,
@@ -182,6 +194,8 @@ class Project(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
+    low_stock_morning_time = models.TimeField(default=time(6, 0))
+    low_stock_evening_time = models.TimeField(default=time(19, 0))
 
     class Meta:
         ordering = ['name']
@@ -206,6 +220,13 @@ class UserProfile(models.Model):
     )
     department = models.CharField(max_length=100, blank=True)
     phone_number = models.CharField(max_length=20, blank=True)
+    bio = models.CharField(max_length=500, blank=True)
+    profile_picture = models.ImageField(
+        upload_to=profile_picture_upload_path,
+        blank=True,
+        validators=[validate_profile_picture_size],
+    )
+    time_zone = models.CharField(max_length=64, default='UTC')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -215,6 +236,96 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"Profile for {self.user.username}"
+
+
+class ProjectLoginEvent(models.Model):
+    """Login audit record scoped to each project the account can access."""
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='login_events',
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='project_login_events',
+    )
+    username = models.CharField(max_length=150)
+    logged_in_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=512, blank=True)
+
+    class Meta:
+        ordering = ('-logged_in_at',)
+        indexes = [
+            models.Index(
+                fields=('project', '-logged_in_at'),
+                name='login_proj_time_idx',
+            ),
+        ]
+        verbose_name = 'Project Login Event'
+        verbose_name_plural = 'Project Login Events'
+
+    def __str__(self):
+        return f"{self.username} logged into {self.project.name}"
+
+
+@receiver(user_logged_in)
+def record_project_login(sender, request, user, **kwargs):
+    """Record a successful login for each project associated with the user."""
+    from django.db.models import Q
+
+    projects = Project.objects.filter(
+        Q(project_manager=user)
+        | Q(project_editors=user)
+        | Q(project_members=user)
+    ).distinct()
+    ip_address = request.META.get('REMOTE_ADDR') if request else None
+    user_agent = (
+        request.META.get('HTTP_USER_AGENT', '')[:512]
+        if request else ''
+    )
+    ProjectLoginEvent.objects.bulk_create([
+        ProjectLoginEvent(
+            project=project,
+            user=user,
+            username=user.get_username(),
+            ip_address=ip_address or None,
+            user_agent=user_agent,
+        )
+        for project in projects
+    ])
+
+
+class LowStockEmailDelivery(models.Model):
+    """Tracks per-recipient local-time low-stock digest deliveries."""
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name='low_stock_email_deliveries',
+    )
+    recipient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='low_stock_email_deliveries',
+    )
+    scheduled_date = models.DateField()
+    scheduled_time = models.TimeField()
+    attempt_count = models.PositiveSmallIntegerField(default=0)
+    last_attempt_at = models.DateTimeField(null=True, blank=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    last_error = models.TextField(blank=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=('project', 'recipient', 'scheduled_date', 'scheduled_time'),
+                name='unique_low_stock_digest_per_schedule',
+            ),
+        ]
+        ordering = ('scheduled_date', 'scheduled_time')
 
 
 @receiver(post_save, sender=User)
@@ -405,7 +516,14 @@ class BaseInventoryItem(models.Model):
 
     @property
     def is_reagent_low_stock(self):
-        return self.pack_count < self.threshold_value
+        return (
+            self.threshold_value is not None
+            and self.pack_count < self.threshold_value
+        )
+
+    @property
+    def is_low_stock(self):
+        return self.is_reagent_low_stock
 
 
 class BaseInventoryManager(models.Manager):
@@ -671,6 +789,8 @@ class Equipment(models.Model):
             unique=True,
             blank=True
     )
+    quantity = models.PositiveIntegerField(default=1)
+    donated_by = models.CharField(max_length=100, blank=True)
     status = models.CharField(
             max_length=20,
             choices=STATUS_CHOICES,
@@ -1027,6 +1147,13 @@ class Sample(models.Model):
     def __str__(self):
         return self.sample_id
 
+    @property
+    def is_low_stock(self):
+        return (
+            self.threshold_value is not None
+            and self.volume < self.threshold_value
+        )
+
     def clean(self):
         """Validate sample data"""
         super().clean()
@@ -1170,6 +1297,8 @@ class TrashEquipment(TrashBaseModel):
     name = models.CharField(max_length=100)
     equip_id = models.CharField(max_length=100)
     serial_num = models.CharField(max_length=100, blank=True, null=True)
+    quantity = models.PositiveIntegerField(default=1)
+    donated_by = models.CharField(max_length=100, blank=True)
     status = models.CharField(max_length=100)
     service_contract_start = models.DateField(null=True, blank=True)
     service_contract_end = models.DateField(null=True, blank=True)

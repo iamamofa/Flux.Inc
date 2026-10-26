@@ -8,6 +8,7 @@
     <link rel="icon" type="image/png" href="{% static '/images/Icon.png' %}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <link rel="stylesheet" href="{% static 'css/inventory_style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/flux_design_system.css' %}?v=3">
     <style>
         /* Popup Styles */
         .popup-overlay {
@@ -303,23 +304,6 @@
         .expiry-warning { background-color: #FEF3C7; }
         .expiry-critical { background-color: #FECACA; }
         
-        td.low-stock-indicator {
-            position: relative;
-        }
-        td.low-stock-indicator::before {
-            content: "LOW STOCK";
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            background-color: #fef3c7;
-            color: #92400e;
-            font-size: 10px;
-            font-weight: bold;
-            padding: 2px 6px;
-            border-top-right-radius: 4px;
-            z-index: 5;
-        }
-
         .legend {
             display: flex;
             gap: 16px;
@@ -367,28 +351,60 @@
         }
     </style>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="{% static 'js/flux_preferences.js' %}" defer></script>
     <title>Flux - {% block title %}{% endblock %}</title>
 </head>
-<body class="relative min-h-screen font-poppins antialiased text-sm bg-white flex text-gray-800 h-full 2xl:max-w-[1920px] 2xl:mx-auto 2xl:border-r-2"
-    x-data="{ showMenu: false }">
+<body class="flux-inventory-layout relative min-h-screen font-poppins antialiased text-sm bg-white flex text-gray-800 h-full 2xl:max-w-[1920px] 2xl:mx-auto 2xl:border-r-2 {% block page_class %}{% endblock %}"
+    x-data="{ showMenu: false, showFilters: false, filtersVisible: true }"
+    x-init="filtersVisible = localStorage.getItem('flux.filters') !== 'hidden'">
 
     {% include 'inventory/partials/sidebar.html' %}
 
     <main class="bg-white min-h-screen lg:ml-60 flex w-full">
         <!-- Screen Overlay shows on small screen showMenu -->
-        <div class="absolute lg:hidden left-0 top-0 h-full w-full bg-black/30 z-[15]" 
+        <div class="inventory-nav-overlay absolute lg:hidden left-0 top-0 h-full w-full bg-black/30 z-[15]"
              @click="showMenu = false"
              x-show="showMenu" 
              x-transition.opacity.duration.500ms>
         </div>
+        <div class="inventory-filter-overlay"
+             @click="showFilters = false"
+             x-show="showFilters"
+             x-cloak
+             x-transition.opacity.duration.200ms
+             aria-hidden="true"></div>
         
          <!-- Filters Sidebar -->
-        <aside class="hidden sm:block w-48 md:w-60 2xl:w-80 bg-gray-50 py-5 lg:py-10 px-2 md:px-4 text-sm">
+        <aside id="inventoryFilters" class="inventory-filter-panel w-48 md:w-60 2xl:w-80 bg-gray-50 py-5 lg:py-10 px-2 md:px-4 text-sm"
+               :class="{'inventory-filter-open': showFilters, 'inventory-filter-closed': !filtersVisible}"
+               aria-label="Inventory filters">
+            <div class="inventory-filter-mobile-heading">
+                <strong>Filter options</strong>
+                <button type="button" @click="showFilters = false" aria-label="Close filters">Close</button>
+            </div>
             {% block filters %}{% endblock %}
         </aside>
 
         <!-- Main Content -->
         <section class="flex-1 py-6 px-4 md:px-4 lg:px-8">
+            {% include "inventory/partials/low_stock_alerts.html" %}
+            <div class="inventory-desktop-toolbar">
+                <button type="button"
+                        @click="filtersVisible = !filtersVisible; localStorage.setItem('flux.filters', filtersVisible ? 'visible' : 'hidden')"
+                        :aria-expanded="filtersVisible"
+                        aria-controls="inventoryFilters">
+                    <span aria-hidden="true">&#9881;</span>
+                    <span x-text="filtersVisible ? 'Hide filters' : 'Show filters'">Hide filters</span>
+                </button>
+            </div>
+            <div class="inventory-mobile-toolbar">
+                <button type="button" @click="showMenu = true" :aria-expanded="showMenu" aria-controls="inventorySidebar">
+                    <span aria-hidden="true">&#9776;</span> Menu
+                </button>
+                <button type="button" @click="showFilters = true" :aria-expanded="showFilters" aria-controls="inventoryFilters">
+                    <span aria-hidden="true">&#9881;</span> Filters
+                </button>
+            </div>
             {% block content %}{% endblock %}
         </section>
 
@@ -400,6 +416,100 @@
     {% block inventory_scripts %}
 
     {% endblock %}
+
+    <dialog class="stock-action-dialog" id="stockActionDialog" aria-labelledby="stockActionTitle">
+        <div class="stock-action-dialog__header">
+            <div>
+                <p class="stock-action-dialog__eyebrow">INVENTORY ITEM</p>
+                <h2 id="stockActionTitle">Update stock</h2>
+                <p class="stock-action-dialog__item" id="stockActionItemName"></p>
+            </div>
+            <button class="stock-action-dialog__close" type="button" data-close-stock-actions aria-label="Close">×</button>
+        </div>
+        <p class="stock-action-dialog__hint">Choose what you would like to do with this item.</p>
+        <div class="stock-action-dialog__actions">
+            <button type="button" data-stock-action="remove">
+                <span class="stock-action-dialog__icon" aria-hidden="true">−</span>
+                <span><strong>Remove stock</strong><small>Record items taken from inventory</small></span>
+                <span class="stock-action-dialog__arrow" aria-hidden="true">›</span>
+            </button>
+            <button type="button" data-stock-action="add">
+                <span class="stock-action-dialog__icon" aria-hidden="true">+</span>
+                <span><strong>Add stock</strong><small>Record returned or received items</small></span>
+                <span class="stock-action-dialog__arrow" aria-hidden="true">›</span>
+            </button>
+        </div>
+    </dialog>
+
+    <script>
+        (() => {
+            const stockActionDialog = document.getElementById('stockActionDialog');
+            let selectedStockItemId = null;
+
+            function openStockActions(itemId, itemName) {
+                if (!stockActionDialog || typeof stockActionDialog.showModal !== 'function') return;
+                selectedStockItemId = itemId;
+                document.getElementById('stockActionItemName').textContent = itemName || 'Selected inventory item';
+                stockActionDialog.showModal();
+            }
+
+            function showInventoryPopup(popupId) {
+                const popup = document.getElementById(popupId);
+                if (!popup) return;
+                document.body.appendChild(popup);
+                popup.classList.add('popup-active', 'flux-popup-overlay');
+                popup.setAttribute('aria-hidden', 'false');
+                popup.style.setProperty('display', 'flex', 'important');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function hideInventoryPopup(popupId) {
+                const popup = document.getElementById(popupId);
+                if (!popup) return;
+                popup.classList.remove('popup-active', 'flux-popup-overlay');
+                popup.setAttribute('aria-hidden', 'true');
+                popup.style.removeProperty('display');
+                if (!document.querySelector('.flux-popup-overlay')) {
+                    document.body.style.overflow = '';
+                }
+            }
+
+            document.querySelectorAll('[data-stock-item]').forEach((item) => {
+                item.addEventListener('click', () => {
+                    openStockActions(item.dataset.id, item.dataset.name);
+                });
+            });
+
+            stockActionDialog?.addEventListener('click', (event) => {
+                if (event.target === stockActionDialog || event.target.closest('[data-close-stock-actions]')) {
+                    stockActionDialog.close();
+                    return;
+                }
+
+                const actionButton = event.target.closest('[data-stock-action]');
+                if (!actionButton || !selectedStockItemId) return;
+                const actionName = actionButton.dataset.stockAction === 'remove'
+                    ? 'showRetrievePopup'
+                    : 'showReturnPopup';
+                if (typeof window[actionName] === 'function') {
+                    stockActionDialog.close();
+                    window[actionName](selectedStockItemId);
+                }
+            });
+
+            window.showInventoryPopup = showInventoryPopup;
+            window.hideInventoryPopup = hideInventoryPopup;
+            window.openStockActions = openStockActions;
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                    document.querySelectorAll('.flux-popup-overlay').forEach((popup) => {
+                        hideInventoryPopup(popup.id);
+                    });
+                }
+            });
+        })();
+    </script>
 
     <!-- Notification Container -->
     <div id="notification-container" class="fixed bottom-4 right-4 z-50"></div>

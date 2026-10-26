@@ -1,0 +1,6 @@
+Scheduled low-stock summary for {{ project.name }}
+{{ scheduled_time }} {{ time_zone }}
+
+{% for alert in alerts %}- {{ alert.name }} ({{ alert.category }}): {{ alert.quantity }} {{ alert.unit }} remaining; threshold {{ alert.threshold }}.
+{% endfor %}
+Open inventory: {{ inventory_url }}

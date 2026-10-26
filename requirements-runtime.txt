@@ -1,0 +1,19 @@
+# Runtime dependencies used by the existing Flux Django inventory application.
+# Python 3.11 recommended for this legacy Django version.
+Django==4.1.7
+python-dotenv>=1.0,<2
+asgiref==3.6.0
+sqlparse==0.4.3
+Pillow==10.4.0
+PyPDF2>=3.0,<4
+shortuuid>=1.0,<2
+bleach==6.2.0
+openpyxl==3.1.2
+whitenoise==6.4.0
+celery>=5.3,<6
+pyclamd>=0.4,<1
+psutil==5.9.6
+pycryptodome>=3.19
+cryptography==39.0.2
+Faker>=30,<40
+gunicorn==20.1.0

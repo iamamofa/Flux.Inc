@@ -1,0 +1,27 @@
+{% load i18n %}
+<button class="sticky toggle-nav-sidebar" id="toggle-nav-sidebar" aria-label="{% translate 'Toggle navigation' %}"></button>
+<nav class="sticky" id="nav-sidebar">
+    <input type="search" id="nav-filter"
+           placeholder="{% translate 'Start typing to filter…' %}"
+           aria-label="{% translate 'Filter navigation items' %}">
+    <section class="flux-dashboard-nav" aria-labelledby="flux-dashboard-nav-title">
+        <h2 id="flux-dashboard-nav-title">Dashboards</h2>
+        <a class="flux-dashboard-nav-link" href="{% url 'control:overview' %}">
+            Administrator overview
+        </a>
+        {% for project in admin_dashboard_projects %}
+            <div class="flux-dashboard-project">
+                <span>{{ project.name }}</span>
+                <a href="{% url 'dashboard_consumables' project_name=project.name %}">Consumables</a>
+                <a href="{% url 'dashboard_reagents' project_name=project.name %}">Reagents</a>
+                <a href="{% url 'dashboard_equipment_' project_name=project.name %}">Equipment</a>
+                <a href="{% url 'dashboard_samples' project_name=project.name %}">Samples</a>
+            </div>
+        {% empty %}
+            {% if request.user.is_superuser %}
+                <p class="flux-dashboard-empty">Join a project team to see its inventory dashboards here.</p>
+            {% endif %}
+        {% endfor %}
+    </section>
+    {% include 'admin/app_list.html' with app_list=available_apps show_changelinks=False %}
+</nav>

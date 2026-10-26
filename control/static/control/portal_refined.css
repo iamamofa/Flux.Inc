@@ -1,0 +1,230 @@
+:root {
+    color-scheme: light;
+    --bg: #f5f5f7;
+    --panel: #fff;
+    --fg: #1d1d1f;
+    --muted: #6e6e73;
+    --border: #e5e5e7;
+    --nav: #fff;
+    --nav-text: #55565a;
+    --accent: #ff5c00;
+    --accent-hover: #c74600;
+    --accent-pale: #fff3eb;
+    --hover: #f8f8f9;
+    --success: #1b7f4b;
+    --success-pale: #e8f8f0;
+    --danger: #b42318;
+    --shadow: 0 2px 12px rgb(20 24 32 / 4%);
+}
+
+html,
+body {
+    color-scheme: light;
+    background: var(--bg);
+    color: var(--fg);
+}
+
+.sidebar {
+    color: var(--fg);
+    background: #fff;
+    border-right: 1px solid var(--border);
+    box-shadow: 2px 0 12px rgb(20 24 32 / 3%);
+}
+
+.brand {
+    border-bottom-color: var(--border);
+}
+
+.brand-icon {
+    background: var(--accent);
+    box-shadow: none;
+}
+
+.brand-dot {
+    color: var(--accent);
+}
+
+.brand small,
+.sidebar-identity small {
+    color: var(--muted);
+}
+
+.brand button {
+    color: var(--fg);
+}
+
+.nav-label {
+    color: #85858a;
+}
+
+.nav-link {
+    color: var(--nav-text);
+}
+
+.nav-link:hover,
+.nav-link:focus-visible {
+    color: var(--fg);
+    background: #f5f5f6;
+}
+
+.nav-link.selected {
+    color: #a63b00;
+    background: #fff0e6;
+}
+
+.nav-link.selected .nav-icon {
+    color: var(--accent);
+}
+
+.nav-count {
+    background: var(--accent);
+}
+
+.sidebar-foot {
+    border-top-color: var(--border);
+}
+
+.sidebar-profile {
+    color: var(--muted);
+}
+
+.sidebar-avatar,
+.top-avatar,
+.mini-avatar,
+.large-avatar {
+    color: #a63b00;
+    background: #fff0e6;
+}
+
+.topbar {
+    background: #fff;
+    border-bottom-color: var(--border);
+}
+
+.global-search:focus-within {
+    border-color: #ffb184;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgb(255 92 0 / 9%);
+}
+
+.welcome-banner {
+    min-height: 150px;
+    color: var(--fg);
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+}
+
+.welcome-label {
+    color: var(--accent-hover);
+}
+
+.pulse {
+    background: var(--accent);
+}
+
+.welcome-banner h2 {
+    color: var(--fg);
+}
+
+.welcome-banner p {
+    color: var(--muted);
+}
+
+.welcome-decoration {
+    border-color: #ffe0cd;
+}
+
+.welcome-decoration span {
+    color: var(--accent);
+    opacity: .07;
+}
+
+.button.primary {
+    color: #fff;
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.button.primary:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+}
+
+.button.secondary {
+    color: var(--fg);
+    background: #fff;
+    border-color: var(--border);
+}
+
+.button.secondary:hover {
+    background: var(--hover);
+}
+
+.stat-card,
+.panel,
+.form-panel,
+.detail-panel,
+.role-card,
+.report-item {
+    background: #fff;
+    border-color: var(--border);
+    box-shadow: var(--shadow);
+}
+
+.stat-card:hover,
+.report-item:hover {
+    border-color: #ffb184;
+}
+
+.stat-arrow,
+.inline-link,
+.attention-row > span:last-child {
+    color: var(--accent-hover);
+}
+
+.timeline-mark {
+    border-color: #ff9b62;
+    box-shadow: 0 0 0 4px var(--accent-pale);
+}
+
+.bar-fill {
+    background: linear-gradient(180deg, #ffb184, var(--accent));
+}
+
+.attention-dot {
+    background: var(--accent);
+}
+
+.role-icon,
+.report-icon {
+    color: var(--accent-hover);
+    background: var(--accent-pale);
+}
+
+.notice-row.notice-unread {
+    background: #fff8f3;
+}
+
+.helper-note {
+    background: var(--accent-pale);
+}
+
+.screen-shade.is-open {
+    background: rgb(29 29 31 / 35%);
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline-color: #ff9b62;
+}
+
+@media (max-width: 950px) {
+    .sidebar {
+        background: #fff;
+    }
+}
