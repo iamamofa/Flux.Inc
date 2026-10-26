@@ -2,20 +2,288 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{% static 'images/Icon.png' %}">
     <meta name="description" content="Keep laboratory inventory, projects and people together with Flux.">
-    <title>Flux · More clarity. More discovery.</title>
-    <link rel="icon" href="{% static 'images/Icon.png' %}">
+    <title>Flux - Inventory Management</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            overflow-x: hidden;
+        }
+
+        .navbar {
+            background-color: rgba(255, 255, 255, 0.084);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+        }
+        .navbar-logo {
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .navbar-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .navbar-button {
+            padding: 10px 20px;
+            background-color: transparent;
+            border: 2px solid #fff;
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            border-radius: 10px;
+            /* Adjusted button roundness */
+        }
+
+        /* Carousel styles */
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            /* Set the carousel container height to full viewport height */
+            overflow: hidden;
+        }
+
+        .carousel {
+            display: flex;
+            width: 500%;
+            /* Adjust the width to accommodate all images */
+            height: 100%;
+            transition: transform 1s ease-in-out;
+            /* Increased transition duration */
+        }
+
+        .carousel-image {
+            flex: 0 0 20%;
+            /* Each image occupies 20% of the carousel width */
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: relative;
+        }
+
+        .carousel-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            /* Dark overlay color */
+            z-index: 1;
+        }
+
+        .carousel-text {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #fff;
+            z-index: 2;
+        }
+
+        .carousel-text h2 {
+            font-size: 150px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-family: 'Staatliches', Arial, sans-serif;
+
+        }
+
+        .carousel-text p {
+            background-color: rgba(255, 255, 255, 0.084);
+            /* Transparent background with opacity */
+            backdrop-filter: blur(10px);
+            font-size: 30px;
+            margin: 0;
+            padding: 15px;
+            font-family: 'Urbanist', sans-serif;
+        }
+
+        /* Adjusted styles for smaller images */
+        .carousel-image img {
+            width: 100%;
+            height: auto;
+        }
+
+        .team-section {
+            text-align: center;
+            padding: 80px 0;
+            background-color: #f7f7f7;
+        }
+
+        .team-title {
+            font-size: 24px;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .team-member {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            /* Spread items horizontally */
+            margin-bottom: 40px;
+            padding: 0 100px;
+        }
+
+        .team-member img {
+            max-width: 500px;
+            margin-left: 0;
+            /* Adjust margin as needed */
+        }
+
+        .team-member-description {
+            flex: 0.9;
+            /* Take remaining width */
+        }
+
+        .team-member p {
+            font-size: 16px;
+            line-height: 1.6;
+            text-align: justify;
+            margin: 0;
+            padding: 15px 0;
+            /* Add more padding */
+        }
+
+        footer {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            background-color: transparent;
+            color: #fff;
+            font-family: 'Urbanist', sans-serif;
+        }
+    </style>
     <link rel="stylesheet" href="{% static 'css/flux_pages.css' %}?v=1">
+    <style>
+        /* Keep the original photo carousel and glass navigation, with the new copy. */
+        .navbar { box-sizing: border-box; padding: 20px clamp(1rem, 5vw, 5rem); background-color: rgba(23, 25, 29, .35); }
+        .navbar-logo { display: flex; }
+        .navbar-button:hover { background: rgba(255, 255, 255, .15); }
+        .carousel-container { height: 100svh; min-height: 40rem; background: #17191d; }
+        .carousel-image img { height: 100%; object-fit: cover; }
+        .carousel-text { width: min(90%, 56rem); }
+        .carousel-text h1 { margin: 0 0 1rem; font-family: 'Staatliches', Arial, sans-serif; font-size: clamp(2.5rem, 7vw, 5.5rem); font-weight: 400; line-height: 1.05; }
+        .carousel-text .carousel-headline { padding: 0; margin: 0 0 1.25rem; background: none; backdrop-filter: none; font-size: clamp(1.5rem, 3vw, 2.4rem); line-height: 1.2; }
+        .carousel-text .carousel-description { max-width: 43rem; margin: 0 auto; padding: 1rem 1.25rem; border-radius: .6rem; font-size: clamp(.95rem, 1.6vw, 1.15rem); line-height: 1.65; }
+        .carousel-text .flux-home-actions { justify-content: center; margin-top: 1.5rem; }
+        .carousel-text .navbar-button { display: inline-flex; align-items: center; gap: .75rem; font-size: .85rem; }
+        .carousel-text .carousel-primary { border-color: #fff; color: #202124; background: #fff; }
+        .carousel-text .carousel-primary:hover { background: #f0f0f0; }
+        .carousel-footer { position: absolute; bottom: 1rem; z-index: 2; width: 100%; margin: 0; color: white; text-align: center; font-size: .8rem; }
+        .carousel-toggle { position: absolute; right: 1.25rem; bottom: 3.5rem; z-index: 3; padding: .5rem .75rem; border: 1px solid #ffffff70; border-radius: .5rem; color: white; background: #17191d80; font: inherit; font-size: .72rem; cursor: pointer; }
+        .flux-home-section { max-width: 1180px; margin: auto; padding: 4rem 1.5rem; }
+        .flux-home-section .flux-home-features { margin-top: 2rem; }
+        .flux-home-original footer { position: static; padding: 1.5rem; box-sizing: border-box; color: #73737b; background: #f7f7f7; font-size: .78rem; }
+        .flux-home-original footer p { margin: 0; }
+        .flux-home-original :is(a, button):focus-visible { outline: 3px solid #ffb184; outline-offset: 4px; }
+        @media (max-width: 540px) {
+            .navbar { padding: 1rem; }
+            .navbar-buttons { gap: .5rem; }
+            .navbar-button { padding: .6rem .8rem; border-radius: .6rem; font-size: .78rem; }
+            .carousel-text { top: 47%; }
+            .carousel-text .carousel-description { padding: .8rem; }
+            .carousel-text .flux-home-actions { gap: .6rem; }
+            .carousel-footer { padding: 0 1rem; box-sizing: border-box; font-size: .7rem; }
+        }
+        @media (prefers-reduced-motion: reduce) { .carousel { transition: none; } }
+    </style>
+    <link rel="preload" href="{% static 'images/Image_1.jpg' %}" as="image">
+    <link href="https://fonts.googleapis.com/css2?family=Staatliches&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Urbanist&display=swap" rel="stylesheet">
 </head>
-<body class="flux-home">
+<body class="flux-home-original">
     <a class="flux-skip-link" href="#homeContent">Skip to content</a>
-    <nav class="flux-home-nav" aria-label="Main navigation"><a href="{% url 'home' %}" class="flux-wordmark" aria-label="Flux home">FLUX<span>.</span></a><div><a href="{% url 'login' %}">Sign in</a><a href="{% url 'registration_page' %}" class="flux-button flux-button-primary">Join your team <span aria-hidden="true">↗</span></a></div></nav>
+    <nav class="navbar" aria-label="Main navigation">
+        <div class="navbar-logo">
+            <a href="{% url 'home' %}" aria-label="Flux Home">
+                <svg width="92" height="27" viewBox="0 0 92 27" fill="none" aria-hidden="true">
+                    <path
+                        d="M5.38281 26H0.337891V0.792969H17.9863V5.83789H5.38281V10.8828H12.9414V15.9277H5.38281V26ZM38.2363 26H20.5879V0.792969H25.6328V20.9551H38.2363V26ZM59.875 15.9277C59.875 17.3223 59.6113 18.6348 59.084 19.8652C58.5566 21.084 57.8359 22.1504 56.9219 23.0645C56.0078 23.9668 54.9355 24.6816 53.7051 25.209C52.4863 25.7363 51.1797 26 49.7852 26C48.3906 26 47.0781 25.7363 45.8477 25.209C44.6289 24.6816 43.5625 23.9668 42.6484 23.0645C41.7461 22.1504 41.0312 21.084 40.5039 19.8652C39.9766 18.6348 39.7129 17.3223 39.7129 15.9277V0.792969H44.7402V15.9277C44.7402 16.6191 44.8691 17.2695 45.127 17.8789C45.3965 18.4883 45.7598 19.0215 46.2168 19.4785C46.6738 19.9355 47.207 20.2988 47.8164 20.5684C48.4375 20.8262 49.0938 20.9551 49.7852 20.9551C50.4766 20.9551 51.127 20.8262 51.7363 20.5684C52.3574 20.2988 52.8965 19.9355 53.3535 19.4785C53.8105 19.0215 54.168 18.4883 54.4258 17.8789C54.6953 17.2695 54.8301 16.6191 54.8301 15.9277V0.792969H59.875V15.9277ZM83.834 26H77.7168L72.8652 17.8613L67.9961 26H61.9141L69.6484 13.3965L61.9141 0.792969H67.9961L72.8652 8.93164L77.7168 0.792969H83.834L76.0996 13.3965L83.834 26Z"
+                        fill="#FF5C00" />
+                    <path
+                        d="M91.7344 23.207C91.7344 23.6289 91.6582 24.0273 91.5059 24.4023C91.3535 24.7656 91.1426 25.082 90.873 25.3516C90.6035 25.6211 90.2871 25.832 89.9238 25.9844C89.5605 26.1484 89.168 26.2305 88.7461 26.2305C88.3359 26.2305 87.9434 26.1484 87.5684 25.9844C87.2051 25.832 86.8828 25.6211 86.6016 25.3516C86.332 25.082 86.1152 24.7656 85.9512 24.4023C85.7988 24.0273 85.7227 23.6289 85.7227 23.207C85.7227 22.7969 85.7988 22.4102 85.9512 22.0469C86.1152 21.6836 86.332 21.3672 86.6016 21.0977C86.8828 20.8281 87.2051 20.6172 87.5684 20.4648C87.9434 20.3008 88.3359 20.2188 88.7461 20.2188C89.168 20.2188 89.5605 20.3008 89.9238 20.4648C90.2871 20.6172 90.6035 20.8281 90.873 21.0977C91.1426 21.3672 91.3535 21.6836 91.5059 22.0469C91.6582 22.4102 91.7344 22.7969 91.7344 23.207Z"
+                        fill="white" />
+                </svg>
+            </a>
+        </div>
+        <div class="navbar-buttons">
+            <a href="{% url 'registration_page' %}" class="navbar-button" aria-label="Register">
+                Register
+            </a>
+            <a href="{% url 'login' %}" class="navbar-button" aria-label="Login">
+                Login
+            </a>
+        </div>
+    </nav>
+
     <main id="homeContent" tabindex="-1">
-        <section class="flux-home-hero" aria-labelledby="homeTitle">
-            <div><p class="flux-eyebrow">YOUR LABORATORY, IN SYNC</p><h1 id="homeTitle">Less searching.<br><span>More discovery.</span></h1><p>Bring your supplies, samples, equipment and research team into one organized workspace. Keep track of what matters, so you can focus on what’s next.</p><div class="flux-home-actions"><a class="flux-button flux-button-primary" href="{% url 'login' %}">Open your workspace <span aria-hidden="true">→</span></a><a class="flux-button" href="{% url 'registration_page' %}">Get started</a></div></div>
-            <figure class="flux-home-photo"><img src="{% static 'images/Image_1.jpg' %}" alt="Laboratory equipment and supplies ready for research" width="720" height="800" fetchpriority="high"><figcaption><strong>Everything has its place.</strong><span>One workspace for the way your lab works.</span></figcaption></figure>
-        </section>
+    <section class="carousel-container" aria-labelledby="homeTitle">
+        <div class="carousel-text">
+            <h1 id="homeTitle">TRY FLUX TODAY</h1>
+            <p class="carousel-headline">Less searching. More discovery.</p>
+            <p class="carousel-description">Bring your supplies, samples, equipment and research team into one organized workspace. Keep track of what matters, so you can focus on what’s next.</p>
+            <div class="flux-home-actions"><a class="navbar-button carousel-primary" href="{% url 'login' %}">Open your workspace <span aria-hidden="true">→</span></a><a class="navbar-button" href="{% url 'registration_page' %}">Get started</a></div>
+        </div>
+        <div class="carousel" aria-hidden="true">
+            <div class="carousel-image active">
+                <img src="{% static 'images/Image_1.jpg' %}"
+                     alt="Laboratory equipment and supplies"
+                     fetchpriority="high"
+                     width="1920"
+                     height="1080">
+            </div>
+            <div class="carousel-image">
+                <img src="{% static 'images/Image_2.jpg' %}"
+                     alt="illumina DNA Prep boxes"
+                     loading="lazy"
+                     width="1920"
+                     height="1080">
+            </div>
+            <div class="carousel-image">
+                <img src="{% static 'images/Image_3.jpg' %}"
+                     alt="Pipetting"
+                     loading="lazy"
+                     width="1920"
+                     height="1080">
+            </div>
+            <div class="carousel-image">
+                <img src="{% static 'images/Image_4.jpg' %}"
+                     alt="Pipettes"
+                     loading="lazy"
+                     width="1920"
+                     height="1080">
+            </div>
+            <div class="carousel-image">
+                <img src="{% static 'images/Image_5.jpg' %}"
+                     alt="Zymo DNA Prep Box"
+                     loading="lazy"
+                     width="1920"
+                     height="1080">
+            </div>
+        </div>
+        <button type="button" class="carousel-toggle" aria-pressed="false">Pause slideshow</button>
+        <p class="carousel-footer">Streamline Your Inventory Process with Us.</p>
+    </section>
         <section class="flux-home-section" aria-labelledby="featuresTitle"><p class="flux-eyebrow">MADE FOR THE EVERYDAY WORK</p><h2 id="featuresTitle">A clearer picture of your lab.</h2><div class="flux-home-features">
             <article><span>01 / INVENTORY</span><h3>Know what’s in stock.</h3><p>Track consumables and reagents, record stock movements and find storage details.</p></article>
             <article><span>02 / SAMPLES</span><h3>Find the right sample.</h3><p>Keep sample information, volumes and locations connected to your project.</p></article>
@@ -23,6 +291,102 @@
             <article><span>04 / TEAMWORK</span><h3>Stay on the same page.</h3><p>Manage project access, review activity and keep an eye on low-stock alerts.</p></article>
         </div></section>
     </main>
-    <footer class="flux-home-footer"><span>&copy; {% now "Y" %} Flux · Inventory management for research.</span><a href="{% url 'user_application' %}">Apply as a project coordinator →</a></footer>
+
+    <footer>
+        <p>&copy; <span id="currentYear"></span> Flux Inventory Management System</p>
+    </footer>
+
+    <script>
+        // Dynamic year implementation
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        // Improved carousel with better performance
+        document.addEventListener('DOMContentLoaded', function() {
+            const carousel = document.querySelector('.carousel');
+            const carouselImages = document.querySelectorAll('.carousel-image');
+            const container = document.querySelector('.carousel-container');
+            const toggle = document.querySelector('.carousel-toggle');
+            const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+            let manuallyPaused = reducedMotion.matches;
+            let currentIndex = 0;
+            const slideDuration = 5000;
+            let slideInterval;
+
+            function showSlide() {
+                carousel.style.transform = `translateX(-${100 * currentIndex / carouselImages.length}%)`;
+            }
+
+            function nextSlide() {
+                currentIndex = (currentIndex + 1) % carouselImages.length;
+                showSlide();
+            }
+
+            function startCarousel() {
+                clearInterval(slideInterval);
+                if (!manuallyPaused && !document.hidden) slideInterval = setInterval(nextSlide, slideDuration);
+            }
+
+            function stopCarousel() {
+                clearInterval(slideInterval);
+            }
+
+            function updateToggle() {
+                toggle.textContent = manuallyPaused ? 'Play slideshow' : 'Pause slideshow';
+                toggle.setAttribute('aria-pressed', String(manuallyPaused));
+            }
+            toggle.addEventListener('click', function () {
+                manuallyPaused = !manuallyPaused;
+                updateToggle();
+                if (manuallyPaused) stopCarousel(); else startCarousel();
+            });
+            document.addEventListener('visibilitychange', function () {
+                if (document.hidden) stopCarousel(); else startCarousel();
+            });
+            updateToggle();
+            startCarousel();
+
+            // Pause on hover for better UX
+            container.addEventListener('mouseenter', stopCarousel);
+            container.addEventListener('mouseleave', startCarousel);
+
+            // Touch support for mobile
+            let touchStartX = 0;
+            let touchEndX = 0;
+
+            carousel.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+                stopCarousel();
+            }, {passive: true});
+
+            carousel.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+                startCarousel();
+            }, {passive: true});
+
+            function handleSwipe() {
+                const threshold = 50;
+                if (touchStartX - touchEndX > threshold) {
+                    nextSlide();
+                } else if (touchEndX - touchStartX > threshold) {
+                    currentIndex = (currentIndex - 1 + carouselImages.length) % carouselImages.length;
+                    showSlide();
+                }
+            }
+
+            // Preload next image for better performance
+            function preloadNextImage() {
+                const nextIndex = (currentIndex + 1) % carouselImages.length;
+                const nextImage = carouselImages[nextIndex].querySelector('img');
+                if (nextImage) {
+                    const img = new Image();
+                    img.src = nextImage.src;
+                }
+            }
+
+            // Initial preload
+            preloadNextImage();
+        });
+    </script>
 </body>
 </html>
