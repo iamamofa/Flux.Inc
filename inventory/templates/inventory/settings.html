@@ -9,9 +9,17 @@
 {% block content %}
 <div class="flux-settings" aria-labelledby="settingsTitle">
     <header class="flux-settings-header">
-        <p class="dashboard-eyebrow">FLUX PREFERENCES</p>
-        <h1 id="settingsTitle">Settings</h1>
-        <p>Personalize Flux and manage your preferences for {{ project.name }}.</p>
+        <div class="flux-settings-header-main">
+            <div>
+                <p class="dashboard-eyebrow">FLUX PREFERENCES</p>
+                <h1 id="settingsTitle">Settings</h1>
+                <p>Personalize Flux and manage your preferences for {{ project.name }}.</p>
+            </div>
+            <a class="flux-settings-action flux-settings-back" href="{{ inventory_url }}">
+                <span aria-hidden="true">←</span> Back to inventory
+            </a>
+        </div>
+        <p class="flux-settings-project"><span>Current project</span><strong>{{ project.name }}</strong></p>
     </header>
 
     <nav class="flux-settings-overview" aria-label="Settings sections">
@@ -87,32 +95,40 @@
         <h2 id="appearanceTitle">General &amp; Appearance</h2>
         <p>These preferences are saved in this browser and do not change shared project data.</p>
 
-        <h3>Theme</h3>
-        <p class="flux-settings-current-value">Light</p>
-        <p class="flux-settings-help">Flux currently uses the light theme.</p>
+        <div class="flux-settings-preference-grid">
+            <div class="flux-settings-preference">
+                <h3>Theme</h3>
+                <p class="flux-settings-current-value">Light</p>
+                <p class="flux-settings-help">Flux currently uses the light theme.</p>
+            </div>
 
-        <h3>Table density</h3>
-        <div class="flux-setting-options" role="radiogroup" aria-label="Table density">
-            <label class="flux-setting-option">
-                <input type="radio" name="density" value="comfortable" data-flux-density>
-                <span>Comfortable</span>
-            </label>
-            <label class="flux-setting-option">
-                <input type="radio" name="density" value="compact" data-flux-density>
-                <span>Compact</span>
-            </label>
-        </div>
+            <div class="flux-settings-preference">
+                <h3>Table density</h3>
+                <div class="flux-setting-options" role="radiogroup" aria-label="Table density">
+                    <label class="flux-setting-option">
+                        <input type="radio" name="density" value="comfortable" data-flux-density>
+                        <span>Comfortable</span>
+                    </label>
+                    <label class="flux-setting-option">
+                        <input type="radio" name="density" value="compact" data-flux-density>
+                        <span>Compact</span>
+                    </label>
+                </div>
+            </div>
 
-        <h3 class="mt-6">Desktop navigation</h3>
-        <div class="flux-setting-options" role="radiogroup" aria-label="Desktop navigation width">
-            <label class="flux-setting-option">
-                <input type="radio" name="sidebar" value="expanded" data-flux-sidebar>
-                <span>Expanded</span>
-            </label>
-            <label class="flux-setting-option">
-                <input type="radio" name="sidebar" value="collapsed" data-flux-sidebar>
-                <span>Compact</span>
-            </label>
+            <div class="flux-settings-preference">
+                <h3>Desktop navigation</h3>
+                <div class="flux-setting-options" role="radiogroup" aria-label="Desktop navigation width">
+                    <label class="flux-setting-option">
+                        <input type="radio" name="sidebar" value="expanded" data-flux-sidebar>
+                        <span>Expanded</span>
+                    </label>
+                    <label class="flux-setting-option">
+                        <input type="radio" name="sidebar" value="collapsed" data-flux-sidebar>
+                        <span>Compact</span>
+                    </label>
+                </div>
+            </div>
         </div>
 
         <button class="flux-settings-reset" type="button" data-flux-reset-preferences>Restore default preferences</button>

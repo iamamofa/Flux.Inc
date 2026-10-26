@@ -76,6 +76,8 @@ class ProjectSettingsAccessTests(TestCase):
                 self.assertContains(response, 'data-flux-density')
                 self.assertNotContains(response, 'data-flux-theme')
                 self.assertContains(response, 'General &amp; Appearance')
+                self.assertContains(response, 'Back to inventory')
+                self.assertContains(response, 'Current project')
                 self.assertContains(response, 'Inventory Preferences')
                 self.assertContains(response, 'Notifications')
                 self.assertContains(response, 'Password &amp; Security')
