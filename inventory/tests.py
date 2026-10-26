@@ -603,6 +603,88 @@ class TeamMemberManagementTests(TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertFalse(self.project.project_members.filter(pk=self.outsider.pk).exists())
 
+    def test_directory_includes_manager_and_deduplicates_editors(self):
+        self.project.project_editors.add(self.member)
+        self.project.project_members.add(self.member)
+        response = self.client.get(reverse('team', args=[self.project.name]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['team_members']), 2)
+        self.assertEqual(response.context['editor_count'], 1)
+        self.assertEqual(response.context['limited_count'], 0)
+        self.assertContains(response, 'Project owner')
+
+    def test_members_can_view_directory_but_not_management_controls(self):
+        self.project.project_members.add(self.member)
+        self.client.force_login(self.member)
+        response = self.client.get(reverse('team', args=[self.project.name]))
+        self.assertContains(response, self.manager.email)
+        self.assertNotContains(response, 'data-open-add')
+        self.assertNotContains(response, 'data-edit-member')
+        self.client.force_login(self.outsider)
+        self.assertEqual(self.client.get(reverse('team', args=[self.project.name])).status_code, 403)
+
+    def test_manager_can_change_access_in_both_directions(self):
+        self.project.project_members.add(self.member)
+        url = reverse('edit_user_access', args=[self.project.name, self.member.pk])
+        for role in ('Full', 'Limited'):
+            with self.subTest(role=role):
+                response = self.client.post(url, {'role': role})
+                self.assertEqual(response.status_code, 200)
+                self.assertTrue(response.json()['success'])
+                self.assertEqual(self.project.project_editors.filter(pk=self.member.pk).exists(), role == 'Full')
+                self.assertEqual(self.project.project_members.filter(pk=self.member.pk).exists(), role == 'Limited')
+        self.assertEqual(self.project.logs.count(), 2)
+
+    def test_invalid_access_does_not_change_membership(self):
+        self.project.project_members.add(self.member)
+        url = reverse('edit_user_access', args=[self.project.name, self.member.pk])
+        self.assertEqual(self.client.post(url, {'role': 'Manager'}).status_code, 400)
+        self.assertTrue(self.project.project_members.filter(pk=self.member.pk).exists())
+        self.assertFalse(self.project.logs.exists())
+
+    def test_manager_removal_is_atomic_and_preserves_account(self):
+        self.project.project_editors.add(self.member)
+        self.project.project_members.add(self.member)
+        profile, _ = UserProfile.objects.get_or_create(user=self.member)
+        profile.managed_projects.add(self.project)
+        response = self.client.post(reverse('remove_user', args=[self.project.name, self.member.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()['success'])
+        self.assertFalse(self.project.project_members.exists())
+        self.assertFalse(self.project.project_editors.exists())
+        self.assertFalse(profile.managed_projects.filter(pk=self.project.pk).exists())
+        self.assertTrue(User.objects.filter(pk=self.member.pk).exists())
+        self.assertEqual(self.project.logs.count(), 1)
+
+    def test_team_mutations_require_manager_and_post(self):
+        self.project.project_members.add(self.member)
+        urls = [reverse(name, args=[self.project.name, self.member.pk]) for name in ('remove_user', 'edit_user_access')]
+        for url in urls:
+            with self.subTest(url=url):
+                self.assertEqual(self.client.get(url).status_code, 405)
+                self.assertEqual(self.client.put(url, '{}', content_type='application/json').status_code, 405)
+                for person in (self.member, self.outsider):
+                    self.client.force_login(person)
+                    self.assertEqual(self.client.post(url, {'role': 'Full'}).status_code, 403)
+                self.client.force_login(self.manager)
+        self.assertTrue(self.project.project_members.filter(pk=self.member.pk).exists())
+
+    def test_manager_cannot_be_removed_or_demoted(self):
+        for name in ('remove_user', 'edit_user_access'):
+            self.assertEqual(self.client.post(reverse(name, args=[self.project.name, self.manager.pk]), {'role': 'Limited'}).status_code, 400)
+        self.assertEqual(self.client.post(self.url, {'email': self.manager.email, 'role': 'Full'}).status_code, 400)
+
+    def test_non_members_cannot_be_edited_or_removed(self):
+        for name in ('remove_user', 'edit_user_access'):
+            self.assertEqual(self.client.post(reverse(name, args=[self.project.name, self.outsider.pk]), {'role': 'Full'}).status_code, 404)
+        self.assertFalse(self.project.project_editors.exists())
+
+    def test_team_mutations_remain_csrf_protected(self):
+        secured = Client(enforce_csrf_checks=True)
+        secured.force_login(self.manager)
+        for name in ('remove_user', 'edit_user_access'):
+            self.assertEqual(secured.post(reverse(name, args=[self.project.name, self.member.pk]), {'role': 'Full'}).status_code, 403)
+
 
 @override_settings(
     EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',

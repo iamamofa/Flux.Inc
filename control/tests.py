@@ -35,7 +35,7 @@ class PortalTests(TestCase):
         self.assertContains(response, 'User accounts')
         self.assertContains(response, 'Open Admin Workspace')
         self.assertContains(response, 'admin/css/flux_admin.css')
-        self.assertContains(response, 'admin/css/flux_admin.css?v=6')
+        self.assertContains(response, 'admin/css/flux_admin.css?v=9')
         self.assertContains(response, 'flux-admin-dashboard-grid')
         self.assertContains(response, 'Recent actions')
 
@@ -45,7 +45,7 @@ class PortalTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'class=" login"')
-        self.assertContains(response, 'admin/css/flux_admin.css?v=6')
+        self.assertContains(response, 'admin/css/flux_admin.css?v=9')
 
     def test_admin_sidebar_shows_only_dashboards_for_accessible_projects(self):
         project = Project.objects.create(name='Admin Dashboard Project', project_manager=self.person)
@@ -89,8 +89,51 @@ class PortalTests(TestCase):
         response = self.client.get(reverse('control:overview'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'control/portal_refined.css?v=2')
+        self.assertContains(response, 'control/portal_refined.css?v=4')
         self.assertContains(response, 'Administrator overview')
+
+    def test_overview_metrics_link_to_their_own_record_lists(self):
+        response = self.client.get(reverse('control:overview'))
+        stats = {stat['title']: stat for stat in response.context['stats']}
+        self.assertEqual(stats['Active accounts']['url'], reverse('control:users') + '?status=active')
+        self.assertEqual(stats['Pending registrations']['url'], reverse('admin:inventory_userapplication_changelist') + '?is_approved__exact=0')
+        self.assertEqual({item['url'] for item in response.context['inventory_summary']}, {
+            reverse(f'admin:inventory_{model}_changelist') for model in ('consumable', 'reagent', 'equipment', 'sample')
+        })
+        self.assertTrue(all(month['height'] == 0 for month in response.context['registration_months'] if month['value'] == 0))
+
+    def test_overview_inventory_respects_each_model_permission(self):
+        self.viewer.user_permissions.add(Permission.objects.get(codename='view_project', content_type__app_label='inventory'))
+        self.client.force_login(self.viewer)
+        response = self.client.get(reverse('control:overview'))
+        self.assertEqual(response.context['inventory_summary'], [])
+        self.assertNotContains(response, 'User registrations')
+        self.assertNotContains(response, 'Recent administration activity')
+        self.viewer.user_permissions.add(Permission.objects.get(codename='view_reagent', content_type__app_label='inventory'))
+        response = self.client.get(reverse('control:overview'))
+        self.assertEqual([item['url'] for item in response.context['inventory_summary']], [reverse('admin:inventory_reagent_changelist')])
+
+    def test_overview_project_totals_include_manager_and_editors(self):
+        project = Project.objects.create(name='Shared research', project_manager=self.person)
+        project.project_members.add(self.viewer)
+        project.project_editors.add(self.viewer, self.admin)
+        response = self.client.get(reverse('control:overview'))
+        self.assertEqual(response.context['recent_projects'][0].members_count, 3)
+        self.assertContains(response, reverse('admin:inventory_project_change', args=[project.pk]))
+
+    def test_admin_library_and_shortcuts_hide_unavailable_records(self):
+        self.viewer.user_permissions.add(Permission.objects.get(codename='view_project', content_type__app_label='inventory'))
+        self.client.force_login(self.viewer)
+        response = self.client.get(reverse('admin:index'))
+        self.assertContains(response, 'Find your starting point')
+        self.assertContains(response, reverse('admin:inventory_project_changelist'))
+        self.assertNotContains(response, reverse('admin:auth_user_changelist'))
+        self.assertNotContains(response, reverse('admin:inventory_project_add'))
+
+    def test_admin_project_form_uses_workflow_sections(self):
+        response = self.client.get(reverse('admin:inventory_project_add'))
+        self.assertContains(response, 'Team &amp; access')
+        self.assertContains(response, 'Low-stock notification schedule')
 
     def test_anonymous_requires_login(self):
         self.client.logout()
@@ -262,7 +305,7 @@ class PortalPageFeedbackTests(TestCase):
         ])
         response = self.client.get(reverse('control:notifications'), {'filter': 'unread'})
         self.assertContains(response, 'aria-current="page"')
-        self.assertContains(response, 'page=2&filter=unread', html=False)
+        self.assertContains(response, 'page=2&amp;filter=unread', html=False)
 
     def test_invalid_department_form_displays_field_links(self):
         response = self.client.post(reverse('control:department_create'), {'name': '', 'code': ''})
@@ -277,3 +320,129 @@ class PortalPageFeedbackTests(TestCase):
         response = self.client.get(reverse('control:settings'))
         self.assertContains(response, 'class="form-readonly" disabled')
         self.assertNotContains(response, 'Save settings')
+
+
+@override_settings(ALLOWED_HOSTS=['testserver', 'localhost'], EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+class AdministrationWorkspaceTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        from datetime import date
+        from inventory.models import Rooms, Storages, Shelf, Rack, Box, Sample, Sample_Locations, Consumable
+
+        cls.root = User.objects.create_superuser('workspace-root', 'root@example.invalid', 'test-password')
+        cls.member = User.objects.create_user('workspace-member', 'member@example.invalid', 'test-password')
+        cls.project = Project.objects.create(name='Workspace project', project_manager=cls.root)
+        cls.department = Department.objects.create(name='Genomics', code='gen', head=cls.member)
+        profile, _ = UserProfile.objects.get_or_create(user=cls.member)
+        profile.department = cls.department.name
+        profile.save()
+        room = Rooms.objects.create(room_name='Lab A', building='Research wing')
+        storage = Storages.objects.create(room_id=room, storage_name='Freezer A', storage_type='Freezer', temperature=-20)
+        shelf = Shelf.objects.create(storage=storage, project=cls.project, shelf_label='Shelf A', notes='Top shelf')
+        rack = Rack.objects.create(project=cls.project, project_manager=cls.root, shelf=shelf, rack_label='Rack A', capacity=10)
+        box = Box.objects.create(project=cls.project, rack=rack, box_label='Box A', notes='Samples')
+        sample = Sample.objects.create(project=cls.project, sample_id='SAMPLE-A', sample_type='Blood', volume=8, volume_unit='mL', collection_date=date.today())
+        location = Sample_Locations.objects.create(sample=sample, box=box, well_id='A1', moved_in_at=date.today())
+        consumable = Consumable.objects.create(project=cls.project, name='Pipette tips', items_per_pack=96, items_left_in_pack=50, pack_count=4, cold_storage='Room')
+        cls.review_objects = [cls.project, room, storage, shelf, rack, box, sample, location, consumable, cls.department]
+
+    def setUp(self):
+        self.client.force_login(self.root)
+
+    def test_every_registered_admin_directory_and_search_renders(self):
+        from django.contrib import admin
+        for model in admin.site._registry:
+            url = reverse(f'admin:{model._meta.app_label}_{model._meta.model_name}_changelist')
+            for query in ({}, {'q': 'workspace'}):
+                with self.subTest(model=model.__name__, query=query):
+                    response = self.client.get(url, query)
+                    self.assertEqual(response.status_code, 200)
+                    self.assertContains(response, 'admin/css/flux_admin_pages.css')
+                    self.assertNotContains(response, 'Toggle theme')
+
+    def test_every_available_admin_creation_form_renders(self):
+        from django.contrib import admin
+        from django.test import RequestFactory
+        request = RequestFactory().get('/admin/')
+        request.user = self.root
+        for model, model_admin in admin.site._registry.items():
+            if model_admin.has_add_permission(request):
+                with self.subTest(model=model.__name__):
+                    response = self.client.get(reverse(f'admin:{model._meta.app_label}_{model._meta.model_name}_add'))
+                    self.assertEqual(response.status_code, 200)
+                    self.assertContains(response, 'flux-record-heading')
+
+    def test_record_edit_history_and_deletion_review_pages_render(self):
+        for obj in self.review_objects:
+            for action in ('change', 'history', 'delete'):
+                with self.subTest(model=obj._meta.model_name, action=action):
+                    response = self.client.get(reverse(f'admin:{obj._meta.app_label}_{obj._meta.model_name}_{action}', args=[obj.pk]))
+                    self.assertEqual(response.status_code, 200)
+                    self.assertContains(response, 'flux_admin_pages.css')
+
+    def test_department_rename_updates_existing_member_assignments(self):
+        response = self.client.post(reverse('control:department_edit', args=[self.department.pk]), {
+            'name': 'Genomics & sequencing', 'code': 'gen', 'head': self.member.pk,
+            'description': 'Updated department', 'is_active': 'on',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.member.profile.refresh_from_db()
+        self.assertEqual(self.member.profile.department, 'Genomics & sequencing')
+
+    def test_inactive_department_head_can_be_preserved(self):
+        self.member.is_active = False
+        self.member.save()
+        response = self.client.post(reverse('control:department_edit', args=[self.department.pk]), {
+            'name': self.department.name, 'code': self.department.code,
+            'head': self.member.pk, 'is_active': 'on',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.department.refresh_from_db()
+        self.assertEqual(self.department.head_id, self.member.pk)
+
+    def test_permission_picker_preserves_selected_grants_on_validation_failure(self):
+        permission = Permission.objects.get(codename='view_project', content_type__app_label='inventory')
+        group = Group.objects.create(name='Project reader')
+        group.permissions.add(permission)
+        response = self.client.get(reverse('control:role_edit', args=[group.pk]))
+        self.assertContains(response, 'data-permission-section')
+        self.assertRegex(response.content.decode(), rf'<input\b(?=[^>]*name="permissions")(?=[^>]*value="{permission.pk}")(?=[^>]*\bchecked)[^>]*>')
+        response = self.client.post(reverse('control:role_edit', args=[group.pk]), {'name': '', 'permissions': [permission.pk]})
+        self.assertRegex(response.content.decode(), rf'<input\b(?=[^>]*name="permissions")(?=[^>]*value="{permission.pk}")(?=[^>]*\bchecked)[^>]*>')
+        self.assertTrue(group.permissions.filter(pk=permission.pk).exists())
+
+    def test_role_search_and_member_counts_are_correct(self):
+        group = Group.objects.create(name='Genomics reader')
+        self.member.groups.add(group)
+        Group.objects.create(name='Other team')
+        response = self.client.get(reverse('control:roles'), {'q': 'Genomics'})
+        self.assertContains(response, 'Genomics reader')
+        self.assertNotContains(response, 'Other team')
+        self.assertEqual(response.context['groups'][0].member_count, 1)
+
+    def test_inventory_exports_include_only_authorized_categories(self):
+        self.member.is_staff = True
+        self.member.save()
+        self.member.user_permissions.add(Permission.objects.get(codename='view_project', content_type__app_label='inventory'))
+        self.client.force_login(self.member)
+        url = reverse('control:report_csv', args=['inventory'])
+        self.assertEqual(self.client.get(url).status_code, 403)
+        self.member.user_permissions.add(Permission.objects.get(codename='view_sample', content_type__app_label='inventory'))
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Sample,1')
+        self.assertNotContains(response, 'Consumable')
+
+    def test_search_opens_the_selected_project(self):
+        response = self.client.get(reverse('control:search'), {'q': 'Workspace project'})
+        self.assertContains(response, reverse('admin:inventory_project_change', args=[self.project.pk]))
+
+    @override_settings(DEBUG=False)
+    def test_admin_permission_errors_use_the_shared_theme(self):
+        self.member.is_staff = True
+        self.member.save()
+        self.client.force_login(self.member)
+        response = self.client.get(reverse('admin:inventory_project_changelist'))
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, 'Access is restricted.', status_code=403)
+        self.assertContains(response, 'flux_admin_pages.css', status_code=403)

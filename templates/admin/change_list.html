@@ -1,0 +1,13 @@
+{% extends "admin/change_list.html" %}
+{% load custom_tags %}
+{% block content_title %}
+<header class="flux-record-heading">
+<div>
+<p class="flux-admin-eyebrow">{{ cl.opts.app_config.verbose_name }} / RECORD DIRECTORY</p>
+<h1>{{ cl.opts.verbose_name_plural|capfirst|admin_label }}</h1>
+<p>Search, filter, and open the records available to your account.</p>
+</div>
+<span class="flux-record-count">
+<strong>{{ cl.result_count }}</strong> matching record{{ cl.result_count|pluralize }}</span>
+</header>
+{% endblock %}

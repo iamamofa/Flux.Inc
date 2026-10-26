@@ -1,1 +1,75 @@
-{% extends 'control/base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">ACCOUNTABILITY</span><h1>Audit logs</h1><p>Review administrative actions recorded by the Flux portal.</p></div><a class="button secondary" href="{% url 'control:report_csv' 'audits' %}">↧ Export audit CSV</a></div><section class="panel"><form method="get" class="filterbar"><input name="q" class="field-control" value="{{ query }}" placeholder="Search action, actor or summary" aria-label="Search audit records"><button class="button secondary">Search</button></form><div class="table-scroll"><table><thead><tr><th>Timestamp</th><th>Actor</th><th>Operation</th><th>Target</th><th>Summary</th></tr></thead><tbody>{% for a in records %}<tr><td class="subtle">{{ a.happened_at|date:'d M Y, H:i:s' }}</td><td>{{ a.actor.username|default:'Deleted account' }}</td><td><span class="tag">{{ a.action }}</span></td><td>{{ a.target_type }} #{{ a.target_id }}</td><td>{{ a.summary }}</td></tr>{% empty %}<tr><td colspan="5"><div class="empty-state">No matching audit records.</div></td></tr>{% endfor %}</tbody></table></div>{% include 'control/partials/pager.html' %}</section>{% endblock %}
+{% extends 'control/base.html' %}{% block content %}
+<header class="page-head">
+<div>
+<span class="eyebrow">ACCOUNTABILITY / WORKSPACE HISTORY</span>
+<h1>Audit logs<span class="heading-dot">.</span>
+</h1>
+<p>Follow the changes made in your institution's administrative workspace.</p>
+</div>
+<a class="button secondary" href="{% url 'control:report_csv' 'audits' %}">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-download"/>
+</svg>Export audit CSV</a>
+</header>
+<section class="panel directory-panel" aria-labelledby="audit-title">
+<div class="panel-head">
+<div>
+<span class="panel-kicker">ADMINISTRATIVE HISTORY</span>
+<h2 id="audit-title">Recorded actions <span class="record-count">{{ records.paginator.count }}</span>
+</h2>
+<p>Who made a change, what changed, and when</p>
+</div>
+<span class="read-only-label">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>Read only</span>
+</div>
+<form method="get" class="filterbar" role="search">
+<label class="filter-search">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-search"/>
+</svg>
+<input name="q" type="search" class="field-control" value="{{ query }}" placeholder="Search operation, actor, or summary…" aria-label="Search audit records">
+</label>
+<button class="button secondary" type="submit">Search</button>{% if query %}<a class="button ghost" href="{% url 'control:audit' %}">Clear</a>{% endif %}</form>
+<div class="table-scroll">
+<table>
+<caption class="sr-only">Recorded administrative actions</caption>
+<thead>
+<tr>
+<th scope="col">Date & time</th>
+<th scope="col">Changed by</th>
+<th scope="col">Operation</th>
+<th scope="col">Record</th>
+<th scope="col">What happened</th>
+</tr>
+</thead>
+<tbody>{% for a in records %}<tr>
+<td class="date-cell">
+<strong>{{ a.happened_at|date:'d M Y' }}</strong>
+<small>{{ a.happened_at|date:'H:i:s' }} UTC</small>
+</td>
+<td>
+<div class="cell-user">
+<span class="mini-avatar" aria-hidden="true">{{ a.actor.username|first|upper|default:'?' }}</span>
+<strong>{{ a.actor.username|default:'Deleted account' }}</strong>
+</div>
+</td>
+<td>
+<span class="tag">{{ a.action }}</span>
+</td>
+<td>
+<span class="audit-target">{{ a.target_type }}<small>#{{ a.target_id }}</small>
+</span>
+</td>
+<td class="audit-summary">{{ a.summary }}</td>
+</tr>{% empty %}<tr>
+<td colspan="5">
+<div class="empty-state">
+<h3>{% if query %}No matching actions{% else %}Your history starts here{% endif %}</h3>
+<p>{% if query %}Try a shorter operation name or a member's username.{% else %}Administrative changes made through the control workspace will be recorded here.{% endif %}</p>
+</div>
+</td>
+</tr>{% endfor %}</tbody>
+</table>
+</div>{% include 'control/partials/pager.html' %}</section>{% endblock %}

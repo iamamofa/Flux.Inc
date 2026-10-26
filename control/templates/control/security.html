@@ -1,1 +1,65 @@
-{% extends 'control/base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">SECURITY & POLICY</span><h1>Security settings</h1><p>Actual Django deployment security values. Changes require server configuration.</p></div></div><section class="panel security-panel"><div class="panel-head"><div><h2>Security checks</h2><p>Read-only configuration health</p></div></div><div class="security-list">{% for label,enabled in controls %}<div class="security-row"><span>{{ label }}</span>{% if enabled %}<span class="status success">Configured</span>{% else %}<span class="status neutral">Not enabled</span>{% endif %}</div>{% endfor %}<div class="security-row"><span>Session expiry</span><strong>{{ session_age_minutes }} minutes</strong></div></div></section><div class="helper-note">Security configuration is controlled by environment variables and Django server settings. This page does not modify password policies or imply that HTTP responses have passed a penetration test.</div>{% endblock %}
+{% extends 'control/base.html' %}{% block content %}
+<header class="page-head">
+<div>
+<span class="eyebrow">SECURITY & POLICY</span>
+<h1>Security settings<span class="heading-dot">.</span>
+</h1>
+<p>Review the configuration behind your institution's administrative access.</p>
+</div>
+<span class="read-only-label">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>Configuration overview</span>
+</header>
+<div class="editor-layout">
+<section class="panel security-panel">
+<div class="panel-head">
+<div>
+<span class="panel-kicker">DEPLOYMENT SETTINGS</span>
+<h2>Security checks</h2>
+<p>Current server settings, available for review</p>
+</div>
+<span class="editor-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>
+</span>
+</div>
+<div class="security-list">{% for label,enabled in controls %}<div class="security-row">
+<span class="security-check-icon {% if enabled %}configured{% endif %}">{% if enabled %}<svg class="ui-icon" aria-hidden="true">
+<use href="#i-check"/>
+</svg>{% else %}<svg class="ui-icon" aria-hidden="true">
+<use href="#i-settings"/>
+</svg>{% endif %}</span>
+<span>{{ label }}</span>{% if enabled %}<span class="status success">Configured</span>{% else %}<span class="status warning">Not enabled</span>{% endif %}</div>{% endfor %}<div class="security-row">
+<span class="security-check-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-clock"/>
+</svg>
+</span>
+<span>Session expiry</span>
+<strong>{{ session_age_minutes }} minutes</strong>
+</div>
+</div>
+</section>
+<aside class="editor-guide">
+<span class="guide-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>
+</span>
+<span class="panel-kicker">CONFIGURATION, IN CONTEXT</span>
+<h2>A clear view of your setup.</h2>
+<p>This page shows configured values. Your system operator manages these settings on the server.</p>
+<dl>
+<div>
+<dt>Development environments</dt>
+<dd>Secure cookies and HTTPS redirects may be disabled for a local development setup.</dd>
+</div>
+<div>
+<dt>Before going live</dt>
+<dd>Review deployment settings with your system operator. This overview is not a security assessment.</dd>
+</div>
+</dl>
+</aside>
+</div>{% endblock %}

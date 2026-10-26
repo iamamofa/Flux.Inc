@@ -1,10 +1,221 @@
 {% extends 'control/base.html' %}{% block content %}
-<div class="page-head"><div><span class="eyebrow">YOUR WORKSPACE</span><h1>Administrator overview</h1><p>Monitor your institution's accounts, research projects and operational activity.</p></div><div class="head-actions">{% if perms.auth.add_user %}<a href="{% url 'control:user_create' %}" class="button primary">+ Add new user</a>{% endif %}<a href="{% url 'control:reports' %}" class="button secondary">↧ Export reports</a></div></div>
-<div class="welcome-banner"><div><span class="welcome-label"><span class="pulse"></span> SYSTEM WORKSPACE</span><h2>Welcome back, {{ request.user.first_name|default:request.user.username }}.</h2><p>Here's a live snapshot of the records you are authorized to manage.</p></div><div class="welcome-decoration" aria-hidden="true"><span>F</span></div></div>
-<div class="stats-grid">{% for title,amount,url in stats %}<a href="{% if url == 'users' %}{% url 'control:users' %}{% elif url == 'applications' %}{% url 'admin:inventory_userapplication_changelist' %}{% elif url == 'projects' %}{% url 'admin:inventory_project_changelist' %}{% endif %}" class="stat-card"><span class="stat-header">{{ title }} <span class="stat-arrow">↗</span></span><strong>{{ amount }}</strong><span class="stat-sub">Live records</span></a>{% empty %}<div class="empty-block">No dashboard metrics available under your assigned permissions.</div>{% endfor %}</div>
-{% if registration_months %}<section class="panel chart-panel"><div class="panel-head"><div><h2>User registrations</h2><p>New accounts over the last six calendar months</p></div></div><div class="chart-area">{% for month in registration_months %}<div class="bar-unit"><span class="bar-value">{{ month.value }}</span><div class="bar-track"><div class="bar-fill" style="height:{{ month.height }}%" aria-label="{{ month.label }}: {{ month.value }} registrations"></div></div><span class="bar-label">{{ month.label }}</span></div>{% endfor %}</div></section>{% endif %}
-{% if pending_applications %}<section class="panel attention-panel"><div class="panel-head"><div><h2>Actions requiring attention</h2><p>Pending user applications</p></div><a class="inline-link" href="{% url 'admin:inventory_userapplication_changelist' %}">Review applications →</a></div><div class="attention-items">{% for app in pending_applications %}<a href="{% url 'admin:inventory_userapplication_change' app.pk %}" class="attention-row"><span class="attention-dot"></span><span><strong>{{ app.first_name }} {{ app.last_name }}</strong><small>{{ app.department }} · {{ app.created_at|date:'d M Y' }}</small></span><span>Review →</span></a>{% endfor %}</div></section>{% endif %}
-<div class="two-columns"><section class="panel"><div class="panel-head"><div><h2>Recent administration activity</h2><p>Changes recorded within the administrator portal</p></div>{% if perms.control.view_adminaudit %}<a class="inline-link" href="{% url 'control:audit' %}">View all →</a>{% endif %}</div><div class="activity-feed">{% for action in recent_admin %}<div class="activity-item"><span class="timeline-mark"></span><div><strong>{{ action.summary }}</strong><p>{{ action.actor.username|default:'Deleted user' }} · {{ action.happened_at|date:'d M Y, H:i' }}</p></div></div>{% empty %}<div class="empty-state">No recorded administrator activity available.</div>{% endfor %}</div></section>
-<section class="panel"><div class="panel-head"><div><h2>Research projects</h2><p>Recently modified projects in Flux</p></div></div><div class="project-feed">{% for project in recent_projects %}<a class="project-row" href="{% url 'admin:inventory_project_changelist' %}"><span class="project-monogram">{{ project.name|slice:':1'|upper }}</span><span class="project-text"><strong>{{ project.name }}</strong><small>{% if project.project_manager %}{{ project.project_manager.get_full_name|default:project.project_manager.username }}{% else %}No manager assigned{% endif %} · {{ project.members_count }} members</small></span><span class="row-chevron">→</span></a>{% empty %}<div class="empty-state">No projects available.</div>{% endfor %}</div></section></div>
-{% if recent_project %}<section class="panel lower-panel"><div class="panel-head"><div><h2>Inventory activity</h2><p>Recent recorded events from the existing project system</p></div></div><div class="activity-feed compact">{% for entry in recent_project %}<div class="activity-item"><span class="timeline-mark"></span><div><strong>{{ entry.action }}</strong><p>{{ entry.project.name }} · {{ entry.user.username }} · {{ entry.timestamp|date:'d M Y, H:i' }}</p></div></div>{% endfor %}</div></section>{% endif %}
+<div class="page-head">
+<div>
+<span class="eyebrow">INSTITUTIONAL WORKSPACE</span>
+<h1>Administrator overview<span class="heading-dot">.</span>
+</h1>
+<p>Your people, research, and operations. One clear view.</p>
+</div>
+<div class="head-actions">
+<a href="{% url 'control:reports' %}" class="button secondary">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-download"/>
+</svg>Export reports</a>{% if perms.auth.add_user %}<a href="{% url 'control:user_create' %}" class="button primary">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-plus"/>
+</svg>Add user</a>{% endif %}</div>
+</div>
+<section class="overview-welcome">
+<div>
+<span class="welcome-kicker">A LITTLE OVERSIGHT. A LOT OF PROGRESS.</span>
+<h2>Good to see you, {{ request.user.first_name|default:request.user.username }}.</h2>
+<p>Keep your institution moving. Start with what needs your attention.</p>
+<span class="overview-date">{% now 'l, j F Y' %}</span>
+</div>
+<div class="welcome-emblem" aria-hidden="true">
+<svg class="ui-icon">
+<use href="#i-grid"/>
+</svg>
+</div>
+</section>
+<div class="overview-section-label">
+<h2>At a glance</h2>
+<span>
+<i class="live-dot">
+</i>Current database records</span>
+</div>
+<div class="stats-grid">{% for stat in stats %}<a href="{{ stat.url }}" class="stat-card">
+<span class="stat-header">
+<span class="stat-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-{{ stat.icon }}"/>
+</svg>
+</span>
+<svg class="ui-icon stat-arrow" aria-hidden="true">
+<use href="#i-external"/>
+</svg>
+</span>
+<strong>{{ stat.amount }}</strong>
+<span class="stat-title">{{ stat.title }}</span>
+<span class="stat-sub">{{ stat.hint }}</span>
+</a>{% empty %}<div class="empty-block">Your administrator account is ready. Dashboard records appear when your role has the relevant view permissions.</div>{% endfor %}</div>
+<div class="overview-insights {% if not registration_months %}overview-insights-single{% endif %}">
+{% if registration_months %}<section class="panel chart-panel">
+<div class="panel-head">
+<div>
+<span class="panel-kicker">ACCOUNT GROWTH</span>
+<h2>User registrations</h2>
+<p>New accounts over the last six calendar months</p>
+</div>
+<div class="chart-total">
+<strong>{{ registrations_total }}</strong>
+<span>new accounts</span>
+</div>
+</div>
+<div class="chart-area" role="img" aria-label="Monthly registrations: {% for month in registration_months %}{{ month.label }}: {{ month.value }}{% if not forloop.last %}; {% endif %}{% endfor %}">{% for month in registration_months %}<div class="bar-unit">
+<span class="bar-value">{{ month.value }}</span>
+<div class="bar-track">
+<div class="bar-fill" style="height:{{ month.height }}%">
+</div>
+</div>
+<span class="bar-label">{{ month.label }}</span>
+</div>{% endfor %}</div>
+<details class="chart-data">
+<summary>View registration data</summary>
+<table>
+<caption class="sr-only">User registrations by month</caption>
+<thead>
+<tr>
+<th scope="col">Month</th>
+<th scope="col">New accounts</th>
+</tr>
+</thead>
+<tbody>{% for month in registration_months %}<tr>
+<th scope="row">{{ month.label }}</th>
+<td>{{ month.value }}</td>
+</tr>{% endfor %}</tbody>
+</table>
+</details>
+</section>{% endif %}
+<section class="panel attention-panel">
+<div class="panel-head">
+<div>
+<span class="panel-kicker">YOUR NEXT STEPS</span>
+<h2>Needs attention</h2>
+<p>Make room for the work that matters.</p>
+</div>
+<span class="attention-count">{{ pending_count|add:unread_count }}</span>
+</div>
+{% if perms.inventory.view_userapplication %}<a class="attention-summary" href="{% url 'admin:inventory_userapplication_changelist' %}?is_approved__exact=0">
+<span class="attention-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-users"/>
+</svg>
+</span>
+<span>
+<strong>{{ pending_count }} pending application{{ pending_count|pluralize }}</strong>
+<small>Review requests to join Flux</small>
+</span>
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-arrow"/>
+</svg>
+</a>{% endif %}
+<a class="attention-summary" href="{% url 'control:notifications' %}">
+<span class="attention-icon neutral">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-bell"/>
+</svg>
+</span>
+<span>
+<strong>{{ unread_count }} unread notification{{ unread_count|pluralize }}</strong>
+<small>Catch up on institutional activity</small>
+</span>
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-arrow"/>
+</svg>
+</a>
+{% if pending_applications %}<div class="pending-preview">
+<span class="panel-kicker">LATEST APPLICATIONS</span>{% for app in pending_applications|slice:':3' %}<a href="{% url 'admin:inventory_userapplication_change' app.pk %}">
+<span class="mini-avatar">{{ app.first_name|first|upper }}{{ app.last_name|first|upper }}</span>
+<span>
+<strong>{{ app.first_name }} {{ app.last_name }}</strong>
+<small>{{ app.department }} · {{ app.created_at|date:'d M' }}</small>
+</span>
+<span class="pending-label">Pending</span>
+</a>{% endfor %}</div>{% elif perms.inventory.view_userapplication %}<div class="attention-clear">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-check"/>
+</svg>
+<span>All applications reviewed.<small>You're up to date.</small>
+</span>
+</div>{% endif %}
+</section>
+</div>
+{% if inventory_summary %}<section class="panel inventory-summary">
+<div class="panel-head">
+<div>
+<span class="panel-kicker">RESEARCH RESOURCES</span>
+<h2>Inventory snapshot</h2>
+<p>Open a category to search and manage its records.</p>
+</div>
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-box"/>
+</svg>
+</div>
+<div class="inventory-metrics">{% for item in inventory_summary %}<a href="{{ item.url }}">
+<span>{{ item.title }}</span>
+<strong>{{ item.amount }}</strong>
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-arrow"/>
+</svg>
+</a>{% endfor %}</div>
+</section>{% endif %}
+<div class="two-columns overview-lower">
+{% if perms.control.view_adminaudit %}<section class="panel">
+<div class="panel-head">
+<div>
+<span class="panel-kicker">THE ACTIVITY FEED</span>
+<h2>Recent administration activity</h2>
+<p>A record of changes in your workspace</p>
+</div>
+<a class="inline-link" href="{% url 'control:audit' %}">View all →</a>
+</div>
+<div class="activity-feed">{% for action in recent_admin %}<div class="activity-item">
+<span class="timeline-mark">
+</span>
+<div>
+<strong>{{ action.summary }}</strong>
+<p>{{ action.actor.username|default:'Deleted user' }} · {{ action.happened_at|date:'d M Y, H:i' }}</p>
+</div>
+</div>{% empty %}<div class="empty-state">No administration activity yet. Changes made in the workspace will appear here.</div>{% endfor %}</div>
+</section>{% endif %}
+{% if show_projects %}<section class="panel">
+<div class="panel-head">
+<div>
+<span class="panel-kicker">IN THE LAB</span>
+<h2>Research projects</h2>
+<p>Recently updated project workspaces</p>
+</div>
+<a class="inline-link" href="{% url 'admin:inventory_project_changelist' %}">View all →</a>
+</div>
+<div class="project-feed">{% for project in recent_projects %}<a class="project-row" href="{% url 'admin:inventory_project_change' project.pk %}">
+<span class="project-monogram">{{ project.name|first|upper }}</span>
+<span class="project-text">
+<strong>{{ project.name }}</strong>
+<small>{{ project.project_manager.get_full_name|default:project.project_manager.username|default:'No manager assigned' }} · {{ project.members_count }} member{{ project.members_count|pluralize }}</small>
+</span>{% if project.is_active %}<span class="project-state">
+<i>
+</i>Active</span>{% else %}<span class="project-state inactive">Inactive</span>{% endif %}<svg class="ui-icon row-chevron" aria-hidden="true">
+<use href="#i-arrow"/>
+</svg>
+</a>{% empty %}<div class="empty-state">No research projects yet. Your project workspaces will appear here.</div>{% endfor %}</div>
+</section>{% endif %}
+</div>
+{% if recent_project %}<section class="panel lower-panel">
+<div class="panel-head">
+<div>
+<span class="panel-kicker">ACROSS YOUR PROJECTS</span>
+<h2>Inventory activity</h2>
+<p>Recent recorded events from the project system</p>
+</div>
+</div>
+<div class="activity-feed compact">{% for entry in recent_project %}<div class="activity-item">
+<span class="timeline-mark">
+</span>
+<div>
+<strong>{{ entry.action }}</strong>
+<p>{{ entry.project.name }} · {{ entry.user.username }} · {{ entry.timestamp|date:'d M Y, H:i' }}</p>
+</div>
+</div>{% endfor %}</div>
+</section>{% endif %}
 {% endblock %}

@@ -1,6 +1,86 @@
 {% extends 'control/base.html' %}{% block content %}
-<div class="page-head"><div><span class="eyebrow">ACCESS & IDENTITY</span><h1>User management</h1><p>Search accounts, maintain profiles and manage authorized access.</p></div>{% if can_add %}<a class="button primary" href="{% url 'control:user_create' %}">+ Create user</a>{% endif %}</div>
-<section class="panel"><form class="filterbar" method="get"><label class="sr-only" for="q">Search accounts</label><input id="q" name="q" class="field-control" placeholder="Search by name, email, department…" value="{{ query }}"><label class="sr-only" for="status">Account status</label><select id="status" name="status" class="field-control"><option value="">All statuses</option><option value="active" {% if status == 'active' %}selected{% endif %}>Active</option><option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive</option><option value="staff" {% if status == 'staff' %}selected{% endif %}>Administrators</option></select><button type="submit" class="button secondary">Apply filters</button><a href="{% url 'control:users' %}" class="button ghost">Reset</a></form>
-<div class="table-scroll"><table><thead><tr><th>User</th><th>Department</th><th>Roles</th><th>Account status</th><th>Last login</th><th class="numeric">Actions</th></tr></thead><tbody>{% for person in records %}<tr><td><div class="cell-user"><span class="mini-avatar">{{ person.username|slice:':1'|upper }}</span><span><strong>{{ person.get_full_name|default:person.username }}</strong><small>{{ person.email|default:'No email set' }}</small></span></div></td><td>{{ person.profile.department|default:'—' }}</td><td>{% if person.is_superuser %}<span class="tag">Super admin</span>{% elif person.is_staff %}<span class="tag">Staff</span>{% else %}{% for group in person.groups.all %}<span class="tag">{{ group.name }}</span>{% empty %}<span class="subtle">No assigned group</span>{% endfor %}{% endif %}</td><td>{% if person.is_active %}<span class="status success">Active</span>{% else %}<span class="status neutral">Inactive</span>{% endif %}</td><td class="subtle">{{ person.last_login|date:'d M Y'|default:'Never' }}</td><td class="numeric"><a class="inline-link" href="{% url 'control:user_detail' person.pk %}">View →</a></td></tr>{% empty %}<tr><td colspan="6"><div class="empty-state">No matching users found. Try adjusting the filters.</div></td></tr>{% endfor %}</tbody></table></div>
-{% include 'control/partials/pager.html' %}</section>
-{% endblock %}
+<header class="page-head">
+<div>
+<span class="eyebrow">PEOPLE & ACCESS</span>
+<h1>User directory<span class="heading-dot">.</span>
+</h1>
+<p>The people behind your institution. Find an account and manage its access.</p>
+</div>{% if can_add %}<a class="button primary" href="{% url 'control:user_create' %}">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-plus"/>
+</svg>Create user</a>{% endif %}</header>
+<section class="panel directory-panel" aria-labelledby="users-title">
+<div class="panel-head">
+<div>
+<span class="panel-kicker">ACCOUNT DIRECTORY</span>
+<h2 id="users-title">Institution members <span class="record-count">{{ records.paginator.count }}</span>
+</h2>
+<p>{% if query or status %}Accounts matching your current filters{% else %}All registered accounts in Flux{% endif %}</p>
+</div>
+<a class="inline-link" href="{% url 'control:report_csv' 'users' %}">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-download"/>
+</svg>Export directory</a>
+</div>
+<form class="filterbar" method="get" role="search">
+<label class="filter-search">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-search"/>
+</svg>
+<input id="q" name="q" class="field-control" type="search" aria-label="Search accounts" placeholder="Search name, email, or department…" value="{{ query }}">
+</label>
+<label class="filter-select">
+<span class="sr-only">Account status</span>
+<select id="status" name="status" class="field-control">
+<option value="">All accounts</option>
+<option value="active" {% if status == 'active' %}selected{% endif %}>Active accounts</option>
+<option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive accounts</option>
+<option value="staff" {% if status == 'staff' %}selected{% endif %}>Administrators</option>
+</select>
+</label>
+<button type="submit" class="button secondary">Apply filters</button>{% if query or status %}<a href="{% url 'control:users' %}" class="button ghost">Clear</a>{% endif %}</form>
+<div class="table-scroll">
+<table>
+<caption class="sr-only">Institution user directory</caption>
+<thead>
+<tr>
+<th scope="col">Team member</th>
+<th scope="col">Department</th>
+<th scope="col">Access roles</th>
+<th scope="col">Status</th>
+<th scope="col">Last login</th>
+<th scope="col" class="numeric">Manage</th>
+</tr>
+</thead>
+<tbody>
+{% for person in records %}<tr>
+<td>
+<a class="cell-user" href="{% url 'control:user_detail' person.pk %}">
+<span class="mini-avatar" aria-hidden="true">{{ person.first_name|default:person.username|first|upper }}{{ person.last_name|first|upper }}</span>
+<span>
+<strong>{{ person.get_full_name|default:person.username }}</strong>
+<small>{{ person.email|default:'No email on file' }}</small>
+</span>
+</a>
+</td>
+<td>{{ person.profile.department|default:'Unassigned' }}</td>
+<td>{% if person.is_superuser %}<span class="tag tag-warm">Super admin</span>{% elif person.is_staff %}<span class="tag">Administrator</span>{% else %}{% for group in person.groups.all %}<span class="tag">{{ group.name }}</span>{% empty %}<span class="subtle">Research member</span>{% endfor %}{% endif %}</td>
+<td>{% if person.is_active %}<span class="status success">Active</span>{% else %}<span class="status neutral">Inactive</span>{% endif %}</td>
+<td class="subtle">{{ person.last_login|date:'d M Y'|default:'Not yet signed in' }}</td>
+<td class="numeric">
+<a class="row-action" href="{% url 'control:user_detail' person.pk %}" aria-label="View {{ person.get_full_name|default:person.username }}">View <svg class="ui-icon" aria-hidden="true">
+<use href="#i-arrow"/>
+</svg>
+</a>
+</td>
+</tr>
+{% empty %}<tr>
+<td colspan="6">
+<div class="empty-state">
+<h3>No accounts found</h3>
+<p>Try a different name or adjust your status filter.</p>{% if query or status %}<a class="button secondary" href="{% url 'control:users' %}">Clear filters</a>{% endif %}</div>
+</td>
+</tr>{% endfor %}</tbody>
+</table>
+</div>
+{% include 'control/partials/pager.html' %}</section>{% endblock %}

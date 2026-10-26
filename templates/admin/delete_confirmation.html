@@ -1,0 +1,9 @@
+{% extends "admin/delete_confirmation.html" %}
+{% block content_title %}<header class="flux-record-heading">
+<div>
+<p class="flux-admin-eyebrow">REVIEW BEFORE DELETING</p>
+<h1>Confirm record deletion</h1>
+<p>Review the affected records and their related information below.</p>
+</div>
+</header>{% endblock %}
+{% block content %}<section class="flux-confirmation-card">{{ block.super }}</section>{% endblock %}

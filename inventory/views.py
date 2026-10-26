@@ -643,13 +643,21 @@ def team(request, project_name):
                 project.project_members.filter(id=user.id).exists()):
             return JsonResponse({'error': "Unauthorized access"}, status=403)
 
-        team_members = (project.project_editors.all() | 
-                        project.project_members.all()).distinct()
+        editor_ids = set(project.project_editors.values_list('id', flat=True))
+        member_ids = set(project.project_members.values_list('id', flat=True))
+        team_members = list(User.objects.filter(
+            pk__in=editor_ids | member_ids | {project.project_manager_id}
+        ).order_by('first_name', 'last_name', 'username'))
+        for person in team_members:
+            person.team_access = ('Manager' if person.pk == project.project_manager_id
+                                  else 'Full' if person.pk in editor_ids else 'Limited')
 
         context = {
             'project': project,
             'projects': get_user_projects(user),
             'team_members': team_members,
+            'editor_count': sum(person.team_access == 'Full' for person in team_members),
+            'limited_count': sum(person.team_access == 'Limited' for person in team_members),
             **get_sidebar_urls(project_name)
         }
         return render(request, 'inventory/team.html', context)
@@ -689,6 +697,12 @@ def add_user_to_project(request, project_name):
             return JsonResponse(
                 {'success': False, 'message': 'No account was found with that email address.'},
                 status=404,
+            )
+
+        if user.pk == project.project_manager_id or not user.is_active:
+            return JsonResponse(
+                {'success': False, 'message': 'Choose an active account other than the project manager.'},
+                status=400,
             )
 
         # Check if user is already in project
@@ -731,26 +745,30 @@ def add_user_to_project(request, project_name):
 @login_required
 def remove_user(request, project_name, user_id):
     """Remove user from project"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Use POST to remove a member.'}, status=405)
     try:
         user = get_object_or_404(User, id=user_id)
         project = get_object_or_404(Project, name=project_name)
 
-        # Remove from both editors and members
-        project.project_editors.remove(user)
-        project.project_members.remove(user)
+        if project.project_manager_id != request.user.id:
+            return JsonResponse({'success': False, 'message': 'Only the project manager can remove members.'}, status=403)
+        if user.pk == project.project_manager_id:
+            return JsonResponse({'success': False, 'message': 'The project manager cannot be removed.'}, status=400)
+        if not (project.project_editors.filter(pk=user.pk).exists() or project.project_members.filter(pk=user.pk).exists()):
+            return JsonResponse({'success': False, 'message': 'This account is not a project member.'}, status=404)
 
-        # Remove project from user's profile
-        user_profile = UserProfile.objects.get(user=user)
-        user_profile.managed_projects.remove(project)
-
-        Log.objects.create(
-            project=project,
-            user=request.user,
-            action=f'Removed {user.get_full_name()} from project'
-        )
+        with transaction.atomic():
+            project.project_editors.remove(user)
+            project.project_members.remove(user)
+            user_profile = UserProfile.objects.filter(user=user).first()
+            if user_profile:
+                user_profile.managed_projects.remove(project)
+            Log.objects.create(project=project, user=request.user,
+                               action=f'Removed {user.get_full_name() or user.username} from project')
 
         return JsonResponse({
-            'message': f'{user.get_full_name()} removed successfully'
+            'success': True, 'message': f'{user.get_full_name() or user.username} removed successfully'
         }, status=200)
 
     except Exception as e:
@@ -767,19 +785,25 @@ def edit_user_access(request, project_name, user_id):
     try:
         user = get_object_or_404(User, id=user_id)
         project = get_object_or_404(Project, name=project_name)
+        if project.project_manager_id != request.user.id:
+            return JsonResponse({'success': False, 'message': 'Only the project manager can change access.'}, status=403)
+        if user.pk == project.project_manager_id:
+            return JsonResponse({'success': False, 'message': 'The project manager always has full access.'}, status=400)
+        if not (project.project_editors.filter(pk=user.pk).exists() or project.project_members.filter(pk=user.pk).exists()):
+            return JsonResponse({'success': False, 'message': 'This account is not a project member.'}, status=404)
         role = clean_text_field(request.POST.get('role'))
-
-        if role == 'Full':
-            project.project_members.remove(user)
-            project.project_editors.add(user)
-            action = f"Granted full access to {user.get_full_name()}"
-        elif role == 'Limited':
-            project.project_editors.remove(user)
-            project.project_members.add(user)
-            action = f"Granted limited access to {user.get_full_name()}"
-
-        Log.objects.create(project=project, user=request.user, action=action)
-        return JsonResponse({'message': "Access updated successfully"})
+        if role not in {'Full', 'Limited'}:
+            return JsonResponse({'success': False, 'message': 'Choose Full or Limited access.'}, status=400)
+        with transaction.atomic():
+            if role == 'Full':
+                project.project_members.remove(user)
+                project.project_editors.add(user)
+            else:
+                project.project_editors.remove(user)
+                project.project_members.add(user)
+            Log.objects.create(project=project, user=request.user,
+                               action=f'Granted {role.lower()} access to {user.get_full_name() or user.username}')
+        return JsonResponse({'success': True, 'message': 'Access updated successfully'})
 
     except Exception as e:
         security_logger.error(f"Edit access error: {str(e)}")

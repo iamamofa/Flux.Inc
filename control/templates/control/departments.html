@@ -1,1 +1,76 @@
-{% extends 'control/base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">ORGANIZATION</span><h1>Departments & units</h1><p>Maintain your institution's organizational structure.</p></div>{% if can_add %}<a class="button primary" href="{% url 'control:department_create' %}">+ Add department</a>{% endif %}</div><section class="panel"><form method="get" class="filterbar"><input class="field-control" name="q" placeholder="Search departments…" value="{{ query }}" aria-label="Search departments"><button class="button secondary">Search</button></form><div class="table-scroll"><table><thead><tr><th>Department</th><th>Code</th><th>Head</th><th>Status</th><th class="numeric">Action</th></tr></thead><tbody>{% for d in records %}<tr><td><strong>{{ d.name }}</strong></td><td>{{ d.code }}</td><td>{% if d.head %}{{ d.head.get_full_name|default:d.head.username }}{% else %}—{% endif %}</td><td>{% if d.is_active %}<span class="status success">Active</span>{% else %}<span class="status neutral">Inactive</span>{% endif %}</td><td class="numeric">{% if can_edit %}<a class="inline-link" href="{% url 'control:department_edit' d.pk %}">Edit →</a>{% endif %}</td></tr>{% empty %}<tr><td colspan="5"><div class="empty-state">No departments configured. Existing users' department labels are preserved.</div></td></tr>{% endfor %}</tbody></table></div>{% include 'control/partials/pager.html' %}</section>{% endblock %}
+{% extends 'control/base.html' %}{% block content %}
+<header class="page-head">
+<div>
+<span class="eyebrow">YOUR ORGANIZATION</span>
+<h1>Departments & units<span class="heading-dot">.</span>
+</h1>
+<p>A clear structure for your institution, from research groups to supporting teams.</p>
+</div>{% if can_add %}<a class="button primary" href="{% url 'control:department_create' %}">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-plus"/>
+</svg>Add department</a>{% endif %}</header>
+<section class="panel directory-panel" aria-labelledby="departments-title">
+<div class="panel-head">
+<div>
+<span class="panel-kicker">ORGANIZATION DIRECTORY</span>
+<h2 id="departments-title">Institution departments <span class="record-count">{{ records.paginator.count }}</span>
+</h2>
+<p>Names, leadership, and current availability</p>
+</div>
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-building"/>
+</svg>
+</div>
+<form method="get" class="filterbar" role="search">
+<label class="filter-search">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-search"/>
+</svg>
+<input class="field-control" type="search" name="q" placeholder="Search department name or code…" value="{{ query }}" aria-label="Search departments">
+</label>
+<button class="button secondary" type="submit">Search</button>{% if query %}<a href="{% url 'control:departments' %}" class="button ghost">Clear</a>{% endif %}</form>
+<div class="table-scroll">
+<table>
+<caption class="sr-only">Department directory</caption>
+<thead>
+<tr>
+<th scope="col">Department</th>
+<th scope="col">Code</th>
+<th scope="col">Department head</th>
+<th scope="col">Status</th>
+<th scope="col" class="numeric">Manage</th>
+</tr>
+</thead>
+<tbody>{% for d in records %}<tr>
+<td>
+<div class="cell-user">
+<span class="department-avatar">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-building"/>
+</svg>
+</span>
+<span>
+<strong>{{ d.name }}</strong>
+<small>{{ d.description|truncatechars:65|default:'Institution department' }}</small>
+</span>
+</div>
+</td>
+<td>
+<span class="tag">{{ d.code }}</span>
+</td>
+<td>{% if d.head %}{{ d.head.get_full_name|default:d.head.username }}{% else %}<span class="subtle">Not assigned</span>{% endif %}</td>
+<td>{% if d.is_active %}<span class="status success">Active</span>{% else %}<span class="status neutral">Inactive</span>{% endif %}</td>
+<td class="numeric">{% if can_edit %}<a class="row-action" href="{% url 'control:department_edit' d.pk %}" aria-label="Edit {{ d.name }}">Edit <svg class="ui-icon" aria-hidden="true">
+<use href="#i-arrow"/>
+</svg>
+</a>{% else %}<span class="subtle">View only</span>{% endif %}</td>
+</tr>{% empty %}<tr>
+<td colspan="5">
+<div class="empty-state">
+<h3>{% if query %}No departments found{% else %}Build your institution's directory{% endif %}</h3>
+<p>{% if query %}Try a department name or a shorter code.{% else %}Add a department to organize team members and leadership.{% endif %}</p>
+</div>
+</td>
+</tr>{% endfor %}</tbody>
+</table>
+</div>{% include 'control/partials/pager.html' %}</section>{% endblock %}

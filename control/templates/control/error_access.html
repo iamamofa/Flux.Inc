@@ -1,1 +1,14 @@
-{% load static %}<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Access denied | Flux.Inc</title><link rel="stylesheet" href="{% static 'control/portal.css' %}"></head><body><main class="reset-shell"><section class="panel form-panel"><span class="eyebrow">FLUX.INC · 403</span><h1>Access denied</h1><p>Your account does not have permission to access this administrator resource.</p><a class="button primary" href="{% url 'home' %}">Return to Flux home</a></section></main></body></html>
+{% extends 'control/status_base.html' %}{% block title %}Access denied | Flux.Inc{% endblock %}{% block content %}<section class="panel status-panel">
+<span class="guide-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>
+</span>
+<span class="eyebrow">ACCESS & PERMISSIONS / 403</span>
+<h1>This area needs a little more access.</h1>
+<p>Your account does not have permission to open this administration resource. Ask your administrator to review your assigned role.</p>
+<a class="button primary" href="{% url 'home' %}">Return to Flux home <svg class="ui-icon" aria-hidden="true">
+<use href="#i-arrow"/>
+</svg>
+</a>
+</section>{% endblock %}

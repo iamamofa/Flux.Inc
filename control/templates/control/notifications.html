@@ -1,1 +1,50 @@
-{% extends 'control/base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">COMMUNICATIONS</span><h1>Notification center</h1><p>Account and administration updates addressed to your user.</p></div><form method="post" action="{% url 'control:notifications_read_all' %}">{% csrf_token %}<button type="submit" class="button secondary" {% if not unread_count %}disabled{% endif %}>Mark all as read</button></form></div><div class="tab-filter"><a href="{% url 'control:notifications' %}" class="button secondary" {% if request.GET.filter != 'unread' %}aria-current="page"{% endif %}>All</a><a href="{% url 'control:notifications' %}?filter=unread" class="button ghost" {% if request.GET.filter == 'unread' %}aria-current="page"{% endif %}>Unread</a></div><section class="panel notification-list">{% for n in records %}<article class="notice-row {% if not n.read_at %}notice-unread{% endif %}"><span class="notice-icon">♧</span><div><h2>{{ n.title }}</h2><p>{{ n.message }}</p><small>{{ n.created_at|date:'d M Y, H:i' }}</small>{% if n.link %}<a class="inline-link" href="{{ n.link }}">Open →</a>{% endif %}</div>{% if not n.read_at %}<form method="post" action="{% url 'control:notification_read' n.pk %}">{% csrf_token %}<button class="button ghost" type="submit">Mark read</button></form>{% else %}<span class="subtle">Read</span>{% endif %}</article>{% empty %}<div class="empty-state">You're all caught up. No notifications in this view.</div>{% endfor %}{% include 'control/partials/pager.html' %}</section>{% endblock %}
+{% extends 'control/base.html' %}{% block content %}
+<header class="page-head">
+<div>
+<span class="eyebrow">YOUR WORKSPACE / UPDATES</span>
+<h1>Notification center<span class="heading-dot">.</span>
+</h1>
+<p>Stay close to the account and administration activity that matters to you.</p>
+</div>
+<form method="post" action="{% url 'control:notifications_read_all' %}">{% csrf_token %}<button type="submit" class="button secondary" {% if not unread_count %}disabled{% endif %}>
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-check"/>
+</svg>Mark all as read</button>
+</form>
+</header>
+<section class="panel notification-list" aria-labelledby="notifications-title">
+<div class="panel-head">
+<div>
+<span class="panel-kicker">YOUR INBOX</span>
+<h2 id="notifications-title">Institution updates <span class="record-count">{{ unread_count }} unread</span>
+</h2>
+<p>Notifications addressed to your administrator account</p>
+</div>
+<nav class="tab-filter" aria-label="Notification views">
+<a href="{% url 'control:notifications' %}" {% if request.GET.filter != 'unread' %}aria-current="page"{% endif %}>All updates</a>
+<a href="{% url 'control:notifications' %}?filter=unread" {% if request.GET.filter == 'unread' %}aria-current="page"{% endif %}>Unread</a>
+</nav>
+</div>
+{% for n in records %}<article class="notice-row {% if not n.read_at %}notice-unread{% endif %}">
+<span class="notice-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-bell"/>
+</svg>
+</span>
+<div>
+<div class="notice-title">
+<h3>{{ n.title }}</h3>{% if not n.read_at %}<span class="unread-label">New</span>{% endif %}</div>
+<p>{{ n.message }}</p>
+<div class="notice-meta">
+<time datetime="{{ n.created_at|date:'c' }}">{{ n.created_at|date:'d M Y, H:i' }}</time>{% if n.link %}<a class="inline-link" href="{{ n.link }}">Open record <svg class="ui-icon" aria-hidden="true">
+<use href="#i-arrow"/>
+</svg>
+</a>{% endif %}</div>
+</div>{% if not n.read_at %}<form method="post" action="{% url 'control:notification_read' n.pk %}">{% csrf_token %}<button class="button ghost" type="submit" aria-label="Mark {{ n.title }} as read">Mark read</button>
+</form>{% else %}<span class="notice-read">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-check"/>
+</svg>Read</span>{% endif %}</article>{% empty %}<div class="empty-state">
+<h3>You're all caught up</h3>
+<p>{% if request.GET.filter == 'unread' %}No unread notifications. Switch to all updates to review your history.{% else %}Account and administration updates will appear here when they arrive.{% endif %}</p>
+</div>{% endfor %}{% include 'control/partials/pager.html' %}</section>{% endblock %}

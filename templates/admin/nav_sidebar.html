@@ -1,6 +1,7 @@
 {% load i18n %}
 <button class="sticky toggle-nav-sidebar" id="toggle-nav-sidebar" aria-label="{% translate 'Toggle navigation' %}"></button>
-<nav class="sticky" id="nav-sidebar">
+<nav class="sticky" id="nav-sidebar" aria-label="Record navigation">
+    <a class="flux-nav-home" href="{% url 'admin:index' %}">← Administration home</a>
     <input type="search" id="nav-filter"
            placeholder="{% translate 'Start typing to filter…' %}"
            aria-label="{% translate 'Filter navigation items' %}">
@@ -10,13 +11,13 @@
             Administrator overview
         </a>
         {% for project in admin_dashboard_projects %}
-            <div class="flux-dashboard-project">
-                <span>{{ project.name }}</span>
+            <details class="flux-dashboard-project">
+                <summary>{{ project.name }}</summary>
                 <a href="{% url 'dashboard_consumables' project_name=project.name %}">Consumables</a>
                 <a href="{% url 'dashboard_reagents' project_name=project.name %}">Reagents</a>
                 <a href="{% url 'dashboard_equipment_' project_name=project.name %}">Equipment</a>
                 <a href="{% url 'dashboard_samples' project_name=project.name %}">Samples</a>
-            </div>
+            </details>
         {% empty %}
             {% if request.user.is_superuser %}
                 <p class="flux-dashboard-empty">Join a project team to see its inventory dashboards here.</p>

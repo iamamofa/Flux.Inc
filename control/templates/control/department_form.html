@@ -1,1 +1,54 @@
-{% extends 'control/base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">ORGANIZATION</span><h1>{{ page_title }}</h1><p>Manage names, reporting head and active status.</p></div><a class="button secondary" href="{% url 'control:departments' %}">← Departments</a></div><section class="panel form-panel"><form method="post">{% csrf_token %}{% include 'control/partials/form_fields.html' %}<div class="form-actions"><button type="submit" class="button primary">Save department</button></div></form></section>{% endblock %}
+{% extends 'control/base.html' %}{% block content %}
+<header class="page-head">
+<div>
+<span class="eyebrow">ORGANIZATION / DEPARTMENT DETAILS</span>
+<h1>{{ page_title }}<span class="heading-dot">.</span>
+</h1>
+<p>Give this part of your institution a clear identity and a point of contact.</p>
+</div>
+<a class="button secondary" href="{% url 'control:departments' %}">← Departments</a>
+</header>
+<div class="editor-layout">
+<section class="panel editor-panel">
+<div class="panel-head">
+<div>
+<span class="panel-kicker">ORGANIZATIONAL DETAILS</span>
+<h2>Department information</h2>
+<p>Fields marked with an asterisk are required.</p>
+</div>
+<span class="editor-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-building"/>
+</svg>
+</span>
+</div>
+<form method="post" class="editor-form" novalidate>{% csrf_token %}{% include 'control/partials/form_fields.html' %}<div class="form-actions">
+<a href="{% url 'control:departments' %}" class="button secondary">Cancel</a>
+<button type="submit" class="button primary">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-check"/>
+</svg>Save department</button>
+</div>
+</form>
+</section>
+<aside class="editor-guide">
+<span class="guide-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-building"/>
+</svg>
+</span>
+<span class="panel-kicker">KEEP THINGS CONNECTED</span>
+<h2>A place for every team.</h2>
+<p>Use a short, recognizable code and assign an active account as the department head.</p>
+<dl>
+<div>
+<dt>Renaming a department</dt>
+<dd>Members assigned to the existing name will move to the new name when you save.</dd>
+</div>
+<div>
+<dt>Inactive departments</dt>
+<dd>Existing assignments are preserved. The department will no longer be offered for new user assignments.</dd>
+</div>
+</dl>
+</aside>
+</div>{% endblock %}

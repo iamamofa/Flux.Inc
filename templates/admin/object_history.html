@@ -1,0 +1,8 @@
+{% extends "admin/object_history.html" %}
+{% block content_title %}<header class="flux-record-heading">
+<div>
+<p class="flux-admin-eyebrow">RECORD HISTORY</p>
+<h1>A clear view of the changes.</h1>
+<p>Recorded administration activity for {{ object|truncatechars:80 }}.</p>
+</div>
+</header>{% endblock %}

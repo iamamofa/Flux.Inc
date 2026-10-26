@@ -1,56 +1,177 @@
-{% extends "admin/base_site.html" %}
-{% load i18n log %}
-
+{% extends "admin/base_site.html" %}{% load i18n log custom_tags %}
 {% block bodyclass %}{{ block.super }} dashboard{% endblock %}
 {% block breadcrumbs %}{% endblock %}
-
+{% block content_title %}{% endblock %}
 {% block content %}
-    <section class="flux-admin-welcome" aria-labelledby="flux-admin-title">
-        <div>
-            <p class="flux-admin-eyebrow">FLUX · INSTITUTIONAL OPERATIONS</p>
-            <h1 id="flux-admin-title">Administration, at a glance.</h1>
-            <p>Manage research records and system data from one workspace.</p>
-        </div>
-        <nav class="flux-admin-shortcuts" aria-label="Administration shortcuts">
-            <a href="{% url 'admin:inventory_project_changelist' %}">Research projects <span aria-hidden="true">↗</span></a>
-            <a href="{% url 'admin:auth_user_changelist' %}">User accounts <span aria-hidden="true">↗</span></a>
-            <a href="{% url 'control:overview' %}">Admin workspace <span aria-hidden="true">↗</span></a>
-        </nav>
-    </section>
-
-    <div class="flux-admin-dashboard-grid">
-        <section id="content-main" aria-label="{% translate 'Available administration areas' %}">
-            {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
-        </section>
-        <aside class="flux-admin-activity" aria-labelledby="recent-actions-title">
-            <section class="module">
-                <h2 id="recent-actions-title">{% translate 'Recent actions' %}</h2>
-                <h3>{% translate 'My actions' %}</h3>
-                {% get_admin_log 8 as admin_log for_user user %}
-                {% if admin_log %}
-                    <ul class="actionlist">
-                        {% for entry in admin_log %}
-                            <li class="{% if entry.is_addition %}addlink{% endif %}{% if entry.is_change %}changelink{% endif %}{% if entry.is_deletion %}deletelink{% endif %}">
-                                {% if entry.is_deletion or not entry.get_admin_url %}
-                                    {{ entry.object_repr }}
-                                {% else %}
-                                    <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
-                                {% endif %}
-                                <br>
-                                <span class="mini quiet">
-                                    {% if entry.content_type %}
-                                        {{ entry.content_type.name|capfirst }}
-                                    {% else %}
-                                        {% translate 'Unknown content' %}
-                                    {% endif %}
-                                </span>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="flux-admin-empty">{% translate 'No recent activity to show.' %}</p>
-                {% endif %}
-            </section>
-        </aside>
-    </div>
+<header class="flux-admin-page-head">
+<div>
+<p class="flux-admin-eyebrow">SYSTEM ADMINISTRATION</p>
+<h1>Administration, at a glance.</h1>
+<p>A considered workspace for the records behind your research.</p>
+</div>
+<span class="flux-admin-access">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>{% if user.is_superuser %}Super administrator{% else %}Staff administrator{% endif %}</span>
+</header>
+<section class="flux-admin-welcome" aria-labelledby="flux-admin-title">
+<div>
+<span class="flux-admin-hero-label">ORGANIZED RECORDS. CONNECTED RESEARCH.</span>
+<h2 id="flux-admin-title">Keep the details in good hands.</h2>
+<p>Manage research records and system data from one workspace.</p>
+<a href="{% url 'control:overview' %}">Go to your admin workspace <svg class="ui-icon" aria-hidden="true">
+<use href="#i-arrow"/>
+</svg>
+</a>
+</div>
+<div class="flux-admin-hero-icon" aria-hidden="true">
+<svg class="ui-icon">
+<use href="#i-folder"/>
+</svg>
+</div>
+</section>
+<nav class="flux-admin-shortcuts" aria-label="Administration shortcuts">
+{% if perms.inventory.view_project %}<a href="{% url 'admin:inventory_project_changelist' %}">
+<span class="flux-shortcut-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-folder"/>
+</svg>
+</span>
+<span>
+<strong>Research projects</strong>
+<small>Teams, access, and schedules</small>
+</span>
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-arrow"/>
+</svg>
+</a>{% endif %}
+{% if perms.auth.view_user %}<a href="{% url 'admin:auth_user_changelist' %}">
+<span class="flux-shortcut-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-users"/>
+</svg>
+</span>
+<span>
+<strong>User accounts</strong>
+<small>People and their permissions</small>
+</span>
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-arrow"/>
+</svg>
+</a>{% endif %}
+{% if perms.inventory.view_userapplication %}<a href="{% url 'admin:inventory_userapplication_changelist' %}?is_approved__exact=0">
+<span class="flux-shortcut-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-clock"/>
+</svg>
+</span>
+<span>
+<strong>Pending applications</strong>
+<small>Review requests to join Flux</small>
+</span>
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-arrow"/>
+</svg>
+</a>{% endif %}
+</nav>
+<div class="flux-admin-dashboard-grid">
+<section id="content-main" aria-labelledby="record-library-title">
+<div class="flux-library-heading">
+<div>
+<p class="flux-admin-eyebrow">THE RECORD LIBRARY</p>
+<h2 id="record-library-title">Find your starting point</h2>
+<p>Browse the areas available to your account.</p>
+</div>
+</div>
+{% if app_list %}<div class="flux-library-tools">
+<label class="flux-library-search">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-search"/>
+</svg>
+<input id="flux-model-search" type="search" placeholder="Find a record type…" aria-label="Find an administration record type">
+</label>
+<label>
+<span class="flux-sr-only">Filter administration area</span>
+<select id="flux-app-filter">
+<option value="">All areas</option>{% for app in app_list %}<option value="{{ app.app_label }}">{{ app.name }}</option>{% endfor %}</select>
+</label>
+</div>{% endif %}
+<p id="flux-library-status" class="flux-library-status" role="status" aria-live="polite">
+</p>
+{% for app in app_list %}<section class="flux-app-group" data-app="{{ app.app_label }}" aria-labelledby="app-{{ app.app_label }}-title">
+<div class="flux-app-heading">
+<h3 id="app-{{ app.app_label }}-title">
+<a href="{{ app.app_url }}">{% if app.app_label == 'auth' %}People & permissions{% elif app.app_label == 'inventory' %}Research & inventory{% elif app.app_label == 'control' %}Institutional operations{% else %}{{ app.name }}{% endif %}</a>
+</h3>
+<span>{{ app.models|length }} record type{{ app.models|length|pluralize }}</span>
+</div>
+<div class="flux-model-grid">
+{% for model in app.models %}<div class="flux-model-card" data-model-name="{{ model.name|admin_label }} {{ app.name }}">
+<span class="flux-model-icon" aria-hidden="true">{{ model.name|admin_label|first|upper }}</span>
+<div>{% if model.admin_url %}<a class="flux-model-title" href="{{ model.admin_url }}">{{ model.name|admin_label }}</a>{% else %}<span class="flux-model-title">{{ model.name|admin_label }}</span>{% endif %}<span class="flux-model-description">{% if model.view_only %}View records{% elif model.admin_url %}Browse and manage{% else %}Create records{% endif %}</span>
+</div>{% if model.add_url %}<a class="flux-model-add" href="{{ model.add_url }}" aria-label="Add {{ model.name|admin_label }}">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-plus"/>
+</svg>
+</a>{% elif model.admin_url %}<a class="flux-model-add" href="{{ model.admin_url }}" aria-label="View {{ model.name|admin_label }}">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-arrow"/>
+</svg>
+</a>{% endif %}</div>{% endfor %}
+</div>
+</section>{% empty %}<div class="flux-library-empty">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>
+<h3>No record access assigned yet</h3>
+<p>Ask your administrator to assign the view or edit permissions you need.</p>
+</div>{% endfor %}
+<div id="flux-library-empty" class="flux-library-empty" hidden>
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-search"/>
+</svg>
+<h3>No matching record types</h3>
+<p>Try another name or browse all administration areas.</p>
+<button type="button" id="flux-clear-search">Clear filters</button>
+</div>
+</section>
+<aside class="flux-admin-activity" aria-labelledby="recent-actions-title">
+<section class="flux-activity-card">
+<div class="flux-activity-heading">
+<p class="flux-admin-eyebrow">YOUR AUDIT TRAIL</p>
+<h2 id="recent-actions-title">Recent actions</h2>
+<p>The latest changes made by you.</p>
+</div>{% get_admin_log 8 as admin_log for_user user %}
+{% if admin_log %}<ul class="flux-action-list">{% for entry in admin_log %}<li>
+<span class="flux-action-marker {% if entry.is_addition %}added{% elif entry.is_deletion %}deleted{% endif %}" aria-hidden="true">
+</span>
+<div>{% if entry.is_deletion or not entry.get_admin_url %}<strong>{{ entry.object_repr }}</strong>{% else %}<a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>{% endif %}<span class="flux-action-meta">{% if entry.is_addition %}Added{% elif entry.is_deletion %}Deleted{% else %}Updated{% endif %} · {{ entry.content_type.name|default:'Record'|capfirst }}</span>
+<time datetime="{{ entry.action_time|date:'c' }}">{{ entry.action_time|date:'d M, H:i' }}</time>
+</div>
+</li>{% endfor %}</ul>{% else %}<div class="flux-admin-empty">
+<span class="flux-empty-clock">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-clock"/>
+</svg>
+</span>
+<strong>A clean slate</strong>
+<p>Your changes will appear here as you work with records.</p>
+</div>{% endif %}</section>
+<section class="flux-admin-help">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-grid"/>
+</svg>
+<h3>Looking for the bigger picture?</h3>
+<p>Visit the admin workspace for account trends, reports, and institutional activity.</p>
+<a href="{% url 'control:overview' %}">Open workspace <svg class="ui-icon" aria-hidden="true">
+<use href="#i-arrow"/>
+</svg>
+</a>
+</section>
+</aside>
+</div>
+<footer class="flux-admin-footer">
+<span>FLUX.INC · Research administration</span>
+<span>Access is governed by your assigned permissions</span>
+</footer>
 {% endblock %}

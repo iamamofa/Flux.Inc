@@ -1,4 +1,52 @@
 {% extends 'control/base.html' %}{% block content %}
-<div class="page-head"><div><span class="eyebrow">ACCESS GOVERNANCE</span><h1>Roles & permissions</h1><p>Permission grants use Django's existing Group and Permission models.</p></div>{% if can_manage %}<a class="button primary" href="{% url 'control:role_create' %}">+ Create role</a>{% endif %}</div>
-<div class="role-grid">{% for group in groups %}<div class="panel role-card"><div class="role-head"><span class="role-icon">▦</span><div><span class="subtle">GROUP ID {{ group.pk }}</span><h2>{{ group.name }}</h2></div></div><p>{{ group.permissions.count }} granted operation{{ group.permissions.count|pluralize }}</p><div class="permission-list">{% for permission in group.permissions.all|slice:':6' %}<span class="tag">{{ permission.codename }}</span>{% empty %}<span class="subtle">No permissions granted</span>{% endfor %}{% if group.permissions.count > 6 %}<span class="tag">+ additional permissions</span>{% endif %}</div>{% if can_manage %}<a href="{% url 'control:role_edit' group.pk %}" class="inline-link">Edit permissions →</a>{% endif %}</div>{% empty %}<div class="empty-state">No custom permission groups have been created yet.</div>{% endfor %}</div><div class="helper-note">Permissions are checked on the server for each administrator route. Role assignment and modification are restricted to super-administrators.</div>
-{% endblock %}
+<header class="page-head">
+<div>
+<span class="eyebrow">ACCESS GOVERNANCE</span>
+<h1>Roles & permissions<span class="heading-dot">.</span>
+</h1>
+<p>Give your people a clear set of responsibilities and the access to match.</p>
+</div>{% if can_manage %}<a class="button primary" href="{% url 'control:role_create' %}">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-plus"/>
+</svg>Create role</a>{% endif %}</header>
+<form class="standalone-search" method="get" role="search">
+<label class="filter-search">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-search"/>
+</svg>
+<input class="field-control" name="q" type="search" value="{{ query }}" placeholder="Find a role…" aria-label="Search roles">
+</label>
+<button class="button secondary" type="submit">Search</button>{% if query %}<a class="button ghost" href="{% url 'control:roles' %}">Clear</a>{% endif %}<span class="subtle">{{ groups|length }} role{{ groups|length|pluralize }}</span>
+</form>
+<div class="role-grid">{% for group in groups %}<section class="panel role-card">
+<div class="role-head">
+<span class="role-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>
+</span>
+<div>
+<span class="panel-kicker">ACCESS ROLE</span>
+<h2>{{ group.name }}</h2>
+</div>
+</div>
+<div class="role-metrics">
+<span>
+<strong>{{ group.member_count }}</strong> member{{ group.member_count|pluralize }}</span>
+<span>
+<strong>{{ group.permissions.count }}</strong> permission{{ group.permissions.count|pluralize }}</span>
+</div>
+<div class="permission-list">{% for permission in group.permissions.all|slice:':5' %}<span class="tag">{{ permission.name }}</span>{% empty %}<p class="subtle">No permissions assigned yet.</p>{% endfor %}{% if group.permissions.count > 5 %}<span class="subtle">{{ group.permissions.count|add:'-5' }} more permission{{ group.permissions.count|add:'-5'|pluralize }}</span>{% endif %}</div>
+<div class="role-card-footer">{% if can_manage %}<a href="{% url 'control:role_edit' group.pk %}" class="inline-link">Manage permissions <svg class="ui-icon" aria-hidden="true">
+<use href="#i-arrow"/>
+</svg>
+</a>{% else %}<span class="subtle">Managed by a super administrator</span>{% endif %}</div>
+</section>{% empty %}<div class="panel empty-state">
+<h3>{% if query %}No matching roles{% else %}Define your first access role{% endif %}</h3>
+<p>{% if query %}Try a different role name.{% else %}Group permissions around the work your team needs to do.{% endif %}</p>{% if can_manage %}<a class="button secondary" href="{% url 'control:role_create' %}">Create role</a>{% endif %}</div>{% endfor %}</div>
+<div class="context-note">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>
+<p>Only super administrators can change role permissions. Assigned roles determine which records an account can view or manage.</p>
+</div>{% endblock %}

@@ -2,11 +2,15 @@
 <div class="form-error-summary" role="alert"><strong>Your changes haven’t been saved.</strong><p>Correct these fields and try again.</p><ul>{% for field in form %}{% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>{% endfor %}{% endfor %}</ul>{{ form.non_field_errors }}</div>
 {% endif %}
 <div class="form-grid">
-{% for field in form %}
-<div class="form-field {% if field.name == 'permissions' or field.name == 'description' %}form-wide{% endif %} {% if field.errors %}form-field-invalid{% endif %}">
-    <label for="{{ field.id_for_label }}">{{ field.label }}{% if not field.field.required %}<span class="form-optional">Optional</span>{% endif %}</label>{{ field }}
-    {% if field.help_text %}<small id="{{ field.id_for_label }}_help">{{ field.help_text }}</small>{% endif %}
-    {% if field.errors %}<span class="form-error" id="{{ field.id_for_label }}_errors">{{ field.errors|join:' ' }}</span>{% endif %}
-</div>
-{% endfor %}
+{% for field in form %}{% if field.name != 'permissions' %}
+<div class="form-field {% if field.name == 'description' or field.field.widget.input_type == 'checkbox' %}form-wide{% endif %} {% if field.errors %}form-field-invalid{% endif %} {% if field.field.widget.input_type == 'checkbox' %}form-field-checkbox{% endif %}">
+{% if field.field.widget.input_type == 'checkbox' %}
+<label class="checkbox-field" for="{{ field.id_for_label }}">{{ field }}<span><strong>{{ field.label }}</strong><small>Make this department available for new assignments.</small></span></label>
+{% else %}
+<label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="required-mark" aria-hidden="true">*</span>{% else %}<span class="form-optional">Optional</span>{% endif %}</label>
+<div class="field-input-wrap">{{ field }}{% if field.field.widget.input_type == 'password' %}<button type="button" class="field-password-toggle" data-control-password="{{ field.id_for_label }}" aria-pressed="false" aria-label="Show {{ field.label|lower }}">Show</button>{% endif %}</div>
+{% endif %}
+{% if field.help_text %}<small id="{{ field.id_for_label }}_help">{{ field.help_text }}</small>{% endif %}
+{% if field.errors %}<span class="form-error" id="{{ field.id_for_label }}_errors">{{ field.errors|join:' ' }}</span>{% endif %}
+</div>{% endif %}{% endfor %}
 </div>

@@ -1,4 +1,54 @@
 {% extends 'control/base.html' %}{% block content %}
-<div class="page-head"><div><span class="eyebrow">USER MANAGEMENT</span><h1>{{ page_title }}</h1><p>{% if editing %}Update personal information without changing authentication credentials.{% else %}Create an account in the existing Flux authentication system.{% endif %}</p></div><a class="button secondary" href="{% url 'control:users' %}">← Back to users</a></div>
-<section class="panel form-panel"><form method="post" novalidate>{% csrf_token %}{% include 'control/partials/form_fields.html' %}<div class="form-actions"><button class="button primary" type="submit">Save user</button><a href="{% url 'control:users' %}" class="button ghost">Cancel</a></div></form></section>
-{% endblock %}
+<header class="page-head">
+<div>
+<span class="eyebrow">PEOPLE & ACCESS / {% if editing %}EDIT ACCOUNT{% else %}NEW ACCOUNT{% endif %}</span>
+<h1>{{ page_title }}<span class="heading-dot">.</span>
+</h1>
+<p>{% if editing %}Keep this member's contact information and department up to date.{% else %}Welcome someone new to your institution's workspace.{% endif %}</p>
+</div>
+<a class="button secondary" href="{% url 'control:users' %}">← User directory</a>
+</header>
+<div class="editor-layout">
+<section class="panel editor-panel">
+<div class="panel-head">
+<div>
+<span class="panel-kicker">ACCOUNT DETAILS</span>
+<h2>{% if editing %}Member information{% else %}Set up their account{% endif %}</h2>
+<p>Fields marked with an asterisk are required.</p>
+</div>
+<span class="editor-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-users"/>
+</svg>
+</span>
+</div>
+<form method="post" novalidate class="editor-form">{% csrf_token %}{% include 'control/partials/form_fields.html' %}<div class="form-actions">
+<a href="{% url 'control:users' %}" class="button secondary">Cancel</a>
+<button class="button primary" type="submit">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-check"/>
+</svg>{% if editing %}Save changes{% else %}Create account{% endif %}</button>
+</div>
+</form>
+</section>
+<aside class="editor-guide">
+<span class="guide-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>
+</span>
+<span class="panel-kicker">GOOD TO KNOW</span>
+<h2>A good start, with the right access.</h2>
+<p>Use an individual email address so this member can receive account recovery links.</p>
+<dl>
+<div>
+<dt>Department</dt>
+<dd>Choose where this person works. You can update it later.</dd>
+</div>
+<div>
+<dt>{% if editing %}Account security{% else %}Temporary password{% endif %}</dt>
+<dd>{% if editing %}Send a password reset link from the member's profile when they need help signing in.{% else %}Choose a strong password. Roles and administrator access are managed separately on the member's profile.{% endif %}</dd>
+</div>
+</dl>
+</aside>
+</div>{% endblock %}

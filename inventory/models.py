@@ -848,6 +848,9 @@ class Rooms(models.Model):
     building = models.CharField(max_length=100)
     notes = models.TextField(blank=True, null=True)
 
+    def __str__(self):
+        return f'{self.room_name} · {self.building}'
+
 
 class Storages(models.Model):
     """Models for storages where shelves, racks and boxes are kept"""
@@ -902,6 +905,9 @@ class Storages(models.Model):
         if not self.temperature:
             return "N/A"
         return f"{self.temperature}°{self.temperature_unit}"
+
+    def __str__(self):
+        return self.storage_name
 
 
 class StorageLocation(models.Model):
@@ -998,6 +1004,9 @@ class Shelf(models.Model):
         verbose_name = 'Shelf'
         verbose_name_plural = 'Shelves'
 
+    def __str__(self):
+        return self.shelf_label
+
 
 class Rack(models.Model):
     """Model for rack storage locations"""
@@ -1038,6 +1047,9 @@ class Rack(models.Model):
     class Meta:
         verbose_name = 'Rack'
         verbose_name_plural = 'Racks'
+
+    def __str__(self):
+        return self.rack_label
 
 
 class Box(models.Model):
@@ -1086,6 +1098,9 @@ class Box(models.Model):
     class Meta:
         verbose_name = 'Box'
         verbose_name_plural = 'Boxes'
+
+    def __str__(self):
+        return self.box_label
 
     @property
     def box_dimension_display(self):
@@ -1203,6 +1218,9 @@ class Sample_Locations(models.Model):
     )
     moved_in_at = models.DateField()
     moved_out_at = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return f'{self.sample} · {self.box} · {self.well_id or "Unassigned well"}'
 
 
 class TrashBaseModel(models.Model):

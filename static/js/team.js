@@ -1,335 +1,91 @@
-// team.js
-document.addEventListener('DOMContentLoaded', function() {
-    // State management
-    const state = {
-        currentItemId: null,
-        currentProject: null,
-        isLoading: false
-    };
-
-    // DOM Elements
-    const elements = {
-        addPopup: document.getElementById('addPopup'),
-        editPopup: document.getElementById('editPopup'),
-        removePopup: document.getElementById('removePopup'),
-        memberForm: document.getElementById('member-form'),
-        editForm: document.getElementById('edit-form'),
-        teamTable: document.getElementById('teamTable')
-    };
-
-    // Event Listeners
-    if (elements.addPopup) {
-        elements.addPopup.addEventListener('click', (event) => {
-            if (event.target === elements.addPopup) {
-                closeAddPopup();
+(function () {
+    'use strict';
+    var table = document.getElementById('teamTable');
+    if (!table) return;
+    var search = document.getElementById('team-search');
+    var filter = document.getElementById('team-access-filter');
+    var activeRow = null;
+    var pending = false;
+    var toastTimer;
+    function updateDirectory() {
+        var rows = Array.from(table.querySelectorAll('tr[data-id]'));
+        var query = search.value.trim().toLocaleLowerCase();
+        var matches = 0;
+        rows.forEach(function (row) {
+            row.hidden = !row.dataset.search.toLocaleLowerCase().includes(query) || (filter.value !== 'all' && row.dataset.access !== filter.value);
+            if (!row.hidden) matches++;
+        });
+        document.getElementById('team-no-results').hidden = matches !== 0;
+        document.getElementById('team-results').textContent = 'Showing ' + matches + ' of ' + rows.length + ' team members';
+        document.querySelectorAll('[data-count]').forEach(function (count) {
+            count.textContent = count.dataset.count === 'all' ? rows.length : rows.filter(function (row) { return row.dataset.access === count.dataset.count; }).length;
+        });
+    }
+    search.addEventListener('input', updateDirectory);
+    filter.addEventListener('change', updateDirectory);
+    document.getElementById('team-clear-filters').addEventListener('click', function () { search.value = ''; filter.value = 'all'; updateDirectory(); search.focus(); });
+    function openDialog(id, row) {
+        activeRow = row;
+        var dialog = document.getElementById(id);
+        dialog.querySelector('.team-form-error').hidden = true;
+        dialog.querySelectorAll('[data-member-name]').forEach(function (name) { name.textContent = row.dataset.name; });
+        if (id === 'team-edit-dialog') document.getElementById('edit-role').value = row.dataset.access;
+        dialog.showModal();
+    }
+    document.querySelectorAll('[data-open-add]').forEach(function (button) {
+        button.addEventListener('click', function () { openDialog('team-add-dialog', null); });
+    });
+    table.addEventListener('click', function (event) {
+        var edit = event.target.closest('[data-edit-member]');
+        var remove = event.target.closest('[data-remove-member]');
+        if (edit || remove) openDialog(edit ? 'team-edit-dialog' : 'team-remove-dialog', (edit || remove).closest('tr'));
+    });
+    document.querySelectorAll('.team-dialog').forEach(function (dialog) {
+        dialog.addEventListener('cancel', function (event) { if (pending) event.preventDefault(); });
+        dialog.querySelectorAll('[data-close-dialog]').forEach(function (button) { button.addEventListener('click', function () { if (!pending) dialog.close(); }); });
+        dialog.addEventListener('click', function (event) {
+            if (!pending && event.target === dialog) {
+                var bounds = dialog.getBoundingClientRect();
+                if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
             }
         });
-    }
-
-    if (elements.editPopup) {
-        elements.editPopup.addEventListener('click', (event) => {
-            if (event.target === elements.editPopup) {
-                closeEditPopup();
-            }
+        dialog.querySelector('form').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            if (pending) return;
+            var form = event.target;
+            var button = form.querySelector('[type="submit"]');
+            var originalText = button.textContent;
+            var error = form.querySelector('.team-form-error');
+            var row = activeRow;
+            var url = form.id === 'member-form' ? form.action : form.id === 'edit-form' ? row.dataset.editUrl : row.dataset.removeUrl;
+            pending = true;
+            error.hidden = true;
+            button.disabled = true;
+            button.textContent = 'Saving…';
+            form.setAttribute('aria-busy', 'true');
+            try {
+                var response = await fetch(url, {method:'POST',body:new FormData(form),headers:{'X-Requested-With':'XMLHttpRequest'}});
+                var data;
+                try { data = await response.json(); } catch (_) { throw new Error('Your session may have expired. Refresh the page and try again.'); }
+                if (!response.ok || !data.success) throw new Error(data.message || data.error || 'The change could not be saved. Please try again.');
+                if (form.id === 'member-form') { window.location.reload(); return; }
+                if (form.id === 'edit-form') {
+                    var role = form.elements.role.value;
+                    row.dataset.access = role;
+                    var badge = row.querySelector('.team-badge');
+                    badge.dataset.role = role;
+                    badge.textContent = role + ' access';
+                } else { row.remove(); }
+                dialog.close();
+                updateDirectory();
+                if (!row.isConnected || row.hidden) search.focus();
+                var toast = document.getElementById('team-notification');
+                toast.textContent = data.message;
+                toast.hidden = false;
+                window.clearTimeout(toastTimer);
+                toastTimer = window.setTimeout(function () { toast.hidden = true; }, 5000);
+            } catch (failure) { error.textContent = failure.message || 'A network error occurred. Please try again.'; error.hidden = false; }
+            finally { pending = false; button.disabled = false; button.textContent = originalText; form.removeAttribute('aria-busy'); }
         });
-    }
-
-    if (elements.removePopup) {
-        elements.removePopup.addEventListener('click', (event) => {
-            if (event.target === elements.removePopup) {
-                closeRemovePopup();
-            }
-        });
-    }
-
-    if (elements.memberForm) {
-        elements.memberForm.addEventListener('submit', handleMemberFormSubmit);
-    }
-
-    if (elements.editForm) {
-        elements.editForm.addEventListener('submit', handleEditFormSubmit);
-    }
-
-    // Functions
-    function showAddPopup() {
-        elements.addPopup.style.display = 'flex';
-        elements.addPopup.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeAddPopup() {
-        elements.addPopup.style.display = 'none';
-        elements.addPopup.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
-    }
-
-    function showEditPopup(projectName, id) {
-        state.currentItemId = id;
-        state.currentProject = projectName;
-        
-        // Set current access level in the form
-        const row = elements.teamTable.querySelector(`tr[data-id="${id}"]`);
-        if (row) {
-            const accessLevel = row.querySelector('td:nth-child(3)').textContent.trim();
-            const select = elements.editForm.querySelector('#edit-role');
-            select.value = accessLevel;
-        }
-        
-        elements.editPopup.style.display = 'flex';
-        elements.editPopup.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeEditPopup() {
-        elements.editPopup.style.display = 'none';
-        elements.editPopup.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
-    }
-
-    function showRemovePopup(projectName, id) {
-        state.currentItemId = id;
-        state.currentProject = projectName;
-        elements.removePopup.style.display = 'flex';
-        elements.removePopup.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeRemovePopup() {
-        elements.removePopup.style.display = 'none';
-        elements.removePopup.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
-    }
-
-    async function handleMemberFormSubmit(event) {
-        event.preventDefault();
-        if (state.isLoading) return;
-        
-        state.isLoading = true;
-        const form = event.target;
-        const submitButton = form.querySelector('button[type="submit"]');
-        const originalButtonText = submitButton.textContent;
-        
-        try {
-            submitButton.disabled = true;
-            submitButton.innerHTML = 'Adding...';
-            
-            const response = await fetch(form.action, {
-                method: 'POST',
-                body: new FormData(form),
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
-                }
-            });
-            
-            const data = await response.json();
-            
-            if (response.ok) {
-                // Handle successful addition
-                if (data.success) {
-                    // Refresh the page or update the table dynamically
-                    window.location.reload();
-                } else {
-                    showError(data.message || 'Failed to add team member');
-                }
-            } else {
-                showError(data.message || 'Server error occurred');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            showError('Network error occurred');
-        } finally {
-            submitButton.disabled = false;
-            submitButton.textContent = originalButtonText;
-            state.isLoading = false;
-        }
-    }
-
-    async function handleEditFormSubmit(event) {
-        event.preventDefault();
-        if (state.isLoading) return;
-        
-        state.isLoading = true;
-        const form = event.target;
-        const submitButton = form.querySelector('button[type="submit"]');
-        const originalButtonText = submitButton.textContent;
-        
-        try {
-            submitButton.disabled = true;
-            submitButton.innerHTML = 'Updating...';
-            
-            const response = await fetch(`/edit_user_access/${state.currentProject}/${state.currentItemId}/`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': form.querySelector('[name=csrfmiddlewaretoken]').value
-                },
-                body: JSON.stringify({
-                    role: form.querySelector('#edit-role').value
-                })
-            });
-            
-            const data = await response.json();
-            
-            if (response.ok) {
-                if (data.success) {
-                    // Update the table row
-                    const row = elements.teamTable.querySelector(`tr[data-id="${state.currentItemId}"]`);
-                    if (row) {
-                        row.querySelector('td:nth-child(3)').textContent = form.querySelector('#edit-role').value;
-                    }
-                    closeEditPopup();
-                } else {
-                    showError(data.message || 'Failed to update access');
-                }
-            } else {
-                showError(data.message || 'Server error occurred');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            showError('Network error occurred');
-        } finally {
-            submitButton.disabled = false;
-            submitButton.textContent = originalButtonText;
-            state.isLoading = false;
-        }
-    }
-
-    async function removeItem() {
-        if (state.isLoading) return;
-        
-        state.isLoading = true;
-        const confirmButton = document.querySelector('#removePopup .delete-bg-primary');
-        const originalButtonText = confirmButton.textContent;
-        
-        try {
-            confirmButton.disabled = true;
-            confirmButton.innerHTML = 'Removing...';
-            
-            const response = await fetch(`/remove_user/${state.currentProject}/${state.currentItemId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                }
-            });
-            
-            const data = await response.json();
-            
-            if (response.ok) {
-                if (data.success) {
-                    // Remove the row from the table
-                    const row = elements.teamTable.querySelector(`tr[data-id="${state.currentItemId}"]`);
-                    if (row) {
-                        row.remove();
-                    }
-                    closeRemovePopup();
-                } else {
-                    showError(data.message || 'Failed to remove user');
-                }
-            } else {
-                showError(data.message || 'Server error occurred');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            showError('Network error occurred');
-        } finally {
-            confirmButton.disabled = false;
-            confirmButton.textContent = originalButtonText;
-            state.isLoading = false;
-        }
-    }
-
-
-    // Notification System
-    function showNotification({ type = 'info', title = '', message = '', duration = 5000 }) {
-        const container = document.getElementById('notification-container');
-        const template = document.getElementById('notification-template');
-        const clone = template.content.cloneNode(true);
-        const notification = clone.querySelector('.notification');
-        const icon = clone.querySelector('.notification-icon');
-        const titleEl = clone.querySelector('.notification-title');
-        const messageEl = clone.querySelector('.notification-message');
-        const closeBtn = clone.querySelector('.notification-close');
-
-        // Set notification content and style
-        notification.classList.add(type);
-        titleEl.textContent = title;
-        messageEl.textContent = message;
-    
-        // Set icon based on type
-        const icons = {
-            success: '✓',
-            error: '⚠',
-            warning: '⚠',
-            info: 'i'
-        };
-        icon.textContent = icons[type] || 'i';
-
-        // Close button handler
-        closeBtn.addEventListener('click', () => {
-            notification.classList.add('notification-exit');
-            setTimeout(() => notification.remove(), 300);
-        });
-
-        // Auto-dismiss after duration
-        if (duration > 0) {
-            setTimeout(() => {
-                notification.classList.add('notification-exit');
-                setTimeout(() => notification.remove(), 300);
-            }, duration);
-        }
-
-        // Add to DOM
-        container.appendChild(clone);
-    }
-
-    // Updated error handling function
-    function showError(message, title = 'Error') {
-        showNotification({
-            type: 'error',
-            title: title,
-            message: message,
-            duration: 8000
-        });
-    }
-
-    // Success notification
-    function showSuccess(message, title = 'Success') {
-        showNotification({
-            type: 'success',
-            title: title,
-            message: message,
-            duration: 5000
-        });
-    }
-
-    // Info notification
-    function showInfo(message, title = 'Info') {
-        showNotification({
-            type: 'info',
-            title: title,
-            message: message,
-            duration: 5000
-        });
-    }
-
-    // Warning notification
-    function showWarning(message, title = 'Warning') {
-        showNotification({
-            type: 'warning',
-            title: title,
-            message: message,
-            duration: 6000
-        });
-    }
-
-    // Make functions available globally
-    window.showAddPopup = showAddPopup;
-    window.closeAddPopup = closeAddPopup;
-    window.showEditPopup = showEditPopup;
-    window.closeEditPopup = closeEditPopup;
-    window.showRemovePopup = showRemovePopup;
-    window.closeRemovePopup = closeRemovePopup;
-    window.removeItem = removeItem;
-});
+    });
+}());

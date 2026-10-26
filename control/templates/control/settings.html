@@ -1,1 +1,56 @@
-{% extends 'control/base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">PLATFORM CONFIGURATION</span><h1>System settings</h1><p>Manage the institutional details shown across your administrator workspace.</p></div></div><section class="panel form-panel"><div class="panel-head"><div><h2>Institutional identity</h2><p>Displayed throughout the administrator portal.</p></div></div><form method="post">{% csrf_token %}<fieldset class="form-readonly" {% if not can_edit %}disabled{% endif %}>{% include 'control/partials/form_fields.html' %}</fieldset>{% if can_edit %}<div class="form-actions"><button class="button secondary" type="reset">Reset changes</button><button class="button primary" type="submit">Save settings</button></div>{% endif %}</form></section><div class="helper-note">Authentication policies, email credentials, and other deployment secrets must be configured on the server. These inputs do not override Django's security settings.</div>{% endblock %}
+{% extends 'control/base.html' %}{% block content %}
+<header class="page-head">
+<div>
+<span class="eyebrow">PLATFORM CONFIGURATION</span>
+<h1>System settings<span class="heading-dot">.</span>
+</h1>
+<p>Keep your institution's identity and administrative defaults in one place.</p>
+</div>{% if not can_edit %}<span class="read-only-label">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>View only</span>{% endif %}</header>
+<div class="editor-layout">
+<section class="panel editor-panel">
+<div class="panel-head">
+<div>
+<span class="panel-kicker">INSTITUTIONAL DETAILS</span>
+<h2>Your institution</h2>
+<p>Contact information and stored reporting preferences</p>
+</div>
+<span class="editor-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-settings"/>
+</svg>
+</span>
+</div>
+<form method="post" class="editor-form" novalidate>{% csrf_token %}<fieldset class="form-readonly" {% if not can_edit %}disabled{% endif %}>{% include 'control/partials/form_fields.html' %}</fieldset>{% if can_edit %}<div class="form-actions">
+<button class="button secondary" type="reset">Reset changes</button>
+<button class="button primary" type="submit">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-check"/>
+</svg>Save settings</button>
+</div>{% else %}<div class="context-note compact">
+<p>Your role can view these settings. A user with settings editing permission can update them.</p>
+</div>{% endif %}</form>
+</section>
+<aside class="editor-guide">
+<span class="guide-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-building"/>
+</svg>
+</span>
+<span class="panel-kicker">YOUR INSTITUTION, CONNECTED</span>
+<h2>Details that keep everyone aligned.</h2>
+<p>The institution name appears in your administrative navigation. Keep the support address current so your team knows where to find help.</p>
+<dl>
+<div>
+<dt>Currency code</dt>
+<dd>Use a three-letter code such as GHS for your stored reporting preference.</dd>
+</div>
+<div>
+<dt>Server configuration</dt>
+<dd>Email delivery and authentication policies are configured by your system operator.</dd>
+</div>
+</dl>
+</aside>
+</div>{% endblock %}

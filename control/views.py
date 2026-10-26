@@ -91,22 +91,26 @@ def overview(request):
     stats = []
     if users_visible:
         stats.extend([
-            ('Total users', User.objects.count(), 'users'),
-            ('Active accounts', User.objects.filter(is_active=True).count(), 'users'),
+            {'title': 'Total users', 'amount': User.objects.count(), 'url': reverse('control:users'), 'icon': 'users', 'hint': 'Explore the user directory'},
+            {'title': 'Active accounts', 'amount': User.objects.filter(is_active=True).count(), 'url': reverse('control:users') + '?status=active', 'icon': 'shield', 'hint': 'Accounts enabled in Flux'},
                     ])
     if has(request, 'inventory.view_userapplication'):
-        stats.append(('Pending registrations', UserApplication.objects.filter(is_approved=False).count(), 'applications'))
+        stats.append({'title': 'Pending registrations', 'amount': UserApplication.objects.filter(is_approved=False).count(), 'url': reverse('admin:inventory_userapplication_changelist') + '?is_approved__exact=0', 'icon': 'clock', 'hint': 'Applications awaiting review'})
     if projects_visible:
-        stats.extend([
-            ('Research projects', Project.objects.count(), 'projects'),
-            ('Consumables', Consumable.objects.count(), 'projects'),
-            ('Reagents', Reagent.objects.count(), 'projects'),
-            ('Equipment', Equipment.objects.count(), 'projects'),
-            ('Samples', Sample.objects.count(), 'projects'),
-        ])
+        stats.append({'title': 'Research projects', 'amount': Project.objects.count(), 'url': reverse('admin:inventory_project_changelist'), 'icon': 'folder', 'hint': 'Explore research projects'})
+    inventory_summary = []
+    for model in (Consumable, Reagent, Equipment, Sample):
+        if has(request, f'inventory.view_{model._meta.model_name}'):
+            inventory_summary.append({'title': str(model._meta.verbose_name_plural).capitalize(),
+                                      'amount': model.objects.count(),
+                                      'url': reverse(f'admin:inventory_{model._meta.model_name}_changelist')})
     recent_admin = list(AdminAudit.objects.select_related('actor')[:8]) if has(request, 'control.view_adminaudit') else []
     recent_project = list(Log.objects.select_related('user', 'project')[:8]) if projects_visible else []
-    projects = Project.objects.select_related('project_manager').annotate(members_count=Count('project_members', distinct=True)).order_by('-updated_at')[:6] if projects_visible else []
+    projects = list(Project.objects.select_related('project_manager').prefetch_related('project_members', 'project_editors').order_by('-updated_at')[:5]) if projects_visible else []
+    for project in projects:
+        project.members_count = len({person.pk for person in project.project_members.all()}
+                                    | {person.pk for person in project.project_editors.all()}
+                                    | ({project.project_manager_id} if project.project_manager_id else set()))
     # Monthly registration trend uses only existing timestamps. No synthetic data.
     now = timezone.now()
     months = []
@@ -118,14 +122,17 @@ def overview(request):
             months.append({'label': timezone.datetime(year, month, 1).strftime('%b %y'), 'value': count})
         biggest = max((item['value'] for item in months), default=0)
         for item in months:
-            item['height'] = 0 if biggest == 0 else max(5, round(100 * item['value'] / biggest))
+            item['height'] = 0 if not item['value'] else max(5, round(100 * item['value'] / biggest))
     pending = list(UserApplication.objects.filter(is_approved=False).order_by('-created_at')[:5]) if has(request, 'inventory.view_userapplication') else []
     # All counts are live ORM queries, never seeded dashboard figures.
     return template(request, 'overview', page_title='Overview', stats=stats,
                     recent_admin=recent_admin, recent_project=recent_project,
                     recent_projects=projects,
                     show_users=users_visible, show_projects=projects_visible,
-                    registration_months=months, pending_applications=pending)
+                    registration_months=months, pending_applications=pending,
+                    inventory_summary=inventory_summary,
+                    registrations_total=sum(item['value'] for item in months),
+                    pending_count=next((item['amount'] for item in stats if item['icon'] == 'clock'), 0))
 
 
 @protected('auth.view_user')
@@ -153,7 +160,7 @@ def user_detail(request, pk):
     person = get_object_or_404(User.objects.select_related('profile').prefetch_related('groups'), pk=pk)
     managed = Project.objects.filter(project_manager=person)
     return template(request, 'user_detail', page_title='User profile', person=person, managed=managed,
-                    can_edit=has(request, 'auth.change_user'),
+                    can_edit=has(request, 'auth.change_user') and (not person.is_staff or request.user.is_superuser),
                     all_groups=Group.objects.order_by('name') if request.user.is_superuser else [])
 
 
@@ -221,8 +228,12 @@ def user_status(request, pk):
 
 @protected('auth.view_group')
 def roles(request):
+    groups = Group.objects.prefetch_related('permissions').annotate(member_count=Count('user', distinct=True)).order_by('name')
+    query = request.GET.get('q', '').strip()[:100]
+    if query:
+        groups = groups.filter(name__icontains=query)
     return template(request, 'roles', page_title='Roles & permissions',
-                    groups=Group.objects.prefetch_related('permissions').order_by('name'),
+                    groups=groups, query=query,
                     can_manage=request.user.is_superuser)
 
 
@@ -276,10 +287,10 @@ def department_form(request, pk=None):
     if not has(request, perm):
         raise PermissionDenied('Department editing not permitted')
     obj = get_object_or_404(Department, pk=pk) if pk else None
+    old_name = obj.name if obj else None
     form = DepartmentForm(request.POST or None, instance=obj)
     if request.method == 'POST' and form.is_valid():
         with transaction.atomic():
-            old_name = obj.name if obj else None
             record = form.save()
             # Department remains a text field in original UserProfile; keep names aligned.
             if old_name and old_name != record.name:
@@ -362,6 +373,7 @@ def reports(request):
         allowed['users'] = 'User directory'
     if has(request, 'inventory.view_project'):
         allowed['projects'] = 'Research projects'
+    if any(has(request, f'inventory.view_{model._meta.model_name}') for model in (Consumable, Reagent, Equipment, Sample)):
         allowed['inventory'] = 'Inventory counts'
     if has(request, 'control.view_adminaudit'):
         allowed['audits'] = 'Administrative audit events'
@@ -374,16 +386,22 @@ def report_csv(request, report):
         'users': 'auth.view_user', 'projects': 'inventory.view_project',
         'inventory': 'inventory.view_project', 'audits': 'control.view_adminaudit',
     }
-    if report not in permissions or not has(request, permissions[report]):
+    inventory_models = [model for model in (Consumable, Reagent, Equipment, Sample)
+                        if has(request, f'inventory.view_{model._meta.model_name}')]
+    if report not in permissions or (report == 'inventory' and not inventory_models) or (report != 'inventory' and not has(request, permissions[report])):
         raise PermissionDenied('Report access denied')
     # Validate and apply optional user-supplied reporting dates without SQL interpolation.
     try:
         date_from = date.fromisoformat(request.GET['from']) if request.GET.get('from') else None
         date_to = date.fromisoformat(request.GET['to']) if request.GET.get('to') else None
     except ValueError:
-        return HttpResponse('Invalid date format. Use YYYY-MM-DD.', status=400)
+        response = template(request, 'report_error', page_title='Check report dates', error='Enter valid dates in YYYY-MM-DD format, or leave them empty to include all records.')
+        response.status_code = 400
+        return response
     if date_from and date_to and date_from > date_to:
-        return HttpResponse('Start date must be before or equal to end date.', status=400)
+        response = template(request, 'report_error', page_title='Check report dates', error='The end date must be on or after the start date.')
+        response.status_code = 400
+        return response
     response = HttpResponse(content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = f'attachment; filename="flux-{report}.csv"'
     response.write('\ufeff')
@@ -413,7 +431,7 @@ def report_csv(request, report):
                    p.is_active, p.created_at.isoformat()])
     elif report == 'inventory':
         write(['Inventory category', 'Total records'])
-        for model in [Consumable, Reagent, Equipment, Sample]:
+        for model in inventory_models:
             write([model.__name__, model.objects.count()])
     elif report == 'audits':
         write(['Date', 'Actor', 'Action', 'Entity', 'Entity ID', 'Summary'])
@@ -441,10 +459,10 @@ def search(request):
         if has(request, 'inventory.view_project'):
             for p in Project.objects.filter(name__icontains=q)[:8]:
                 results.append(('Project', p.name,
-                                reverse('admin:inventory_project_changelist')))
+                                reverse('admin:inventory_project_change', args=[p.pk])))
         if has(request, 'control.view_department'):
             for d in Department.objects.filter(name__icontains=q)[:8]:
-                results.append(('Department', d.name, reverse('control:departments')))
+                results.append(('Department', d.name, reverse('control:departments') + '?' + urlencode({'q': d.name})))
     return template(request, 'search', page_title='Search', query=q, results=results)
 
 @protected(superuser=True)

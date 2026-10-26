@@ -1,0 +1,14 @@
+{% extends 'control/base.html' %}{% block content %}<section class="panel status-panel">
+<span class="guide-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-chart"/>
+</svg>
+</span>
+<span class="eyebrow">REPORT DATE RANGE</span>
+<h1>Let's check those dates.</h1>
+<p>{{ error }}</p>
+<a class="button primary" href="{% url 'control:reports' %}">Back to reports <svg class="ui-icon" aria-hidden="true">
+<use href="#i-arrow"/>
+</svg>
+</a>
+</section>{% endblock %}

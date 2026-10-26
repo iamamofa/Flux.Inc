@@ -1,1 +1,70 @@
-{% extends 'control/base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">ACCOUNT</span><h1>My administrator profile</h1><p>Signed-in account and security links.</p></div></div><section class="panel detail-panel narrow"><div class="identity-heading"><span class="large-avatar">{{ person.username|slice:':1'|upper }}</span><div><h2>{{ person.get_full_name|default:person.username }}</h2><p>{{ person.email }}</p><span class="status success">Authenticated</span></div></div><dl class="details-list"><div><dt>Username</dt><dd>{{ person.username }}</dd></div><div><dt>Access</dt><dd>{% if person.is_superuser %}Super administrator{% else %}Staff administrator{% endif %}</dd></div><div><dt>Last login</dt><dd>{{ person.last_login|date:'d M Y, H:i'|default:'Not recorded' }}</dd></div></dl><div class="form-actions"><a class="button secondary" href="{% url 'change_password' %}">Change password</a><a class="button ghost" href="{% url 'admin:index' %}">Django administration</a><a class="button danger-outline" href="{% url 'logout' %}">Log out</a></div></section>{% endblock %}
+{% extends 'control/base.html' %}{% block content %}
+<header class="page-head">
+<div>
+<span class="eyebrow">YOUR ACCOUNT</span>
+<h1>My profile<span class="heading-dot">.</span>
+</h1>
+<p>Your account, your administrative access, and your next steps.</p>
+</div>
+</header>
+<div class="profile-layout">
+<section class="panel profile-identity">
+<span class="profile-avatar" aria-hidden="true">{{ person.first_name|default:person.username|first|upper }}{{ person.last_name|first|upper }}</span>
+<h2>{{ person.get_full_name|default:person.username }}</h2>
+<p>{{ person.email|default:'No email on file' }}</p>
+<span class="status success">Active account</span>
+<div class="profile-role">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>{% if person.is_superuser %}Super administrator{% else %}Staff administrator{% endif %}</div>
+</section>
+<div class="stack">
+<section class="panel detail-panel">
+<div class="panel-head">
+<div>
+<span class="panel-kicker">ACCOUNT INFORMATION</span>
+<h2>Personal details</h2>
+</div>
+</div>
+<dl class="details-list">
+<div>
+<dt>Username</dt>
+<dd>{{ person.username }}</dd>
+</div>
+<div>
+<dt>Department</dt>
+<dd>{{ person.profile.department|default:'Unassigned' }}</dd>
+</div>
+<div>
+<dt>Joined Flux</dt>
+<dd>{{ person.date_joined|date:'d M Y' }}</dd>
+</div>
+<div>
+<dt>Last login</dt>
+<dd>{{ person.last_login|date:'d M Y, H:i'|default:'Not recorded' }}</dd>
+</div>
+</dl>
+</section>
+<section class="panel detail-panel">
+<div class="panel-head">
+<div>
+<span class="panel-kicker">ACCOUNT SECURITY</span>
+<h2>Keep your account in good hands</h2>
+<p>Update your password or securely end your session.</p>
+</div>
+</div>
+<div class="profile-actions">
+<a class="button secondary" href="{% url 'admin:password_change' %}">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>Change password</a>
+<a class="button secondary" href="{% url 'admin:index' %}">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-external"/>
+</svg>Django administration</a>
+<form method="post" action="{% url 'admin:logout' %}">{% csrf_token %}<button class="button ghost" type="submit">Log out</button>
+</form>
+</div>
+</section>
+</div>
+</div>{% endblock %}

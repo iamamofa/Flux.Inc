@@ -1,1 +1,39 @@
-{% extends 'control/base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">GLOBAL SEARCH</span><h1>Search results</h1><p>Results are limited to records your account may access.</p></div></div><section class="panel"><form method="get" class="filterbar"><input class="field-control" aria-label="Search" name="q" placeholder="Search users, research projects, departments" value="{{ query }}"><button class="button primary">Search</button></form>{% for kind,name,url in results %}<a class="search-result" href="{{ url }}"><span class="tag">{{ kind }}</span><strong>{{ name }}</strong><span>→</span></a>{% empty %}<div class="empty-state">{% if query %}No records match “{{ query }}”. Try a name, email address or project title.{% else %}Find a person, research project or department. Enter a search term to get started.{% endif %}</div>{% endfor %}</section>{% endblock %}
+{% extends 'control/base.html' %}{% block content %}
+<header class="page-head">
+<div>
+<span class="eyebrow">ACROSS YOUR WORKSPACE</span>
+<h1>Find what you need<span class="heading-dot">.</span>
+</h1>
+<p>Search the people, projects, and departments available to your account.</p>
+</div>
+</header>
+<section class="panel search-panel">
+<form method="get" class="filterbar" role="search">
+<label class="filter-search">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-search"/>
+</svg>
+<input class="field-control" type="search" aria-label="Search administration records" name="q" placeholder="Enter a name, email, or project title…" value="{{ query }}">
+</label>
+<button class="button primary" type="submit">Search</button>{% if query %}<a class="button ghost" href="{% url 'control:search' %}">Clear</a>{% endif %}</form>{% if query %}<div class="search-summary">
+<strong>{{ results|length }} result{{ results|length|pluralize }}</strong>
+<span>for “{{ query }}”</span>
+</div>{% endif %}{% for kind,name,url in results %}<a class="search-result" href="{{ url }}">
+<span class="search-kind-icon">{% if kind == 'User' %}<svg class="ui-icon" aria-hidden="true">
+<use href="#i-users"/>
+</svg>{% elif kind == 'Project' %}<svg class="ui-icon" aria-hidden="true">
+<use href="#i-folder"/>
+</svg>{% else %}<svg class="ui-icon" aria-hidden="true">
+<use href="#i-building"/>
+</svg>{% endif %}</span>
+<span class="search-result-body">
+<small>{{ kind }}</small>
+<strong>{{ name }}</strong>
+</span>
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-arrow"/>
+</svg>
+</a>{% empty %}<div class="empty-state">
+<h3>{% if query %}No matches just yet{% else %}Your workspace, a search away{% endif %}</h3>
+<p>{% if query %}Try a shorter name, a registered email address, or a project title.{% else %}Enter a search term to find a person, research project, or department.{% endif %}</p>
+</div>{% endfor %}</section>{% endblock %}

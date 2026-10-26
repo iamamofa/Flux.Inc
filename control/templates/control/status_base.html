@@ -1,0 +1,23 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>{% block title %}Flux administration{% endblock %}</title>
+<link rel="icon" href="{% static 'images/Icon.png' %}">
+<link rel="stylesheet" href="{% static 'control/portal.css' %}?v=3">
+<link rel="stylesheet" href="{% static 'control/portal_refined.css' %}?v=4">
+<link rel="stylesheet" href="{% static 'control/portal_components.css' %}?v=2">
+</head>
+<body class="control-workspace control-status-page">{% include 'partials/ui_icons.html' %}<header class="status-brand">
+<a href="{% url 'home' %}" aria-label="Flux home">
+<span class="brand-icon">F</span>
+<strong>FLUX<span>.</span>INC</strong>
+</a>
+<span>INSTITUTIONAL WORKSPACE</span>
+</header>
+<main class="status-main">{% block content %}{% endblock %}</main>
+<footer class="status-footer">FLUX.INC · Research administration</footer>
+</body>
+</html>

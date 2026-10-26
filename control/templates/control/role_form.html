@@ -1,1 +1,59 @@
-{% extends 'control/base.html' %}{% block content %}<div class="page-head"><div><span class="eyebrow">SECURITY GOVERNANCE</span><h1>{{ page_title }}</h1><p>Grant only the permissions required for the role.</p></div><a class="button secondary" href="{% url 'control:roles' %}">← Roles</a></div><section class="panel form-panel"><form method="post">{% csrf_token %}{% include 'control/partials/form_fields.html' %}<div class="form-actions"><button class="button primary" type="submit">Save role</button></div></form></section>{% endblock %}
+{% extends 'control/base.html' %}{% block content %}
+<header class="page-head">
+<div>
+<span class="eyebrow">ACCESS GOVERNANCE / ROLE DETAILS</span>
+<h1>{{ page_title }}<span class="heading-dot">.</span>
+</h1>
+<p>Build a focused set of permissions around the work this role needs to do.</p>
+</div>
+<a class="button secondary" href="{% url 'control:roles' %}">← Roles & permissions</a>
+</header>
+<div class="editor-layout">
+<section class="panel editor-panel">
+<div class="panel-head">
+<div>
+<span class="panel-kicker">ROLE CONFIGURATION</span>
+<h2>Name and permission grants</h2>
+<p>Changes apply to every account assigned to this role.</p>
+</div>
+<span class="editor-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>
+</span>
+</div>
+<form method="post" class="editor-form" novalidate>{% csrf_token %}{% include 'control/partials/form_fields.html' %}{% include 'control/partials/permission_picker.html' %}<div class="form-actions">
+<a href="{% url 'control:roles' %}" class="button secondary">Cancel</a>
+<button class="button primary" type="submit">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-check"/>
+</svg>Save role</button>
+</div>
+</form>
+</section>
+<aside class="editor-guide">
+<span class="guide-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>
+</span>
+<span class="panel-kicker">THOUGHTFUL ACCESS</span>
+<h2>Give each role a clear purpose.</h2>
+<p>Start with the fewest permissions a person needs. Add more as their responsibilities change.</p>
+<dl>
+<div>
+<dt>View</dt>
+<dd>Read and search records.</dd>
+</div>
+<div>
+<dt>Add & change</dt>
+<dd>Create records or update existing information.</dd>
+</div>
+<div>
+<dt>Delete</dt>
+<dd>Remove records. Review this permission carefully.</dd>
+</div>
+</dl>
+<p class="guide-footnote">A role does not automatically make a user an administrator. Staff eligibility is managed separately.</p>
+</aside>
+</div>{% endblock %}

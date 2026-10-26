@@ -1,243 +1,275 @@
-{% load static %}
-<!DOCTYPE html>
+{% load static %}<!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="{% static 'images/Icon.png' %}">
-    <link rel="stylesheet" href="{% static 'css/inventory_style.css' %}">
-    <link rel="stylesheet" href="{% static 'css/flux_design_system.css' %}">
-    <link rel="stylesheet" href="{% static 'css/team.css' %}">
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script src="{% static 'js/flux_preferences.js' %}" defer></script>
-    <title>Flux - Team Management</title>
-    <link rel="stylesheet" href="{% static 'css/flux_pages.css' %}?v=1">
-    <script src="{% static 'js/flux_pages.js' %}" defer></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project team · {{ project.name }} | Flux</title>
+<link rel="icon" href="{% static 'images/Icon.png' %}">
+<link rel="stylesheet" href="{% static 'css/inventory_style.css' %}">
+<link rel="stylesheet" href="{% static 'css/flux_design_system.css' %}">
+<link rel="stylesheet" href="{% static 'css/flux_pages.css' %}?v=1">
+<link rel="stylesheet" href="{% static 'css/team.css' %}?v=3">
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer>
+</script>
+<script src="{% static 'js/flux_preferences.js' %}" defer>
+</script>
+<script src="{% static 'js/flux_pages.js' %}" defer>
+</script>
+<script src="{% static 'js/team.js' %}?v=3" defer>
+</script>
 </head>
-
-<body class="flux-inventory-layout relative min-h-screen font-poppins antialiased text-sm bg-white flex text-gray-800 h-full 2xl:max-w-[1920px] 2xl:mx-auto 2xl:border-r-2"
-    x-data="{ showMenu: false }">
-    <a class="flux-skip-link" href="#workspaceContent">Skip to content</a>
-
-    {% include "inventory/partials/sidebar.html" %}
-
-    <main id="workspaceContent" tabindex="-1" class="bg-white min-h-screen lg:ml-60 flex w-full">
-        <!-- Screen Overlay -->
-        <div class="absolute lg:hidden left-0 top-0 h-full w-full bg-black/30 z-[15]" 
-            @click="showMenu = false"
-            x-show="showMenu" 
-            x-transition.opacity.duration.500ms
-            aria-hidden="true">
-        </div>
-
-        <!-- Main Content -->
-        <section class="flex-1 py-6 px-4 md:px-4 lg:px-8">
-            {% include "inventory/partials/messages.html" %}
-            <!-- Header -->
-            <div class="flex items-center justify-between">
-                <div>
-                    {% include 'inventory/partials/project_switcher.html' with project_route='team' %}
-                </div>
-                <div class="flex items-center space-x-4">
-                    {% if user == project.project_manager %}
-                    <button id="addItemBtn" onclick="showAddPopup()"
-                        class="bg-primary hover:bg-primary/90 py-1.5 px-4 rounded flex items-center text-white space-x-1"
-                        aria-label="Add new team member">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-                            <path fill-rule="evenodd"
-                                d="M12 5.25a.75.75 0 01.75.75v5.25H18a.75.75 0 010 1.5h-5.25V18a.75.75 0 01-1.5 0v-5.25H6a.75.75 0 010-1.5h5.25V6a.75.75 0 01.75-.75z"
-                                clip-rule="evenodd" />
-                        </svg>
-                        <span>Add Member</span>
-                    </button>
-                    {% endif %}
-                    <!-- Menu button -->
-                    <button class="lg:hidden bg-gray-50 p-2 text-gray-600 rounded hover:bg-gray-300 focus:text-primary outline-none focus:drop-shadow"
-                        @click="showMenu = !showMenu"
-                        aria-label="Toggle menu"
-                        aria-expanded="false"
-                        :aria-expanded="showMenu">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
-                            <path fill-rule="evenodd"
-                                d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm7 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
-                                clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Team Table -->
-<header class="flux-page-heading"><div><p class="flux-eyebrow">{{ project.name }}</p><h1 id="teamTableTitle">Your project team</h1><p>Manage who can work in this project and what they can change.</p></div></header>
-<div class="flux-table-toolbar"><div><h2>Team members <span class="flux-search-result" data-table-search-status role="status"></span></h2><p>Full access lets editors update shared project records.</p></div><label class="flux-table-search"><span aria-hidden="true">⌕</span><input type="search" aria-label="Search team" placeholder="Search team…" data-table-search="table[aria-labelledby=teamTableTitle]"></label></div>
-            <div class="table-container">
-                <div class="mt-8 text-gray-500">
-                    {% if user == project.project_manager %}
-                    <table class="w-full table-auto" aria-labelledby="teamTableTitle">
-                        <thead class="uppercase tracking-wider border-b h-7 align-top text-xs font-semibold">
-                            <tr>
-                                <th scope="col" class="text-left min-w-fit w-3/5 md:w-1/2 lg:w-fit">Name</th>
-                                <th scope="col" class="text-left">Email</th>
-                                <th scope="col" class="text-left">Access</th>
-                                <th scope="col" class="text-left">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="teamTable">
-                            {% for team_member in team_members %}
-                            <tr class="h-16 border-b border-gray-100 hover:bg-primary/5" data-id="{{ team_member.id }}">
-                                <td class="font-semibold text-sm">
-                                    {{ team_member.get_full_name|default:team_member.username }}
-                                </td>
-                                <td class="text-xs space-y-1.5">
-                                    {{ team_member.email }}
-                                </td>
-                                <td class="text-xs space-y-1.5">
-                                    {% if team_member in project.project_editors.all %}
-                                        Full
-                                    {% else %}
-                                        Limited
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="dropdown">
-                                        <button class="dropbtn" aria-label="Actions for {{ team_member.first_name }}">
-                                            <span aria-hidden="true">. . .</span>
-                                        </button>
-                                        <div class="dropdown-content">
-                                            <hr>
-                                            <a href="#"
-                                                onclick="showEditPopup('{{ project.name }}','{{ team_member.id }}'); return false;"
-                                                aria-label="Edit access for {{ team_member.first_name }}">
-                                                Edit Access
-                                            </a>
-                                            <a href="#"
-                                                onclick="showRemovePopup('{{ project.name }}','{{ team_member.id }}'); return false;"
-                                                aria-label="Remove {{ team_member.first_name }} from project">
-                                                Remove
-                                            </a>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% empty %}<tr><td colspan="4" class="inventory-empty-state"><strong>Your team starts here</strong><span>Add a member using their Flux account email address.</span></td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    {% else %}
-                        <p>Team information is not available for you to view for this project.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </section>
-
-        <!-- Add Member Popup -->
-        <div class="popup-container1" id="addPopup" role="dialog" aria-modal="true" aria-labelledby="addPopupTitle" aria-hidden="true">
-            <div class="popup-card">
-                <h2 id="addPopupTitle">Add Team Member</h2>
-                <div class="box">
-                    <form id="member-form" method="POST" action="{% url 'add_user_to_project' project_name=project.name %}">
-                        {% csrf_token %}
-                        <div class="inputBox">
-                            <input type="email" name="email" id="email" required
-                                onkeyup="this.setAttribute('value', this.value);" value=""
-                                aria-required="true" aria-label="Email address">
-                            <label for="email">Email</label>
-                        </div>
-                        <div class="quantity-filter-container">
-                            <label for="role">Access Type</label>
-                            <div class="inputBox">
-                                <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" 
-                                    id="role" name="role" required
-                                    aria-required="true" aria-label="Access type">
-                                    <option value="Limited">Limited</option>
-                                    <option value="Full">Full</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="inputBox button"><button type="button" class="flux-button" onclick="closeAddPopup()">Cancel</button>
-                            <button type="submit" class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90">
-                                Add
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Edit Access Popup -->
-        <div class="popup-container2" id="editPopup" role="dialog" aria-modal="true" aria-labelledby="editPopupTitle" aria-hidden="true">
-            <div class="popup-card">
-                <h2 id="editPopupTitle">Change Access Type</h2>
-                <br>
-                <form id="edit-form" method="POST" action="">
-                    {% csrf_token %}
-                    <div class="quantity-filter-container">
-                        <h3>Access Type</h3>
-                        <div class="quantity-filter-container">
-                            <div class="inputBox">
-                                <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" 
-                                    id="edit-role" name="role" required
-                                    aria-required="true" aria-label="Access type">
-                                    <option value="Limited">Limited</option>
-                                    <option value="Full">Full</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <br>
-                    <div class="inputBox button"><button type="button" class="flux-button" onclick="closeEditPopup()">Cancel</button>
-                        <button type="submit" class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90">
-                            OK
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Remove User Popup -->
-        <div class="popup-container1" id="removePopup" role="dialog" aria-modal="true" aria-labelledby="removePopupTitle" aria-hidden="true">
-            <div class="popup-card">
-                <h2 id="removePopupTitle">Remove User</h2>
-                <br>
-                <p>Are you sure you want to remove this individual?</p>
-                <div class="buttons">
-                    <button class="border border-gray-300 font-medium text-sm w-1/3 text-gray-500 tracking-wide py-2 rounded-md hover:border-gray-400" 
-                        style="margin-right: 10px;" 
-                        onclick="closeRemovePopup()"
-                        aria-label="Cancel removal">
-                        Cancel
-                    </button>
-                    <button class="delete-bg-primary border delete-border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:delete-bg-primary/90" 
-                        onclick="removeItem()"
-                        aria-label="Confirm removal">
-                        Confirm
-                    </button>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <script src="{% static 'js/team.js' %}"></script>
-
-    <!-- Notification System -->
-    <div id="notification-container" 
-        class="fixed bottom-4 right-4 z-50 w-full max-w-xs space-y-4">
-        <!-- Notifications will be inserted here dynamically -->
-    </div>
-
-    <!-- Notification Template (hidden by default) -->
-    <template id="notification-template">
-        <div class="notification p-4 rounded-lg shadow-lg border-l-4 flex items-start">
-            <div class="notification-icon mr-3 mt-0.5"></div>
-            <div class="notification-content flex-1">
-                <h3 class="notification-title font-medium"></h3>
-                <p class="notification-message text-sm mt-1"></p>
-            </div>
-            <button class="notification-close ml-2 text-gray-500 hover:text-gray-700">
-                &times;
-            </button>
-        </div>
-    </template>
+<body class="flux-inventory-layout team-workspace relative min-h-screen font-poppins antialiased text-sm flex text-gray-800" x-data="{ showMenu: false }">
+{% include 'partials/ui_icons.html' %}
+<a class="flux-skip-link" href="#workspaceContent">Skip to content</a>
+{% include 'inventory/partials/sidebar.html' %}
+<main id="workspaceContent" tabindex="-1" class="min-h-screen lg:ml-60 w-full">
+<div class="absolute lg:hidden left-0 top-0 h-full w-full bg-black/30 z-[15]" @click="showMenu = false" x-show="showMenu" x-cloak aria-hidden="true">
+</div>
+<section class="team-content">
+<div class="team-topbar">{% include 'inventory/partials/project_switcher.html' with project_route='team' %}<span class="team-workspace-label">PROJECT WORKSPACE</span>
+<button type="button" class="team-icon-button lg:hidden" @click="showMenu = !showMenu" :aria-expanded="showMenu" aria-label="Toggle navigation">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-menu"/>
+</svg>
+</button>
+</div>
+{% include 'inventory/partials/messages.html' %}
+<header class="team-heading">
+<div>
+<p class="team-eyebrow">PEOPLE & ACCESS</p>
+<h1>Your project team<span>.</span>
+</h1>
+<p>A shared space for the people behind your research.</p>
+</div>{% if user == project.project_manager %}<button type="button" class="team-button team-primary" data-open-add>
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-plus"/>
+</svg>Add member</button>{% endif %}</header>
+<div class="team-stats" aria-label="Team summary">
+<div>
+<span class="team-stat-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-users"/>
+</svg>
+</span>
+<div>
+<strong data-count="all">{{ team_members|length }}</strong>
+<span>Team members</span>
+</div>
+</div>
+<div>
+<span class="team-stat-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>
+</span>
+<div>
+<strong data-count="Full">{{ editor_count }}</strong>
+<span>Full access editors</span>
+</div>
+</div>
+<div>
+<span class="team-stat-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-folder"/>
+</svg>
+</span>
+<div>
+<strong data-count="Limited">{{ limited_count }}</strong>
+<span>Limited access members</span>
+</div>
+</div>
+</div>
+<div class="team-layout">
+<section class="team-directory" aria-labelledby="directory-title">
+<div class="team-panel-heading">
+<div>
+<h2 id="directory-title">Member directory</h2>
+<p>Everyone with access to {{ project.name }}.</p>
+</div>
+<span class="team-live">
+<i>
+</i> Project team</span>
+</div>
+<div class="team-tools">
+<label class="team-search">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-search"/>
+</svg>
+<input id="team-search" type="search" placeholder="Search name or email…" aria-label="Search team members">
+</label>
+<label class="team-filter">
+<span class="sr-only">Filter by access</span>
+<select id="team-access-filter">
+<option value="all">All access</option>
+<option value="Manager">Project manager</option>
+<option value="Full">Full access</option>
+<option value="Limited">Limited access</option>
+</select>
+</label>
+</div>
+<div class="team-table-scroll">
+<table aria-labelledby="directory-title">
+<thead>
+<tr>
+<th scope="col">Team member</th>
+<th scope="col">Access level</th>
+<th scope="col" class="team-actions-heading">{% if user == project.project_manager %}Manage{% else %}Role{% endif %}</th>
+</tr>
+</thead>
+<tbody id="teamTable">
+{% for person in team_members %}<tr data-id="{{ person.pk }}" data-access="{{ person.team_access }}" data-name="{{ person.get_full_name|default:person.username }}" data-search="{{ person.get_full_name }} {{ person.username }} {{ person.email }}" data-edit-url="{% url 'edit_user_access' project_name=project.name user_id=person.pk %}" data-remove-url="{% url 'remove_user' project_name=project.name user_id=person.pk %}">
+<td>
+<div class="team-person">
+<span class="team-avatar {% if person.team_access == 'Manager' %}team-avatar-manager{% endif %}" aria-hidden="true">{{ person.first_name|default:person.username|first|upper }}{{ person.last_name|first|upper }}</span>
+<div>
+<strong>{{ person.get_full_name|default:person.username }}{% if person == user %}<span class="team-you">You</span>{% endif %}</strong>
+<span>{{ person.email|default:'No email on file' }}</span>
+</div>
+</div>
+</td>
+<td>
+<span class="team-badge" data-role="{{ person.team_access }}">{% if person.team_access == 'Manager' %}<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>Project manager{% else %}{{ person.team_access }} access{% endif %}</span>
+</td>
+<td class="team-row-actions">{% if person.team_access == 'Manager' %}<span class="team-owner-label">Project owner</span>{% elif user == project.project_manager %}<button type="button" class="team-edit" data-edit-member>Edit access</button>
+<button type="button" class="team-remove" data-remove-member aria-label="Remove {{ person.get_full_name|default:person.username }}">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-close"/>
+</svg>
+</button>{% else %}<span class="team-owner-label">Member</span>{% endif %}</td>
+</tr>{% endfor %}
+<tr id="team-no-results" hidden>
+<td colspan="3">
+<div class="team-empty">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-search"/>
+</svg>
+<strong>No members found</strong>
+<p>Try a different name, email, or access level.</p>
+<button type="button" class="team-edit" id="team-clear-filters">Clear filters</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="team-directory-footer">
+<span id="team-results" role="status" aria-live="polite">Showing {{ team_members|length }} team member{{ team_members|length|pluralize }}</span>
+<span>Access is managed by the project manager</span>
+</div>
+</section>
+<aside class="team-guide" aria-labelledby="access-guide-title">
+<div class="team-guide-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>
+</div>
+<p class="team-eyebrow">A LITTLE CLARITY</p>
+<h2 id="access-guide-title">The right access.<br>A better workflow.</h2>
+<p>Give each person the access they need to contribute.</p>
+<dl>
+<div>
+<dt>
+<span class="team-access-dot manager">
+</span>Project manager</dt>
+<dd>Leads the project and manages its team and access.</dd>
+</div>
+<div>
+<dt>
+<span class="team-access-dot full">
+</span>Full access</dt>
+<dd>Can add and update shared inventory records.</dd>
+</div>
+<div>
+<dt>
+<span class="team-access-dot limited">
+</span>Limited access</dt>
+<dd>Can view the project and use its inventory within their permissions.</dd>
+</div>
+</dl>
+<div class="team-guide-note">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-users"/>
+</svg>
+<p>{% if user == project.project_manager %}Adding someone? They’ll need an active Flux account. Use the email they registered with.{% else %}Need different access? Contact your project manager.{% endif %}</p>
+</div>
+</aside>
+</div>
+<footer class="team-footer">
+<span>FLUX.INC · Research, together.</span>
+<span>{{ project.name }}</span>
+</footer>
+</section>
+</main>
+{% if user == project.project_manager %}
+<dialog id="team-add-dialog" class="team-dialog" aria-labelledby="team-add-dialogTitle">
+<form id="member-form" action="{% url 'add_user_to_project' project_name=project.name %}" method="post">{% csrf_token %}<div class="team-dialog-heading">
+<span class="team-dialog-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-users"/>
+</svg>
+</span>
+<button type="button" class="team-icon-button" data-close-dialog aria-label="Close add member dialog">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-close"/>
+</svg>
+</button>
+</div>
+<p class="team-eyebrow">GROW YOUR TEAM</p>
+<h2 id="team-add-dialogTitle">Add a team member</h2>
+<p>Add an existing Flux account to {{ project.name }}.</p>
+<label for="member-email">Account email</label>
+<input id="member-email" autofocus type="email" name="email" autocomplete="email" placeholder="name@institution.org" required>
+<label for="member-role">Access level</label>
+<select id="member-role" name="role">
+<option value="Limited">Limited access</option>
+<option value="Full">Full access</option>
+</select>
+<p class="team-field-help">Full access lets this member add and update shared inventory.</p>
+<p class="team-form-error" role="alert" hidden>
+</p>
+<div class="team-dialog-actions">
+<button type="button" class="team-button" data-close-dialog>Cancel</button>
+<button type="submit" class="team-button team-primary">Add member</button>
+</div>
+</form>
+</dialog>
+<dialog id="team-edit-dialog" class="team-dialog" aria-labelledby="team-edit-dialogTitle">
+<form id="edit-form" method="post">{% csrf_token %}<p class="team-eyebrow">PROJECT PERMISSIONS</p>
+<h2 id="team-edit-dialogTitle">Edit member access</h2>
+<p>Update access for <strong data-member-name>
+</strong>.</p>
+<label for="edit-role">Access level</label>
+<select id="edit-role" name="role">
+<option value="Limited">Limited access</option>
+<option value="Full">Full access</option>
+</select>
+<p class="team-field-help">Full access lets this member add and update shared inventory.</p>
+<p class="team-form-error" role="alert" hidden>
+</p>
+<div class="team-dialog-actions">
+<button type="button" class="team-button" data-close-dialog>Cancel</button>
+<button type="submit" class="team-button team-primary">Save access</button>
+</div>
+</form>
+</dialog>
+<dialog id="team-remove-dialog" class="team-dialog" aria-labelledby="team-remove-dialogTitle">
+<form id="remove-form" method="post">{% csrf_token %}<p class="team-eyebrow">TEAM MEMBERSHIP</p>
+<h2 id="team-remove-dialogTitle">Remove this member?</h2>
+<p>
+<strong data-member-name>
+</strong> will lose access to this project. Their Flux account and existing project records will remain.</p>
+<p class="team-form-error" role="alert" hidden>
+</p>
+<div class="team-dialog-actions">
+<button type="button" class="team-button" data-close-dialog>Keep member</button>
+<button type="submit" class="team-button team-danger">Remove member</button>
+</div>
+</form>
+</dialog>
+{% endif %}
+<div id="team-notification" class="team-notification" role="status" aria-live="polite" hidden>
+</div>
 </body>
 </html>

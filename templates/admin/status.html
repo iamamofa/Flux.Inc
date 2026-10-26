@@ -1,0 +1,11 @@
+{% extends "admin/base_site.html" %}{% block content_title %}{% endblock %}{% block content %}<section class="flux-account-outcome">
+<span class="flux-account-icon">
+<svg class="ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg>
+</span>
+<p class="flux-admin-eyebrow">FLUX ADMINISTRATION / {{ status_code }}</p>
+<h1>{{ title }}</h1>
+<p>{{ status_message }}</p>
+<a class="flux-account-button" href="{% url 'admin:index' %}">Administration home →</a>
+</section>{% endblock %}

@@ -1,4 +1,5 @@
 from django import forms
+from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.models import Group
@@ -31,6 +32,8 @@ class UserForm(StyledFormMixin, forms.ModelForm):
     def __init__(self, *args, creating=False, **kwargs):
         self.creating = creating
         super().__init__(*args, **kwargs)
+        self.fields['email'].required = True
+        self.fields['email'].help_text = 'Used for account recovery and institution updates.'
         department_names = list(Department.objects.filter(is_active=True).order_by('name').values_list('name', flat=True))
         old_department = ''
         if self.instance.pk:
@@ -89,7 +92,9 @@ class DepartmentForm(StyledFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['head'].queryset = User.objects.filter(is_active=True).order_by('first_name', 'username')
+        self.fields['head'].queryset = User.objects.filter(
+            Q(is_active=True) | Q(pk=self.instance.head_id)
+        ).order_by('first_name', 'username')
         self.style_fields()
 
 
@@ -100,6 +105,8 @@ class SettingsForm(StyledFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['currency'].help_text = 'A three-letter currency code, such as GHS.'
+        self.fields['date_format'].help_text = 'Stored date preference, for example d M Y for 26 Oct 2026.'
         self.style_fields()
 
     def clean_currency(self):
@@ -117,5 +124,27 @@ class GroupForm(StyledFormMixin, forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['permissions'].queryset = self.fields['permissions'].queryset.order_by('content_type__app_label', 'codename')
+        self.fields['permissions'].queryset = self.fields['permissions'].queryset.select_related('content_type').order_by('content_type__app_label', 'content_type__model', 'codename')
         self.style_fields()
+
+    @property
+    def permission_sections(self):
+        """Group bound inputs without losing checked values after validation errors."""
+        widgets = {str(widget.data['value']): widget for widget in self['permissions']}
+        sections = {}
+        for permission in self.fields['permissions'].queryset:
+            app_label = permission.content_type.app_label
+            try:
+                app_name = apps.get_app_config(app_label).verbose_name
+            except LookupError:
+                app_name = app_label.replace('_', ' ').title()
+            section = sections.setdefault(app_label, {
+                'label': app_name,
+                'key': app_label, 'permissions': [],
+            })
+            section['permissions'].append({
+                'widget': widgets[str(permission.pk)],
+                'label': permission.name,
+                'search': f'{permission.name} {permission.codename} {app_label}',
+            })
+        return list(sections.values())
