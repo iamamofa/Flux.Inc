@@ -73,6 +73,7 @@ def get_sidebar_urls(project_name):
         'trash_url': reverse('trash_reagents',
                              kwargs={'project_name': project_name}),
         'team_url': reverse('team', kwargs={'project_name': project_name}),
+        'borrow_loan_url': reverse('borrow_loan', kwargs={'project_name': project_name}),
         'settings_url': reverse('project_settings',
                                 kwargs={'project_name': project_name}),
     }
@@ -1271,6 +1272,13 @@ class InventoryItemViews:
         try:
             project = get_object_or_404(Project, name=project_name)
             item = get_object_or_404(model, id=item_id, project=project)
+
+            if isinstance(item, (Consumable, Reagent)) and (
+                item.stock_offers.exists() or item.received_loans.exists()
+            ):
+                return JsonResponse({
+                    'error': 'This item is linked to Borrow & Loan history and must remain in inventory.',
+                }, status=400)
 
             # Create trash record
             trash_data = {field.name: getattr(item, field.name) 
@@ -3770,6 +3778,11 @@ def bulk_delete_reagents(request, project_name):
             project=project,
             is_active=True
         )
+
+        if reagents.filter(Q(stock_offers__isnull=False) | Q(received_loans__isnull=False)).exists():
+            return JsonResponse({
+                'error': 'Some selected items are linked to Borrow & Loan history and must remain in inventory.',
+            }, status=400)
 
         # Verify user has permission to delete each reagent
         if reagents[0].is_just_member(request.user):

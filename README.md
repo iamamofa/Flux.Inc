@@ -36,6 +36,24 @@ The application is designed for genomics and bioinformatics laboratories to orga
 - Review inventory dashboards and low-stock alerts.
 - Export selected inventory data and manage applicable trash/recovery workflows.
 - Upload and manage reagent safety data sheet files.
+- Share unused, unopened consumable and reagent packs between project managers through **Borrow & Loan**.
+
+#### Borrow & Loan
+
+Open **Borrow & Loan** in a project manager's workspace. Under **My offers**, publish
+spare, unexpired packs that your project can lend. Other enrolled project managers
+can search offers by item, category, and project, then request packs with a purpose
+and return or replacement date. The lending manager approves or declines each
+request before stock moves.
+
+Approval transfers packs into a separate inventory entry in the borrowing project,
+preserving item metadata and reagent safety documents. The borrower arranges a
+full return or replacement and the lender confirms receipt to close the loan.
+Different-expiry replacement stock stays as a separate batch. Requests, decisions,
+due dates, and activity history remain stored even when an offer is withdrawn.
+Borrowing and lending histories can be exported as CSV. Editors and members cannot
+access the exchange, and inventory linked to exchange history is protected from
+deletion.
 
 ### Administrator portal
 
@@ -158,8 +176,10 @@ Sign in with an authorized super-administrator account to access the administrat
 | --- | --- | --- |
 | Research application | `/` | Existing research-user application |
 | Sign in | `/login/` | Research application login |
+| Password reset | `/forgot-password/` | Email-based password reset and secure confirmation |
 | Registration | `/registration/` | User registration |
 | Project workspace | Project-specific routes | Project team, settings, logs, and inventory |
+| Borrow & Loan | `/borrow-loan/<project_name>/` | Manager-only stock exchange and borrowing history |
 | Django administration | `/admin/` | Django administrative interface |
 | Portal overview | `/control/` | Administrator workspace |
 | Users and roles | `/control/users/`, `/control/roles/` | User and role management |

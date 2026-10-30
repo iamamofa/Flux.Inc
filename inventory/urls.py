@@ -1,5 +1,7 @@
 from django.urls import path
+from django.contrib.auth import views as auth_views
 from . import views
+from . import borrow_views
 from .decorators import project_access_required, reagent_access_required
 
 
@@ -92,6 +94,7 @@ reagent_urlpatterns = [
 ]
 
 urlpatterns = [
+    path('borrow-loan/<str:project_name>/', borrow_views.borrow_loan, name='borrow_loan'),
     path('', views.home, name='home'),
     path('registration/', views.registration_page, name='registration_page'),
     path('user_application/', views.user_application, name='user_application'),
@@ -107,6 +110,38 @@ urlpatterns = [
          views.project_settings,
          name='project_settings'),
     path('login/', views.login_view, name='login'),
+    path(
+        'forgot-password/',
+        auth_views.PasswordResetView.as_view(
+            template_name='registration/password_reset_form.html',
+            email_template_name='registration/password_reset_email.html',
+            subject_template_name='registration/password_reset_subject.txt',
+            success_url='/forgot-password/sent/',
+        ),
+        name='password_reset',
+    ),
+    path(
+        'forgot-password/sent/',
+        auth_views.PasswordResetDoneView.as_view(
+            template_name='registration/password_reset_done.html',
+        ),
+        name='password_reset_done',
+    ),
+    path(
+        'reset-password/<uidb64>/<token>/',
+        auth_views.PasswordResetConfirmView.as_view(
+            template_name='registration/password_reset_confirm.html',
+            success_url='/reset-password/complete/',
+        ),
+        name='password_reset_confirm',
+    ),
+    path(
+        'reset-password/complete/',
+        auth_views.PasswordResetCompleteView.as_view(
+            template_name='registration/password_reset_complete.html',
+        ),
+        name='password_reset_complete',
+    ),
     path('logout/', views.logoutUser, name ="logout"),
     path('create_project/', views.create_project, name='create_project'),
     path('team/<str:project_name>/', views.team, name ="team"),
@@ -117,7 +152,7 @@ urlpatterns = [
     path('consumables/<str:project_name>/', views.consumables, name ="consumables"),
     path('dashboard/consumables/<str:project_name>/', views.dashboard_consumables, name ="dashboard_consumables"),
     path('add_consumable/<str:project_name>', views.add_consumable, name='add_consumable'),
-    path('delete_consumable/<str:project_name>/<str:pk>/', views.delete_consumable, name = "delete_consumable"),
+    path('delete_consumable/<str:project_name>/<str:consumable_id>/', views.delete_consumable, name = "delete_consumable"),
     path('get_consumable_info/<str:id>', views.get_consumable_info, name='get_consumable_info'),
     path('edit_consumable/<str:id>', views.edit_consumable, name='edit_consumable'),
     path('retrieve_consumable/<str:consumable_id>', views.retrieve_consumable, name='retrieve_consumable'),

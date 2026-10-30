@@ -8,6 +8,6 @@
     {% include 'inventory/partials/form_fields.html' %}
     <button class="flux-button flux-button-primary flux-button-full" type="submit">Sign in <span aria-hidden="true">→</span></button>
 </form>
-<details class="flux-account-help"><summary>Need help signing in?</summary><p>Contact your project coordinator or system administrator to reset your password or confirm your project access.</p></details>
+<p class="flux-account-alternative"><a href="{% url 'password_reset' %}">Forgot your password?</a></p>
 <p class="flux-account-alternative">New to Flux? <a href="{% url 'registration_page' %}">Create an account</a></p>
 {% endblock %}

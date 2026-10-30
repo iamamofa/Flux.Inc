@@ -1385,3 +1385,192 @@ class TrashSample(TrashBaseModel):
 
     def __str__(self):
         return f"[DELETED] {self.sample_id}"
+
+
+class StockOffer(models.Model):
+    """An explicit offer of unopened consumable or reagent packs to peers."""
+    source_project = models.ForeignKey(
+        Project, on_delete=models.PROTECT, related_name='stock_offers',
+    )
+    consumable = models.ForeignKey(
+        Consumable, on_delete=models.PROTECT, null=True, blank=True,
+        related_name='stock_offers',
+    )
+    reagent = models.ForeignKey(
+        Reagent, on_delete=models.PROTECT, null=True, blank=True,
+        related_name='stock_offers',
+    )
+    quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    notes = models.TextField(max_length=1000, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name='stock_offers',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('-created_at',)
+        constraints = [
+            models.CheckConstraint(
+                check=(models.Q(consumable__isnull=False, reagent__isnull=True)
+                       | models.Q(consumable__isnull=True, reagent__isnull=False)),
+                name='stock_offer_exactly_one_item',
+            ),
+            models.UniqueConstraint(
+                fields=('consumable',), condition=models.Q(is_active=True),
+                name='one_active_consumable_offer',
+            ),
+            models.UniqueConstraint(
+                fields=('reagent',), condition=models.Q(is_active=True),
+                name='one_active_reagent_offer',
+            ),
+        ]
+
+    @property
+    def item(self):
+        return self.consumable if self.consumable_id else self.reagent
+
+    @property
+    def item_kind(self):
+        return 'consumable' if self.consumable_id else 'reagent'
+
+    @property
+    def available_quantity(self):
+        item = self.item
+        project = self.source_project
+        if (not self.is_active or not item or not item.is_active
+                or not project.is_active or not project.project_manager_id
+                or not project.project_manager.is_active
+                or item.project_id != self.source_project_id
+                or item.items_per_pack <= 0
+                or item.items_left_in_pack > item.items_per_pack
+                or (item.expiry_date and item.expiry_date < timezone.localdate())):
+            return 0
+        unopened = max(
+            item.pack_count - int(item.items_left_in_pack < item.items_per_pack), 0,
+        )
+        return min(self.quantity, unopened)
+
+    def clean(self):
+        super().clean()
+        if bool(self.consumable_id) == bool(self.reagent_id):
+            raise ValidationError('Choose exactly one consumable or reagent.')
+        if self.source_project_id and self.item.project_id != self.source_project_id:
+            raise ValidationError('The shared item must belong to the lending project.')
+
+    def __str__(self):
+        return f'{self.item} · {self.source_project}'
+
+
+class BorrowLoan(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Awaiting approval'
+        ACTIVE = 'active', 'On loan'
+        RETURN_PENDING = 'return_pending', 'Return awaiting confirmation'
+        RETURNED = 'returned', 'Returned'
+        DECLINED = 'declined', 'Declined'
+        CANCELLED = 'cancelled', 'Cancelled'
+
+    offer = models.ForeignKey(
+        StockOffer, on_delete=models.PROTECT, related_name='loans',
+    )
+    borrower_project = models.ForeignKey(
+        Project, on_delete=models.PROTECT, related_name='borrowed_loans',
+    )
+    requested_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name='requested_loans',
+    )
+    approved_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='approved_loans',
+    )
+    quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    due_date = models.DateField()
+    purpose = models.TextField(max_length=1000)
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.PENDING, db_index=True,
+    )
+    decision_note = models.TextField(max_length=1000, blank=True)
+    item_name = models.CharField(max_length=100)
+    product_code = models.CharField(max_length=100, blank=True)
+    items_per_pack = models.PositiveIntegerField()
+    lender_project_name = models.CharField(max_length=255)
+    borrower_project_name = models.CharField(max_length=255)
+    requester_name = models.CharField(max_length=150)
+    received_consumable = models.ForeignKey(
+        Consumable, on_delete=models.PROTECT, null=True, blank=True,
+        related_name='received_loans',
+    )
+    received_reagent = models.ForeignKey(
+        Reagent, on_delete=models.PROTECT, null=True, blank=True,
+        related_name='received_loans',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    returned_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ('-created_at',)
+        constraints = [
+            models.CheckConstraint(check=models.Q(quantity__gt=0), name='loan_quantity_positive'),
+            models.CheckConstraint(
+                check=~(models.Q(received_consumable__isnull=False)
+                        & models.Q(received_reagent__isnull=False)),
+                name='loan_at_most_one_received_item',
+            ),
+            models.UniqueConstraint(
+                fields=('offer', 'borrower_project'),
+                condition=models.Q(status='pending'),
+                name='one_pending_request_per_offer',
+            ),
+        ]
+
+    @property
+    def lender_project(self):
+        return self.offer.source_project
+
+    @property
+    def received_item(self):
+        return (self.received_consumable if self.received_consumable_id
+                else self.received_reagent)
+
+    @property
+    def is_overdue(self):
+        return (self.status in (self.Status.ACTIVE, self.Status.RETURN_PENDING)
+                and self.due_date < timezone.localdate())
+
+    @property
+    def reference(self):
+        return f'BL-{self.pk:05d}' if self.pk else 'New loan'
+
+    def clean(self):
+        super().clean()
+        if self.offer_id and self.borrower_project_id == self.offer.source_project_id:
+            raise ValidationError('Borrow from a different project.')
+        if self.received_item and self.received_item.project_id != self.borrower_project_id:
+            raise ValidationError('Received inventory must belong to the borrowing project.')
+
+    def __str__(self):
+        return f'{self.reference} · {self.item_name}'
+
+
+class BorrowLoanEvent(models.Model):
+    """Append-only application activity for a persisted borrowing request."""
+    loan = models.ForeignKey(
+        BorrowLoan, on_delete=models.CASCADE, related_name='events',
+    )
+    actor = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, related_name='loan_events',
+    )
+    actor_name = models.CharField(max_length=150)
+    action = models.CharField(max_length=40)
+    note = models.TextField(max_length=1000, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('created_at', 'pk')
+
+    def __str__(self):
+        return f'{self.loan.reference} · {self.action}'

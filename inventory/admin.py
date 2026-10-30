@@ -5,6 +5,8 @@ from django.contrib.auth.models import Group, User
 from django.db.models import Count
 
 from .models import (
+    BorrowLoan,
+    BorrowLoanEvent,
     Consumable,
     Equipment,
     Log,
@@ -21,6 +23,7 @@ from .models import (
     Shelf,
     Box,
     Storages,
+    StockOffer,
     TrashConsumable,
     TrashEquipment,
     TrashReagent,
@@ -33,6 +36,59 @@ from .models import (
 admin.site.site_header = 'Flux administration'
 admin.site.site_title = 'Flux admin'
 admin.site.index_title = 'Institutional operations'
+
+
+class BorrowingRecordAdmin(admin.ModelAdmin):
+    """Keep the audit trail read-only in administration."""
+    list_per_page = 25
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def get_readonly_fields(self, request, obj=None):
+        return tuple(field.name for field in self.model._meta.fields)
+
+
+class BorrowLoanEventInline(admin.TabularInline):
+    model = BorrowLoanEvent
+    extra = 0
+    can_delete = False
+    fields = ('action', 'actor_name', 'note', 'created_at')
+    readonly_fields = fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(StockOffer)
+class StockOfferAdmin(BorrowingRecordAdmin):
+    list_display = ('id', 'source_project', 'item', 'quantity', 'is_active', 'created_at')
+    list_filter = ('is_active', 'source_project')
+    search_fields = ('source_project__name', 'consumable__name', 'reagent__name')
+    list_select_related = ('source_project', 'consumable', 'reagent')
+
+
+@admin.register(BorrowLoan)
+class BorrowLoanAdmin(BorrowingRecordAdmin):
+    list_display = ('reference', 'item_name', 'lender_project_name',
+                    'borrower_project_name', 'quantity', 'status', 'due_date')
+    list_filter = ('status', 'due_date')
+    search_fields = ('item_name', 'product_code', 'lender_project_name',
+                     'borrower_project_name', 'requester_name')
+    list_select_related = ('offer__source_project', 'borrower_project', 'requested_by')
+    inlines = (BorrowLoanEventInline,)
 
 
 class FluxUserAdmin(DjangoUserAdmin):
