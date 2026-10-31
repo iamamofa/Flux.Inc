@@ -40,20 +40,30 @@ The application is designed for genomics and bioinformatics laboratories to orga
 
 #### Borrow & Loan
 
-Open **Borrow & Loan** in a project manager's workspace. Under **My offers**, publish
-spare, unexpired packs that your project can lend. Other enrolled project managers
-can search offers by item, category, and project, then request packs with a purpose
-and return or replacement date. The lending manager approves or declines each
-request before stock moves.
+Open **Borrow & Loan** from any project workspace you belong to. Researchers,
+project manager collaborators, and the project manager can request eligible
+unexpired, unopened consumables and reagents from the current project or from
+other active projects. A project does not need to publish an offer first: direct
+inventory requests are recorded automatically and still require approval before
+stock moves. The lending project manager approves or declines each request.
+
+Researchers first need their own project manager to approve the request. This
+creates the two-party agreement required for a transfer.
 
 Approval transfers packs into a separate inventory entry in the borrowing project,
 preserving item metadata and reagent safety documents. The borrower arranges a
 full return or replacement and the lender confirms receipt to close the loan.
 Different-expiry replacement stock stays as a separate batch. Requests, decisions,
 due dates, and activity history remain stored even when an offer is withdrawn.
-Borrowing and lending histories can be exported as CSV. Editors and members cannot
-access the exchange, and inventory linked to exchange history is protected from
-deletion.
+Borrowing and lending histories can be exported as CSV. Researchers and project
+manager collaborators can request stock for a project; only project managers can
+publish stock, approve project requests, or approve lending. Inventory linked to
+exchange history is protected from deletion. Project managers can invite researcher or project manager collaborators
+by email; invitations expire after seven days and are recorded when accepted.
+
+Each request, approval, decline, return, and confirmation sends an email update to
+the relevant project managers and requester. Approval and return confirmation
+emails include a PDF receipt, which is also available from the loan activity record.
 
 ### Administrator portal
 
@@ -179,7 +189,7 @@ Sign in with an authorized super-administrator account to access the administrat
 | Password reset | `/forgot-password/` | Email-based password reset and secure confirmation |
 | Registration | `/registration/` | User registration |
 | Project workspace | Project-specific routes | Project team, settings, logs, and inventory |
-| Borrow & Loan | `/borrow-loan/<project_name>/` | Manager-only stock exchange and borrowing history |
+| Borrow & Loan | `/borrow-loan/<project_name>/` | Project borrowing, approvals, receipts, and history |
 | Django administration | `/admin/` | Django administrative interface |
 | Portal overview | `/control/` | Administrator workspace |
 | Users and roles | `/control/users/`, `/control/roles/` | User and role management |

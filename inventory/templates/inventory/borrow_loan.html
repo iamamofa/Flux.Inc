@@ -18,7 +18,7 @@
             <h1>Borrow &amp; Loan<span>.</span></h1>
             <p>Connect spare supplies with projects that need them. Every handover, in one place.</p>
         </div>
-        <a class="borrow-button borrow-button-primary" href="?tab=offers#publish-stock"><span aria-hidden="true">＋</span> Offer spare stock</a>
+        {% if is_project_manager %}<a class="borrow-button borrow-button-primary" href="?tab=offers#publish-stock"><span aria-hidden="true">＋</span> Offer spare stock</a>{% endif %}
     </header>
 
     {% if error %}
@@ -65,10 +65,11 @@
                 <div class="borrow-stock-count"><strong>{{ offer.available_quantity }}</strong><span>pack{{ offer.available_quantity|pluralize }} to share<small>{{ offer.item.items_per_pack }} items per pack</small></span></div>
                 <dl class="borrow-offer-meta"><div><dt>From</dt><dd>{{ offer.source_project.name }}</dd></div><div><dt>Managed by</dt><dd>{{ offer.source_project.project_manager.get_full_name|default:offer.source_project.project_manager.username }}</dd></div><div><dt>Expiry</dt><dd>{{ offer.item.expiry_date|date:'d M Y'|default:'Not specified' }}</dd></div>{% if offer.item.cold_storage %}<div><dt>Storage</dt><dd>{{ offer.item.cold_storage }}{% if offer.item.oem_temperature != None %} · {{ offer.item.oem_temperature }}°{{ offer.item.temperature_unit }}{% endif %}</dd></div>{% endif %}</dl>
                 {% if offer.notes %}<p class="borrow-offer-note">{{ offer.notes|linebreaksbr }}</p>{% endif %}
-                <details class="borrow-request" {% if error_action == 'request' and error_id == offer.pk|stringformat:'s' %}open{% endif %}>
+                {% if offer.direct %}<p class="borrow-offer-note">Direct request · this project has not published an offer. The lending manager will still approve the transfer.</p>{% endif %}
+                <details class="borrow-request" {% if error_action == 'request' and error_id == offer.request_key %}open{% endif %}>
                     <summary>Request to borrow <span aria-hidden="true">↗</span></summary>
                     <form method="post" class="borrow-form">
-                        {% csrf_token %}<input type="hidden" name="action" value="request"><input type="hidden" name="offer_id" value="{{ offer.pk }}"><input type="hidden" name="tab" value="discover">
+                        {% csrf_token %}<input type="hidden" name="action" value="request">{% if offer.direct %}<input type="hidden" name="source_ref" value="{{ offer.request_key }}">{% else %}<input type="hidden" name="offer_id" value="{{ offer.pk }}">{% endif %}<input type="hidden" name="tab" value="discover">
                         <p class="borrow-form-intro">Request for <strong>{{ project.name }}</strong>. The lending manager will review your request before stock is transferred.</p>
                         <div class="borrow-form-pair"><label>Packs to borrow<input type="number" name="quantity" min="1" max="{{ offer.available_quantity }}" step="1" value="{% if error_action == 'request' and error_id == offer.pk|stringformat:'s' %}{{ post_data.quantity }}{% else %}1{% endif %}" required></label><label>Return or replace by<input type="date" name="due_date" min="{{ today|date:'Y-m-d' }}" value="{% if error_action == 'request' and error_id == offer.pk|stringformat:'s' %}{{ post_data.due_date }}{% endif %}" required></label></div>
                         <label>What do you need it for?<textarea name="purpose" rows="3" maxlength="1000" placeholder="Briefly explain your need and handover arrangements…" required>{% if error_action == 'request' and error_id == offer.pk|stringformat:'s' %}{{ post_data.purpose }}{% endif %}</textarea></label>
@@ -87,7 +88,7 @@
     {% elif active_tab == 'offers' %}
     <section aria-labelledby="offers-title">
         <div class="borrow-section-heading"><div><h2 id="offers-title">Your spare stock, a new possibility.</h2><p>Choose what {{ project.name }} can share with the manager network.</p></div></div>
-        <details class="borrow-publish" id="publish-stock" {% if error_action == 'publish' or not own_offers %}open{% endif %}>
+        {% if is_project_manager %}<details class="borrow-publish" id="publish-stock" {% if error_action == 'publish' or not own_offers %}open{% endif %}>
             <summary><span><span class="borrow-plus" aria-hidden="true">＋</span> Offer unused stock</span><span aria-hidden="true">⌄</span></summary>
             {% if lendable_items %}
             <form method="post" class="borrow-form borrow-publish-form">
@@ -100,14 +101,14 @@
             {% else %}
             <div class="borrow-publish-empty"><p><strong>No eligible spare packs yet.</strong> Add unused consumables or reagents to your inventory, then return here to share them.</p><a href="{{ inventory_url }}" class="borrow-text-link">Go to inventory →</a></div>
             {% endif %}
-        </details>
+        </details>{% endif %}
         <div class="borrow-own-offers">
         {% for offer in own_offers %}
             <article class="borrow-own-offer">
                 <span class="borrow-own-icon">{% include 'inventory/partials/settings_icon.html' with icon='inventory' %}</span>
                 <div class="borrow-own-info"><span class="borrow-kind borrow-kind-{{ offer.item_kind }}">{% if offer.item_kind == 'reagent' %}Reagent{% else %}Consumable{% endif %}</span><h3>{{ offer.item.name }}</h3><p>{{ offer.item.product_code|default:'No product code' }} · {{ offer.item.items_per_pack }} items per pack</p>{% if offer.notes %}<p>{{ offer.notes }}</p>{% endif %}</div>
                 <div class="borrow-own-count"><strong>{{ offer.available_quantity }}</strong><span>pack{{ offer.available_quantity|pluralize }} available</span><small>{{ offer.quantity }} remaining on offer</small></div>
-                <div class="borrow-own-action">{% if offer.is_active %}<span class="borrow-status {% if offer.available_quantity %}borrow-status-active{% else %}borrow-status-cancelled{% endif %}">{% if offer.available_quantity %}Published{% else %}Unavailable{% endif %}</span><form method="post">{% csrf_token %}<input type="hidden" name="action" value="withdraw"><input type="hidden" name="offer_id" value="{{ offer.pk }}"><input type="hidden" name="tab" value="offers"><button type="submit" class="borrow-text-link">Withdraw offer</button></form>{% else %}<span class="borrow-status borrow-status-cancelled">Withdrawn</span>{% endif %}</div>
+                <div class="borrow-own-action">{% if offer.is_active %}<span class="borrow-status {% if offer.available_quantity %}borrow-status-active{% else %}borrow-status-cancelled{% endif %}">{% if offer.available_quantity %}Published{% else %}Unavailable{% endif %}</span>{% if is_project_manager %}<form method="post">{% csrf_token %}<input type="hidden" name="action" value="withdraw"><input type="hidden" name="offer_id" value="{{ offer.pk }}"><input type="hidden" name="tab" value="offers"><button type="submit" class="borrow-text-link">Withdraw offer</button></form>{% endif %}{% else %}<span class="borrow-status borrow-status-cancelled">Withdrawn</span>{% endif %}</div>
             </article>
         {% empty %}
             <div class="borrow-empty borrow-empty-small"><span class="borrow-empty-icon">{% include 'inventory/partials/settings_icon.html' with icon='inventory' %}</span><h3>A shelf of possibilities</h3><p>Your published offers will appear here. Share a few spare packs to help another project move forward.</p></div>
@@ -126,7 +127,15 @@
                 <div class="borrow-loan-main"><div><span class="borrow-kind borrow-kind-{{ loan.offer.item_kind }}">{% if loan.offer.item_kind == 'reagent' %}Reagent{% else %}Consumable{% endif %}</span><h3>{{ loan.item_name }}</h3><p class="borrow-product-code">{{ loan.product_code|default:'No product code' }}</p></div><div class="borrow-loan-quantity"><strong>{{ loan.quantity }}</strong><span>pack{{ loan.quantity|pluralize }} · {{ loan.items_per_pack }} items each</span></div></div>
                 <div class="borrow-loan-route"><span><small>LENDING PROJECT</small><strong>{{ loan.lender_project.name }}</strong></span><span class="borrow-route-arrow" aria-hidden="true">→</span><span><small>BORROWING PROJECT</small><strong>{{ loan.borrower_project.name }}</strong></span><span class="borrow-loan-due"><small>RETURN OR REPLACE BY</small><strong>{{ loan.due_date|date:'d M Y' }}</strong></span></div>
                 <p class="borrow-purpose">{{ loan.purpose|linebreaksbr }}</p>
-                {% if loan.status == 'pending' and active_tab == 'lending' %}
+                {% if loan.status == 'pending_borrower' and active_tab == 'borrowing' and user == project.project_manager %}
+                <form method="post" class="borrow-loan-actions">
+                    {% csrf_token %}<input type="hidden" name="loan_id" value="{{ loan.pk }}"><input type="hidden" name="tab" value="borrowing">
+                    <label>Message to the borrowing researcher <span class="borrow-optional">(optional)</span><textarea name="note" maxlength="1000" rows="2" placeholder="Confirm the project need or add a handover note…"></textarea></label>
+                    <div class="borrow-action-footer"><p>A researcher requested this stock for {{ project.name }}. Approve it before the lending project manager reviews the transfer.</p><div><button type="submit" name="action" value="decline_borrower" class="borrow-button">Decline</button><button type="submit" name="action" value="approve_borrower" class="borrow-button borrow-button-primary">Approve for our project <span aria-hidden="true">→</span></button></div></div>
+                </form>
+                {% elif loan.status == 'pending_borrower' and active_tab == 'borrowing' %}
+                <div class="borrow-waiting"><p><span class="borrow-wait-dot" aria-hidden="true"></span> Waiting for your project manager to approve this request.</p></div>
+                {% elif loan.status == 'pending' and active_tab == 'lending' %}
                 <form method="post" class="borrow-loan-actions">
                     {% csrf_token %}<input type="hidden" name="loan_id" value="{{ loan.pk }}"><input type="hidden" name="tab" value="lending">
                     <label>Message to the borrowing manager <span class="borrow-optional">(optional)</span><textarea name="note" maxlength="1000" rows="2" placeholder="Add collection details or explain your decision…">{% if error_id == loan.pk|stringformat:'s' %}{{ post_data.note }}{% endif %}</textarea></label>
@@ -153,7 +162,7 @@
                 {% elif loan.status == 'returned' %}
                 <div class="borrow-complete"><span aria-hidden="true">✓</span> Return confirmed{% if loan.returned_at %} on {{ loan.returned_at|date:'d M Y' }}{% endif %}. This loan is closed.</div>
                 {% endif %}
-                <details class="borrow-activity"><summary>Loan details &amp; activity <span aria-hidden="true">⌄</span></summary><div class="borrow-activity-body"><dl><div><dt>Requested by</dt><dd>{{ loan.requested_by.get_full_name|default:loan.requested_by.username|default:'Former account' }}</dd></div><div><dt>Request date</dt><dd>{{ loan.created_at|date:'d M Y, H:i' }}</dd></div>{% if loan.approved_at %}<div><dt>Approved</dt><dd>{{ loan.approved_at|date:'d M Y, H:i' }}</dd></div>{% endif %}</dl><ol class="borrow-timeline">{% for event in loan.events.all %}<li><span class="borrow-timeline-dot" aria-hidden="true"></span><div><strong>{{ event.get_action_display|default:event.action }}</strong><p>{{ event.actor.get_full_name|default:event.actor.username|default:'Former account' }} · {{ event.created_at|date:'d M Y, H:i' }}</p>{% if event.note %}<p class="borrow-event-note">{{ event.note|linebreaksbr }}</p>{% endif %}</div></li>{% empty %}<li><p>This request was recorded on {{ loan.created_at|date:'d M Y' }}.</p></li>{% endfor %}</ol></div></details>
+                <details class="borrow-activity"><summary>Loan details &amp; activity <span aria-hidden="true">⌄</span></summary><div class="borrow-activity-body"><dl><div><dt>Requested by</dt><dd>{{ loan.requested_by.get_full_name|default:loan.requested_by.username|default:loan.requester_name|default:'Former account' }}</dd></div><div><dt>Request date</dt><dd>{{ loan.created_at|date:'d M Y, H:i' }}</dd></div>{% if loan.approved_at %}<div><dt>Approved</dt><dd>{{ loan.approved_at|date:'d M Y, H:i' }}</dd></div>{% endif %}<div><dt>Receipt</dt><dd><a href="{% url 'borrow_loan_receipt' project_name=project.name loan_id=loan.pk %}">Download PDF receipt</a></dd></div></dl><ol class="borrow-timeline">{% for event in loan.events.all %}<li><span class="borrow-timeline-dot" aria-hidden="true"></span><div><strong>{{ event.get_action_display|default:event.action }}</strong><p>{{ event.actor.get_full_name|default:event.actor.username|default:event.actor_name|default:'Former account' }} · {{ event.created_at|date:'d M Y, H:i' }}</p>{% if event.note %}<p class="borrow-event-note">{{ event.note|linebreaksbr }}</p>{% endif %}</div></li>{% empty %}<li><p>This request was recorded on {{ loan.created_at|date:'d M Y' }}.</p></li>{% endfor %}</ol></div></details>
             </article>
         {% empty %}
             <div class="borrow-empty"><span class="borrow-empty-icon">{% include 'inventory/partials/settings_icon.html' with icon='borrow' %}</span><h3>{% if active_tab == 'lending' %}Your next collaboration starts here{% else %}A helping hand for your next project{% endif %}</h3><p>{% if active_tab == 'lending' %}Requests from other project managers will appear here when they find your shared stock. You decide what to approve.{% else %}Borrowing requests and their full history will appear here. Explore the network to find spare consumables and reagents.{% endif %}</p><a class="borrow-button" href="{% if active_tab == 'lending' %}?tab=offers#publish-stock{% else %}?tab=discover{% endif %}">{% if active_tab == 'lending' %}Offer spare stock{% else %}Discover available stock{% endif %} <span aria-hidden="true">→</span></a></div>

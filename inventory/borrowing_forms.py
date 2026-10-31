@@ -15,7 +15,7 @@ class PublishOfferForm(forms.Form):
 
 
 class BorrowRequestForm(forms.Form):
-    offer_id = forms.IntegerField(min_value=1, max_value=9223372036854775807)
+    offer_id = forms.IntegerField(required=False, min_value=1, max_value=9223372036854775807)
     quantity = forms.IntegerField(min_value=1, max_value=2147483647)
     due_date = forms.DateField(input_formats=['%Y-%m-%d'])
     purpose = forms.CharField(max_length=1000)

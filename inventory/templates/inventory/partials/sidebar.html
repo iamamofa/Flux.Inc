@@ -6,7 +6,7 @@
         {% with current=request.resolver_match.url_name %}
             <a href="{{ dashboard_url }}" title="Dashboard" {% if 'dashboard_' in current %}aria-current="page"{% endif %}>{% include 'inventory/partials/settings_icon.html' with icon='appearance' %}<span class="flex-1 pl-2">Dashboard</span></a>
             <a href="{{ inventory_url }}" title="Inventory" {% if current == 'consumables' or current == 'reagents' or current == 'samples' or current == 'equipment_' %}aria-current="page"{% endif %}>{% include 'inventory/partials/settings_icon.html' with icon='inventory' %}<span class="flex-1 pl-2">Inventory</span></a>
-        {% if user == project.project_manager %}
+        {% if user == project.project_manager or user in project.project_editors.all or user in project.project_members.all %}
             <a href="{% url 'borrow_loan' project.name %}" title="Borrow &amp; Loan" {% if current == 'borrow_loan' %}aria-current="page"{% endif %}>{% include 'inventory/partials/settings_icon.html' with icon='borrow' %}<span class="flex-1 pl-2">Borrow &amp; Loan</span></a>
         {% endif %}
             <a href="{{ logs_url }}" title="Logs" {% if current == 'log' %}aria-current="page"{% endif %}>{% include 'inventory/partials/settings_icon.html' with icon='history' %}<span class="flex-1 pl-2">Logs</span></a>

@@ -787,3 +787,9 @@
     }
 }
 .team-filter select { height: 42px; }
+.team-invite-details { position: relative; }
+.team-invite-details summary { list-style: none; cursor: pointer; }
+.team-invite-details summary::-webkit-details-marker { display: none; }
+.team-invite-form { display: grid; gap: 10px; min-width: 280px; padding: 16px; margin-top: 8px; border: 1px solid #e5e5e7; border-radius: 12px; background: #fff; box-shadow: 0 12px 32px #0001; }
+.team-invite-form input, .team-invite-form select { min-height: 40px; padding: 8px 10px; border: 1px solid #dedee3; border-radius: 8px; font: inherit; }
+.team-invite-list { display: grid; gap: 6px; margin-top: 16px; padding: 14px 20px; border: 1px solid #eadfd6; border-radius: 10px; background: #fffaf6; color: #6c625b; font-size: .78rem; }

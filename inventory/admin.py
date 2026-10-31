@@ -15,6 +15,7 @@ from .models import (
     MSDSSection,
     MSDSValidationResult,
     Project,
+    ProjectInvitation,
     Rack,
     Reagent,
     Rooms,
@@ -89,6 +90,14 @@ class BorrowLoanAdmin(BorrowingRecordAdmin):
                      'borrower_project_name', 'requester_name')
     list_select_related = ('offer__source_project', 'borrower_project', 'requested_by')
     inlines = (BorrowLoanEventInline,)
+
+
+@admin.register(ProjectInvitation)
+class ProjectInvitationAdmin(BorrowingRecordAdmin):
+    list_display = ('email', 'project', 'role', 'status', 'created_at', 'expires_at')
+    list_filter = ('status', 'role', 'project')
+    search_fields = ('email', 'project__name', 'invited_by__username')
+    list_select_related = ('project', 'invited_by', 'invitee')
 
 
 class FluxUserAdmin(DjangoUserAdmin):

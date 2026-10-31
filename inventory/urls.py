@@ -95,6 +95,7 @@ reagent_urlpatterns = [
 
 urlpatterns = [
     path('borrow-loan/<str:project_name>/', borrow_views.borrow_loan, name='borrow_loan'),
+    path('borrow-loan/<str:project_name>/<int:loan_id>/receipt.pdf', borrow_views.borrow_loan_receipt, name='borrow_loan_receipt'),
     path('', views.home, name='home'),
     path('registration/', views.registration_page, name='registration_page'),
     path('user_application/', views.user_application, name='user_application'),
@@ -145,6 +146,8 @@ urlpatterns = [
     path('logout/', views.logoutUser, name ="logout"),
     path('create_project/', views.create_project, name='create_project'),
     path('team/<str:project_name>/', views.team, name ="team"),
+    path('team/<str:project_name>/invite/', views.invite_project_user, name='invite_project_user'),
+    path('team/invitation/<uuid:token>/accept/', views.accept_project_invitation, name='accept_project_invitation'),
     path('log/<str:project_name>/', views.log, name ="log"),
     path('add_user_to_project/<str:project_name>', views.add_user_to_project, name='add_user_to_project'),
     path('edit_user_access/<str:project_name>/<int:user_id>/', views.edit_user_access, name='edit_user_access'),

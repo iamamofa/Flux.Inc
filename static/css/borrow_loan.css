@@ -123,6 +123,7 @@
 .borrow-own-action { display: grid; justify-items: end; flex: 0 0 auto; gap: .7rem; min-width: 7.5rem; }
 .borrow-status { display: inline-flex; align-items: center; width: fit-content; gap: .35rem; padding: .25rem .5rem; border-radius: .35rem; background: #f1f1f4; color: #767884; font-size: .62rem; font-weight: 600; white-space: nowrap; }
 .borrow-status-pending { background: #fff6e7; color: #967021; }
+.borrow-status-pending_borrower { background: #f0edff; color: #5d4a9a; }
 .borrow-status-active, .borrow-status-returned { background: #edf6ef; color: #36724f; }
 .borrow-status-return_pending { background: #edf1fc; color: #526e9f; }
 .borrow-status-declined { background: #fff0ed; color: #a25a4e; }

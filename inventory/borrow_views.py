@@ -15,7 +15,11 @@ from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
-from .borrowing import publish_offer, request_loan, update_loan, withdraw_offer
+from .borrowing import (
+    project_role, publish_offer, request_direct_loan, request_loan,
+    update_loan, withdraw_offer,
+)
+from .borrowing_notifications import build_loan_receipt_pdf
 from .borrowing_forms import (
     BorrowRequestForm, LoanActionForm, PublishOfferForm, WithdrawOfferForm,
 )
@@ -25,6 +29,8 @@ from .views import get_sidebar_urls
 
 TABS = ('discover', 'borrowing', 'lending', 'offers')
 LOAN_ACTIONS = {
+    'approve_borrower': 'Your project approved the borrowing request. It is now with the lending manager.',
+    'decline_borrower': 'Your project declined the borrowing request.',
     'approve': 'Loan approved. The packs have been transferred to the borrowing project.',
     'decline': 'Borrowing request declined.',
     'cancel': 'Borrowing request cancelled.',
@@ -32,6 +38,44 @@ LOAN_ACTIONS = {
     'confirm_return': 'Return confirmed. Stock has been restored to the lending project.',
     'reject_return': 'Return sent back for follow-up. The loan remains active.',
 }
+
+
+class BorrowCandidate:
+    """A direct inventory candidate that does not need a prior public offer."""
+    direct = True
+    is_active = True
+    notes = ''
+
+    def __init__(self, item, item_kind, source_project):
+        self.item = item
+        self.item_kind = item_kind
+        self.source_project = source_project
+        self.pk = None
+        self.quantity = self.available_quantity = max(
+            item.pack_count - int(item.items_left_in_pack < item.items_per_pack), 0,
+        )
+        self.request_key = f'item:{source_project.pk}:{item_kind}:{item.pk}'
+
+    @property
+    def reference(self):
+        return self.request_key
+
+
+def _candidate_items(current_project):
+    candidates = []
+    projects = Project.objects.filter(
+        is_active=True, project_manager__is_active=True,
+    ).select_related('project_manager').order_by('name')
+    for source_project in projects:
+        for kind, model in (('consumable', Consumable), ('reagent', Reagent)):
+            active_ids = set(StockOffer.objects.filter(
+                source_project=source_project, is_active=True, quantity__gt=0,
+                **{kind + '__isnull': False},
+            ).values_list(kind + '_id', flat=True))
+            for item in model.objects.filter(project=source_project).filter(
+                    _unopened_stock_filter()).exclude(pk__in=active_ids).select_related('project'):
+                candidates.append(BorrowCandidate(item, kind, source_project))
+    return candidates
 
 
 def _unopened_stock_filter(prefix=''):
@@ -108,8 +152,8 @@ def _validated(form):
 def borrow_loan(request, project_name):
     project = get_object_or_404(Project, name=project_name)
     if (not project.is_active or not request.user.is_active
-            or project.project_manager_id != request.user.pk):
-        raise PermissionDenied('Borrow & Loan is available to the active project manager.')
+            or not project_role(project, request.user)):
+        raise PermissionDenied('Join this project before using Borrow & Loan for it.')
 
     active_tab = request.POST.get('tab', request.GET.get('tab', 'discover'))
     if active_tab not in TABS:
@@ -133,8 +177,21 @@ def borrow_loan(request, project_name):
                 message = 'Spare stock listed. Other project managers can now request these packs.'
             elif action == 'request':
                 data = _validated(BorrowRequestForm(request.POST))
-                get_object_or_404(StockOffer, pk=data['offer_id'])
-                request_loan(project=project, user=request.user, **data)
+                source_ref = request.POST.get('source_ref', '').strip()
+                if source_ref:
+                    parts = source_ref.split(':')
+                    if len(parts) != 4 or parts[0] != 'item':
+                        raise ValidationError('Choose a valid inventory item.')
+                    _, source_project_id, item_kind, item_id = parts
+                    data.pop('offer_id', None)
+                    request_direct_loan(
+                        project=project, user=request.user,
+                        source_project_id=source_project_id,
+                        item_kind=item_kind, item_id=item_id, **data,
+                    )
+                else:
+                    get_object_or_404(StockOffer, pk=data['offer_id'])
+                    request_loan(project=project, user=request.user, **data)
                 message = 'Borrowing request sent to the lending project manager.'
             elif action == 'withdraw':
                 data = _validated(WithdrawOfferForm(request.POST))
@@ -161,37 +218,35 @@ def borrow_loan(request, project_name):
             url = reverse('borrow_loan', kwargs={'project_name': project.name})
             return redirect(f'{url}?{urlencode({"tab": active_tab})}')
 
-    discovery = StockOffer.objects.filter(
+    published_discovery = StockOffer.objects.filter(
         is_active=True, quantity__gt=0, source_project__is_active=True,
         source_project__project_manager__is_active=True,
-    ).exclude(source_project__project_manager=request.user).filter(
+    ).filter(
         _unopened_stock_filter('consumable__') | _unopened_stock_filter('reagent__')
     ).select_related('source_project__project_manager', 'consumable', 'reagent').order_by(
         'source_project__name', '-created_at', '-pk',
     )
-    source_projects = Project.objects.filter(
-        pk__in=discovery.values('source_project_id')
-    ).order_by('name')
-    available_count = discovery.count()
+    direct_candidates = _candidate_items(project)
+    discovery = list(published_discovery) + direct_candidates
     search_query = request.GET.get('q', '').strip()[:200]
     kind_filter = request.GET.get('kind', '')
     if kind_filter not in ('consumable', 'reagent'):
         kind_filter = ''
     project_filter = request.GET.get('source_project', '')
     if search_query:
-        discovery = discovery.filter(
-            Q(consumable__name__icontains=search_query)
-            | Q(reagent__name__icontains=search_query)
-            | Q(consumable__product_code__icontains=search_query)
-            | Q(reagent__product_code__icontains=search_query)
-            | Q(source_project__name__icontains=search_query)
-        )
+        needle = search_query.casefold()
+        discovery = [candidate for candidate in discovery if needle in ' '.join([
+            candidate.item.name, candidate.item.product_code or '', candidate.source_project.name,
+        ]).casefold()]
     if kind_filter:
-        discovery = discovery.filter(**{kind_filter + '__isnull': False})
+        discovery = [candidate for candidate in discovery if candidate.item_kind == kind_filter]
     if project_filter.isdecimal() and len(project_filter) <= 19 and int(project_filter) <= 9223372036854775807:
-        discovery = discovery.filter(source_project_id=project_filter)
+        discovery = [candidate for candidate in discovery if str(candidate.source_project.pk) == project_filter]
     else:
         project_filter = ''
+    discovery.sort(key=lambda candidate: (candidate.source_project.name.casefold(), candidate.item.name.casefold()))
+    source_projects = sorted({candidate.source_project for candidate in discovery}, key=lambda item: item.name.casefold())
+    available_count = len(discovery)
 
     scoped_loans = BorrowLoan.objects.filter(
         Q(borrower_project=project) | Q(offer__source_project=project)
@@ -223,6 +278,7 @@ def borrow_loan(request, project_name):
     page_params['tab'] = active_tab
     context = {
         'project': project,
+        'is_project_manager': project.project_manager_id == request.user.pk,
         'projects': Project.objects.filter(project_manager=request.user, is_active=True),
         'active_tab': active_tab, 'search_query': search_query, 'kind_filter': kind_filter,
         'project_filter': project_filter, 'source_projects': source_projects,
@@ -230,8 +286,26 @@ def borrow_loan(request, project_name):
         'own_offers': own_offers, 'loans_page': Paginator(loans, 12).get_page(request.GET.get('page')),
         'stats': stats, 'lendable_items': lendable_items, 'today': timezone.localdate(),
         'error': error, 'error_action': action,
-        'error_id': request.POST.get('offer_id', request.POST.get('loan_id', '')),
+        'error_id': request.POST.get('offer_id', request.POST.get('loan_id', request.POST.get('source_ref', ''))),
         'post_data': request.POST if error else {}, 'page_query': page_params.urlencode(),
         **get_sidebar_urls(project.name),
     }
     return render(request, 'inventory/borrow_loan.html', context, status=status)
+
+
+@login_required
+def borrow_loan_receipt(request, project_name, loan_id):
+    project = get_object_or_404(Project, name=project_name)
+    if not project_role(project, request.user):
+        raise PermissionDenied('You do not have access to this project receipt.')
+    loan = get_object_or_404(
+        BorrowLoan.objects.select_related('offer__source_project', 'borrower_project'),
+        pk=loan_id,
+    )
+    if loan.offer.source_project_id != project.pk and loan.borrower_project_id != project.pk:
+        raise PermissionDenied('This receipt belongs to another project.')
+    event = 'Return confirmed' if loan.status == BorrowLoan.Status.RETURNED else 'Approved & issued'
+    response = HttpResponse(build_loan_receipt_pdf(loan, event), content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{loan.reference.lower()}-receipt.pdf"'
+    response['Cache-Control'] = 'private, no-store'
+    return response

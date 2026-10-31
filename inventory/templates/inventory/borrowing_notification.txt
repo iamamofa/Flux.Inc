@@ -1,0 +1,18 @@
+Flux Borrow & Loan update
+
+{{ event }}
+
+Reference: {{ loan.reference }}
+Item: {{ loan.item_name }} ({{ loan.offer.item_kind }})
+Quantity: {{ loan.quantity }} pack(s)
+Lending project: {{ loan.lender_project_name }}
+Borrowing project: {{ loan.borrower_project_name }}
+Return or replacement date: {{ loan.due_date }}
+{% if note %}
+Message: {{ note }}
+{% endif %}
+
+{% if event == 'Approved & issued' or event == 'Return confirmed' %}A PDF receipt is attached for your records.{% endif %}
+Open the loan record: {{ receipt_url }}
+
+Flux · Inventory management for better research

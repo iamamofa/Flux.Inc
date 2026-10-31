@@ -16,6 +16,29 @@ MAX_PACKS = 2147483647
 ITEM_MODELS = {'consumable': Consumable, 'reagent': Reagent}
 
 
+def project_role(project, user):
+    """Return the user's project role for borrowing permissions."""
+    if project.project_manager_id == user.pk:
+        return 'manager'
+    if project.project_editors.filter(pk=user.pk).exists():
+        return 'project_manager'
+    if project.project_members.filter(pk=user.pk).exists():
+        return 'researcher'
+    return None
+
+
+def _project_access(project, user):
+    try:
+        current = Project.objects.get(pk=project.pk)
+    except Project.DoesNotExist:
+        raise PermissionDenied('This project is unavailable.')
+    if not user.is_authenticated or not user.is_active or not current.is_active:
+        raise PermissionDenied('This project is unavailable.')
+    if not project_role(current, user):
+        raise PermissionDenied('Join the project before requesting stock for it.')
+    return current
+
+
 def unopened_packs(item):
     """The current partial pack is excluded from packs available to lend."""
     if (item.items_per_pack <= 0
@@ -33,6 +56,13 @@ def _manager(project, user):
             or current.project_manager_id != user.pk):
         raise PermissionDenied('Only the manager of an active project can manage borrowing and loans.')
     return current
+
+
+def _manager_for_source(project, user):
+    project = _manager(project, user)
+    if not project.project_manager_id:
+        raise PermissionDenied('This project does not have an active project manager.')
+    return project
 
 
 def _quantity(value):
@@ -84,6 +114,14 @@ def _record(loan, user, action, note=''):
                 'note': note,
             },
         )
+    try:
+        from .borrowing_notifications import send_loan_notification
+        transaction.on_commit(
+            lambda: send_loan_notification(loan.pk, action, note=note)
+        )
+    except Exception:
+        # Notification failures must not undo a stock movement or its audit trail.
+        pass
 
 
 def _locked_item(item):
@@ -193,18 +231,16 @@ def withdraw_offer(*, project, user, offer_id):
 
 @transaction.atomic
 def request_loan(*, project, user, offer_id, quantity, due_date, purpose):
-    project = _manager(project, user)
+    project = _project_access(project, user)
     quantity = _quantity(quantity)
     purpose = _text(purpose, 'Purpose', required=True)
     if (not isinstance(due_date, date) or isinstance(due_date, datetime)
             or due_date < timezone.localdate()):
         raise ValidationError('Choose a return date of today or later.')
     offer = _offer(offer_id)
-    if (offer.source_project_id == project.pk
-            or offer.source_project.project_manager_id == user.pk):
-        raise ValidationError('Choose stock from another project manager’s project.')
     if quantity > offer.available_quantity:
         raise ValidationError('This quantity is no longer available from the shared-stock listing.')
+    requester_is_manager = project.project_manager_id == user.pk
     loan = BorrowLoan(
         offer=offer, borrower_project=project, requested_by=user,
         quantity=quantity, due_date=due_date, purpose=purpose,
@@ -212,6 +248,10 @@ def request_loan(*, project, user, offer_id, quantity, due_date, purpose):
         items_per_pack=offer.item.items_per_pack,
         lender_project_name=offer.source_project.name,
         borrower_project_name=project.name, requester_name=user.get_username(),
+        status=(BorrowLoan.Status.PENDING if requester_is_manager
+                else BorrowLoan.Status.PENDING_BORROWER),
+        borrower_approved_by=user if requester_is_manager else None,
+        borrower_approved_at=timezone.now() if requester_is_manager else None,
     )
     loan.full_clean()
     try:
@@ -224,8 +264,57 @@ def request_loan(*, project, user, offer_id, quantity, due_date, purpose):
 
 
 @transaction.atomic
+def request_direct_loan(*, project, user, source_project_id, item_kind, item_id,
+                        quantity, due_date, purpose):
+    """Request stock directly from inventory without a prior public offer."""
+    borrower_project = _project_access(project, user)
+    try:
+        source_project = Project.objects.select_related('project_manager').get(
+            pk=source_project_id, is_active=True,
+        )
+    except (Project.DoesNotExist, ValueError, TypeError, OverflowError):
+        raise ValidationError('The source project is no longer available.')
+    if not source_project.project_manager_id or not source_project.project_manager.is_active:
+        raise ValidationError('The source project does not have an active manager.')
+    model = ITEM_MODELS.get(item_kind)
+    if not model:
+        raise ValidationError('Only consumables and reagents can be borrowed.')
+    try:
+        item = model.objects.get(pk=item_id, project=source_project)
+    except (model.DoesNotExist, ValueError, TypeError, OverflowError):
+        raise ValidationError('That inventory item is no longer available.')
+    if not _usable(item) or quantity > unopened_packs(item):
+        raise ValidationError('Only unexpired, unopened packs can be borrowed.')
+    if isinstance(item, Reagent) and (item.hazard_level or 0) >= 3 and not item.msds_files.exists():
+        raise ValidationError('This reagent needs its safety data sheet before it can be borrowed.')
+    exhausted_offer = StockOffer.objects.select_for_update().filter(
+        **{item_kind: item}, is_active=True,
+    ).first()
+    offer = StockOffer.objects.select_for_update().filter(
+        **{item_kind: item}, is_active=True, quantity__gt=0,
+    ).first()
+    if offer is None:
+        if exhausted_offer is not None:
+            exhausted_offer.is_active = False
+            exhausted_offer.updated_at = timezone.now()
+            exhausted_offer.save(update_fields=['is_active', 'updated_at'])
+        offer = StockOffer(
+            source_project=source_project, created_by=source_project.project_manager,
+            quantity=unopened_packs(item),
+            notes='Directly requestable inventory; no prior offer was required.',
+            is_active=True, **{item_kind: item},
+        )
+        offer.full_clean()
+        offer.save()
+    return request_loan(
+        project=borrower_project, user=user, offer_id=offer.pk,
+        quantity=quantity, due_date=due_date, purpose=purpose,
+    )
+
+
+@transaction.atomic
 def update_loan(*, project, user, loan_id, action, note=''):
-    project = _manager(project, user)
+    project = _project_access(project, user)
     note = _text(note, 'Note')
     try:
         loan = BorrowLoan.objects.select_for_update(of=('self',)).select_related(
@@ -235,9 +324,18 @@ def update_loan(*, project, user, loan_id, action, note=''):
         ).get(pk=loan_id)
     except (BorrowLoan.DoesNotExist, ValueError, TypeError, OverflowError):
         raise ValidationError('This borrowing request is unavailable.')
-    lender = loan.offer.source_project_id == project.pk
+    lender = (loan.offer.source_project_id == project.pk
+              and project.project_manager_id == user.pk)
     borrower = loan.borrower_project_id == project.pk
     transitions = {
+        'approve_borrower': ('pending_borrower', 'pending',
+                             project.pk == loan.borrower_project_id
+                             and project.project_manager_id == user.pk,
+                             'Borrower project approved'),
+        'decline_borrower': ('pending_borrower', 'declined',
+                             project.pk == loan.borrower_project_id
+                             and project.project_manager_id == user.pk,
+                             'Borrower project declined'),
         'approve': ('pending', 'active', lender, 'Approved & issued'),
         'decline': ('pending', 'declined', lender, 'Declined'),
         'cancel': ('pending', 'cancelled', borrower, 'Cancelled'),
@@ -261,7 +359,14 @@ def update_loan(*, project, user, loan_id, action, note=''):
     loan.status = following
     loan.decision_note = note
 
-    if action == 'approve':
+    if action == 'approve_borrower':
+        now = timezone.now()
+        loan.borrower_approved_by = user
+        loan.borrower_approved_at = now
+        BorrowLoan.objects.filter(pk=loan.pk).update(
+            borrower_approved_by=user, borrower_approved_at=now,
+        )
+    elif action == 'approve':
         offer = _offer(loan.offer_id)
         source = _locked_item(offer.item)
         offer.consumable = source if offer.consumable_id else None

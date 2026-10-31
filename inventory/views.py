@@ -39,7 +39,7 @@ from .models import (
     Shelf, Rack, Box, Rooms, Storages, Sample_Locations,
     MSDSFile, MSDSSection, MSDSValidationResult, ProjectLoginEvent,
     TrashConsumable, TrashReagent, TrashEquipment, TrashSample,
-    LowStockEmailDelivery,
+    LowStockEmailDelivery, ProjectInvitation,
 )
 from .low_stock import get_low_stock_alerts
 from .email_utils import attach_inline_email_images
@@ -659,6 +659,7 @@ def team(request, project_name):
             'team_members': team_members,
             'editor_count': sum(person.team_access == 'Full' for person in team_members),
             'limited_count': sum(person.team_access == 'Limited' for person in team_members),
+            'pending_invitations': project.invitations.filter(status='pending').select_related('invited_by'),
             **get_sidebar_urls(project_name)
         }
         return render(request, 'inventory/team.html', context)
@@ -666,6 +667,86 @@ def team(request, project_name):
     except Exception as e:
         security_logger.error(f"Team view error: {str(e)}")
         return JsonResponse({'error': str(e)}, status=400)
+
+
+@login_required
+@ensure_csrf_cookie
+def invite_project_user(request, project_name):
+    """Send a tracked invitation to a researcher or manager collaborator."""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'Use POST to send an invitation.'}, status=405)
+    project = get_object_or_404(Project, name=project_name)
+    if project.project_manager_id != request.user.pk:
+        return JsonResponse({'success': False, 'message': 'Only the project manager can invite people.'}, status=403)
+    email = request.POST.get('email', '').strip().lower()
+    role = request.POST.get('role', 'researcher')
+    if not email or '@' not in email or role not in {'researcher', 'project_manager'}:
+        return JsonResponse({'success': False, 'message': 'Enter a valid email and invitation role.'}, status=400)
+    invitee = User.objects.filter(email__iexact=email, is_active=True).first()
+    if invitee and (
+        project.project_editors.filter(pk=invitee.pk).exists()
+        or project.project_members.filter(pk=invitee.pk).exists()
+        or invitee.pk == project.project_manager_id
+    ):
+        return JsonResponse({'success': False, 'message': 'This account already belongs to the project.'}, status=409)
+    try:
+        invitation = ProjectInvitation.objects.create(
+            project=project, invited_by=request.user, invitee=invitee,
+            email=email, role=role,
+        )
+    except IntegrityError:
+        return JsonResponse({'success': False, 'message': 'A pending invitation already exists for this email.'}, status=409)
+    accept_url = request.build_absolute_uri(reverse('accept_project_invitation', kwargs={'token': invitation.token}))
+    body = render_to_string('inventory/project_invitation_email.txt', {
+        'project': project, 'invitation': invitation, 'accept_url': accept_url,
+        'inviter': request.user,
+    })
+    try:
+        EmailMultiAlternatives(
+            f'You are invited to join {project.name} on Flux',
+            body, settings.DEFAULT_FROM_EMAIL, [email],
+        ).send(fail_silently=True)
+    except Exception:
+        security_logger.exception('Project invitation email failed')
+    Log.objects.create(project=project, user=request.user,
+                       action=f'Invited {email} as {invitation.get_role_display()}')
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': True, 'message': f'Invitation sent to {email}.'})
+    messages.success(request, f'Invitation sent to {email}.')
+    return redirect('team', project_name=project.name)
+
+
+@login_required
+def accept_project_invitation(request, token):
+    invitation = get_object_or_404(ProjectInvitation.objects.select_related('project', 'invited_by'), token=token)
+    if invitation.is_expired:
+        invitation.status = 'expired'
+        invitation.save(update_fields=['status'])
+        return render(request, 'inventory/success_page.html', {
+            'message1': 'This invitation has expired.',
+            'message2': 'Ask the project manager to send a new invitation.',
+        }, status=410)
+    if request.user.email.casefold() != invitation.email.casefold():
+        return render(request, 'inventory/403_page.html', status=403)
+    if invitation.status != 'pending':
+        return redirect('team', project_name=invitation.project.name)
+    with transaction.atomic():
+        if invitation.role == 'project_manager':
+            invitation.project.project_editors.add(request.user)
+        else:
+            invitation.project.project_members.add(request.user)
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        profile.managed_projects.add(invitation.project)
+        invitation.invitee = request.user
+        invitation.status = 'accepted'
+        invitation.accepted_at = timezone.now()
+        invitation.save(update_fields=['invitee', 'status', 'accepted_at'])
+        Log.objects.create(
+            project=invitation.project, user=request.user,
+            action=f'Accepted invitation as {invitation.get_role_display()}',
+        )
+    messages.success(request, f'You joined {invitation.project.name}.')
+    return redirect('team', project_name=invitation.project.name)
 
 
 @login_required

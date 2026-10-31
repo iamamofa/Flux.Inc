@@ -1436,6 +1436,10 @@ class StockOffer(models.Model):
         return 'consumable' if self.consumable_id else 'reagent'
 
     @property
+    def request_key(self):
+        return str(self.pk)
+
+    @property
     def available_quantity(self):
         item = self.item
         project = self.source_project
@@ -1463,8 +1467,53 @@ class StockOffer(models.Model):
         return f'{self.item} · {self.source_project}'
 
 
+def project_invitation_expiry():
+    return timezone.now() + timedelta(days=7)
+
+
+class ProjectInvitation(models.Model):
+    """A time-limited invitation to join a project as a researcher or collaborator."""
+    ROLE_CHOICES = (
+        ('researcher', 'Researcher'),
+        ('project_manager', 'Project manager collaborator'),
+    )
+    STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('accepted', 'Accepted'),
+        ('declined', 'Declined'),
+        ('expired', 'Expired'),
+    )
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='invitations')
+    invited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='sent_project_invitations')
+    invitee = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='project_invitations')
+    email = models.EmailField()
+    role = models.CharField(max_length=30, choices=ROLE_CHOICES, default='researcher')
+    token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(default=project_invitation_expiry)
+    accepted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ('-created_at',)
+        constraints = [
+            models.UniqueConstraint(
+                fields=('project', 'email'), condition=models.Q(status='pending'),
+                name='one_pending_project_invitation',
+            ),
+        ]
+
+    @property
+    def is_expired(self):
+        return self.status == 'pending' and self.expires_at <= timezone.now()
+
+    def __str__(self):
+        return f'{self.email} · {self.project.name}'
+
+
 class BorrowLoan(models.Model):
     class Status(models.TextChoices):
+        PENDING_BORROWER = 'pending_borrower', 'Awaiting borrower project approval'
         PENDING = 'pending', 'Awaiting approval'
         ACTIVE = 'active', 'On loan'
         RETURN_PENDING = 'return_pending', 'Return awaiting confirmation'
@@ -1484,6 +1533,10 @@ class BorrowLoan(models.Model):
     approved_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True,
         related_name='approved_loans',
+    )
+    borrower_approved_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='borrower_approved_loans',
     )
     quantity = models.PositiveIntegerField(validators=[MinValueValidator(1)])
     due_date = models.DateField()
@@ -1509,6 +1562,7 @@ class BorrowLoan(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     approved_at = models.DateTimeField(null=True, blank=True)
+    borrower_approved_at = models.DateTimeField(null=True, blank=True)
     returned_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
@@ -1522,7 +1576,7 @@ class BorrowLoan(models.Model):
             ),
             models.UniqueConstraint(
                 fields=('offer', 'borrower_project'),
-                condition=models.Q(status='pending'),
+                condition=models.Q(status__in=('pending', 'pending_borrower')),
                 name='one_pending_request_per_offer',
             ),
         ]
@@ -1547,8 +1601,6 @@ class BorrowLoan(models.Model):
 
     def clean(self):
         super().clean()
-        if self.offer_id and self.borrower_project_id == self.offer.source_project_id:
-            raise ValidationError('Borrow from a different project.')
         if self.received_item and self.received_item.project_id != self.borrower_project_id:
             raise ValidationError('Received inventory must belong to the borrowing project.')
 

@@ -1,0 +1,10 @@
+You have been invited to join {{ project.name }} on Flux.
+
+{{ inviter.get_full_name|default:inviter.username }} invited you as {{ invitation.get_role_display }}.
+
+Accept the invitation here:
+{{ accept_url }}
+
+The invitation expires in seven days. Sign in with {{ invitation.email }} before accepting it.
+
+Flux · Inventory management for better research

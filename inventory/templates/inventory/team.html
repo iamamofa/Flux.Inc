@@ -43,7 +43,7 @@
 </div>{% if user == project.project_manager %}<button type="button" class="team-button team-primary" data-open-add>
 <svg class="ui-icon" aria-hidden="true">
 <use href="#i-plus"/>
-</svg>Add member</button>{% endif %}</header>
+</svg>Add member</button><details class="team-invite-details"><summary class="team-button">Invite manager / researcher</summary><form method="post" action="{% url 'invite_project_user' project_name=project.name %}" class="team-invite-form">{% csrf_token %}<label for="invite-email">Account email</label><input id="invite-email" type="email" name="email" placeholder="name@institution.org" required><label for="invite-role">Invitation role</label><select id="invite-role" name="role"><option value="researcher">Researcher</option><option value="project_manager">Project manager collaborator</option></select><button class="team-button team-primary" type="submit">Send invitation</button></form></details>{% endif %}</header>
 <div class="team-stats" aria-label="Team summary">
 <div>
 <span class="team-stat-icon">
@@ -158,6 +158,7 @@
 <span id="team-results" role="status" aria-live="polite">Showing {{ team_members|length }} team member{{ team_members|length|pluralize }}</span>
 <span>Access is managed by the project manager</span>
 </div>
+{% if user == project.project_manager and pending_invitations %}<div class="team-invite-list"><strong>Pending invitations</strong>{% for invitation in pending_invitations %}<span>{{ invitation.email }} · {{ invitation.get_role_display }} · expires {{ invitation.expires_at|date:'d M Y' }}</span>{% endfor %}</div>{% endif %}
 </section>
 <aside class="team-guide" aria-labelledby="access-guide-title">
 <div class="team-guide-icon">
