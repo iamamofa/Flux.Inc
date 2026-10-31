@@ -32,6 +32,7 @@ urlpatterns = [
     path('auth/reset/complete/', auth_views.PasswordResetCompleteView.as_view(
         template_name='control/reset_complete.html'), name='reset_complete'),
     path('reports/', views.reports, name='reports'),
+    path('cold-chain/', views.cold_chain_audit, name='cold_chain_audit'),
     path('reports/<str:report>.csv', views.report_csv, name='report_csv'),
     path('search/', views.search, name='search'),
 ]

@@ -174,7 +174,7 @@
                 </div>
             </div>
         
-<header class="flux-page-heading"><div><p class="flux-eyebrow">{{ project.name }}</p><h1 id="logsTableDescription">Project activity</h1><p>Follow the inventory updates and actions recorded for your project.</p></div></header>
+<header class="flux-page-heading"><div><p class="flux-eyebrow">{{ project.name }}</p><h1 id="logsTableDescription">Project activity</h1><p>Follow the inventory updates and actions recorded for your project.</p></div>{% if user == project.project_manager %}<div class="flux-log-actions"><a class="flux-button" href="{{ log_export_url }}">Download CSV <span aria-hidden="true">↓</span></a><a class="flux-button flux-button-primary" href="{% url 'cold_chain_audit' project_name=project.name %}">Cold-chain audit <span aria-hidden="true">↗</span></a></div>{% endif %}</header>
 <div class="flux-table-toolbar"><div><h2>Activity history <span class="flux-search-result" data-table-search-status role="status"></span></h2><p>Latest events appear first.</p></div><label class="flux-table-search"><span aria-hidden="true">⌕</span><input type="search" aria-label="Search logs" placeholder="Search logs…" data-table-search=".logs-table"></label></div>
             <div class="table-container">
                 {% if user == project.project_manager %}

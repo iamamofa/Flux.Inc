@@ -4,7 +4,7 @@ All state-changing endpoints are CSRF-protected POSTs, and role/permission decis
 are enforced on the server. Procurement is intentionally not simulated.
 """
 import csv
-from datetime import date
+from datetime import date, timedelta
 from functools import wraps
 from urllib.parse import urlencode
 from django.conf import settings
@@ -18,9 +18,12 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.text import slugify
 from django.views.decorators.http import require_POST
 from inventory.models import (Project, UserProfile, UserApplication, Consumable,
                               Reagent, Equipment, Sample, Log)
+from inventory.cold_chain import (build_cold_chain_audit, parse_audit_window,
+                                  render_cold_chain_pdf, storage_unit_choices)
 from .models import Department, AdminAudit, AdminNotification, PortalSettings
 from .forms import UserForm, DepartmentForm, SettingsForm, GroupForm
 
@@ -378,6 +381,42 @@ def reports(request):
     if has(request, 'control.view_adminaudit'):
         allowed['audits'] = 'Administrative audit events'
     return template(request, 'reports', page_title='Reports & exports', allowed=allowed)
+
+
+@protected('inventory.view_project')
+def cold_chain_audit(request):
+    """Administrator-facing cold-chain evidence builder and PDF exporter."""
+    projects = Project.objects.filter(is_active=True).order_by('name')
+    project_id = request.GET.get('project', '').strip()
+    selected_project = None
+    if project_id:
+        selected_project = get_object_or_404(projects, pk=project_id)
+    storage_unit = request.GET.get('storage_unit', '').strip()[:100]
+    start_value = request.GET.get('from', '')
+    end_value = request.GET.get('to', '')
+    audit_package = None
+    error = ''
+    if storage_unit and start_value and end_value:
+        start, end, error = parse_audit_window(start_value, end_value)
+        if not error:
+            audit_package = build_cold_chain_audit(storage_unit=storage_unit, start=start, end=end, project_id=selected_project.pk if selected_project else None)
+            if request.GET.get('format') == 'pdf':
+                audit(request, 'cold_chain.audit_export', request.user, f'Exported cold-chain audit for {storage_unit}', {'project': selected_project.name if selected_project else 'all', 'from': start.isoformat(), 'to': end.isoformat()})
+                try:
+                    pdf_bytes = render_cold_chain_pdf(audit_package, generated_by=request.user)
+                except RuntimeError as exc:
+                    return HttpResponse(str(exc), status=503)
+                response = HttpResponse(pdf_bytes, content_type='application/pdf')
+                response['Content-Disposition'] = f'attachment; filename="flux-cold-chain-{slugify(storage_unit)[:40] or "storage-unit"}.pdf"'
+                return response
+    elif any((storage_unit, start_value, end_value)):
+        error = 'Choose a storage unit, start time and end time to build the evidence package.'
+    now = timezone.localtime()
+    return template(request, 'cold_chain_audit', page_title='Cold-chain audit',
+                    projects=projects, selected_project=selected_project,
+                    storage_units=storage_unit_choices(selected_project.pk if selected_project else None),
+                    storage_unit=storage_unit, from_value=start_value or (now - timedelta(hours=24)).strftime('%Y-%m-%dT%H:%M'),
+                    to_value=end_value or now.strftime('%Y-%m-%dT%H:%M'), audit=audit_package, error=error)
 
 
 @protected()

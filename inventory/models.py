@@ -227,6 +227,8 @@ class UserProfile(models.Model):
         validators=[validate_profile_picture_size],
     )
     time_zone = models.CharField(max_length=64, default='UTC')
+    has_seen_product_tour = models.BooleanField(default=False)
+    product_tour_completed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -404,6 +406,16 @@ class BaseInventoryItem(models.Model):
     date_recorded = models.DateField(auto_now_add=True)
     storage_location = models.CharField(max_length=100, blank=True)
     cold_storage = models.CharField(max_length=50)
+    STORAGE_CONDITIONS = [
+        ('room', 'Room temperature'), ('4c', '4°C'), ('minus20', '-20°C'),
+        ('minus80', '-80°C'), ('ln2', 'Liquid nitrogen'),
+    ]
+    storage_condition = models.CharField(max_length=20, choices=STORAGE_CONDITIONS, default='room')
+    lot_number = models.CharField(max_length=100, blank=True, db_index=True)
+    extraction_batch_number = models.CharField(max_length=100, blank=True, db_index=True)
+    grant_code = models.CharField(max_length=100, blank=True, db_index=True)
+    par_stock = models.PositiveIntegerField(null=True, blank=True)
+    average_daily_use = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     oem_temperature = models.IntegerField(
             null=True,
             blank=True,
@@ -524,6 +536,18 @@ class BaseInventoryItem(models.Model):
     @property
     def is_low_stock(self):
         return self.is_reagent_low_stock
+
+    @property
+    def days_of_stock_remaining(self):
+        if not self.average_daily_use or self.average_daily_use <= 0:
+            return None
+        return round((self.pack_count * self.items_per_pack) / float(self.average_daily_use), 1)
+
+    @property
+    def reorder_date(self):
+        if self.days_of_stock_remaining is None:
+            return None
+        return timezone.localdate() + timedelta(days=max(int(self.days_of_stock_remaining), 0))
 
 
 class BaseInventoryManager(models.Manager):
@@ -806,6 +830,8 @@ class Equipment(models.Model):
     last_calibration_date = models.DateField(null=True, blank=True)
     next_calibration_date = models.DateField(null=True, blank=True)
     notes = models.TextField(blank=True)
+    grant_code = models.CharField(max_length=100, blank=True, db_index=True)
+    barcode_value = models.CharField(max_length=120, blank=True, unique=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -1151,6 +1177,9 @@ class Sample(models.Model):
     collection_date = models.DateField()
     date_recorded = models.DateTimeField(auto_now_add=True)
     threshold_value = models.PositiveIntegerField(null=True, blank=True)
+    extraction_batch_number = models.CharField(max_length=100, blank=True, db_index=True)
+    grant_code = models.CharField(max_length=100, blank=True, db_index=True)
+    barcode_value = models.CharField(max_length=120, blank=True, unique=True, null=True)
     is_active = models.BooleanField(default=True)
     notes = models.TextField()
 
@@ -1626,3 +1655,78 @@ class BorrowLoanEvent(models.Model):
 
     def __str__(self):
         return f'{self.loan.reference} · {self.action}'
+
+
+class StorageTemperatureEvent(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='temperature_events')
+    item_type = models.CharField(max_length=30)
+    item_id = models.CharField(max_length=50)
+    temperature = models.DecimalField(max_digits=8, decimal_places=2)
+    temperature_unit = models.CharField(max_length=1, default='C')
+    storage_condition = models.CharField(max_length=20, blank=True)
+    recorded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+    alert_level = models.CharField(max_length=20, default='normal')
+
+
+class ProcurementRequest(models.Model):
+    STATUS_CHOICES = (('pending', 'Pending review'), ('approved', 'Approved'), ('declined', 'Declined'), ('ordered', 'Ordered'))
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='procurement_requests')
+    requested_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    item_name = models.CharField(max_length=150)
+    product_code = models.CharField(max_length=100, blank=True)
+    quantity = models.PositiveIntegerField(default=1)
+    grant_code = models.CharField(max_length=100, blank=True)
+    justification = models.TextField(max_length=1000)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_procurement_requests')
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+
+class EquipmentBooking(models.Model):
+    STATUS_CHOICES = (('requested', 'Requested'), ('approved', 'Approved'), ('declined', 'Declined'), ('cancelled', 'Cancelled'))
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='equipment_bookings')
+    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, related_name='bookings')
+    booked_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField()
+    purpose = models.CharField(max_length=500)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='requested')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('starts_at',)
+
+
+class Plate(models.Model):
+    PLATE_TYPES = (('96', '96 well'), ('384', '384 well'))
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='plates')
+    name = models.CharField(max_length=150)
+    plate_type = models.CharField(max_length=3, choices=PLATE_TYPES, default='96')
+    barcode_value = models.CharField(max_length=120, unique=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class PlateWell(models.Model):
+    plate = models.ForeignKey(Plate, on_delete=models.CASCADE, related_name='wells')
+    coordinate = models.CharField(max_length=5)
+    sample = models.ForeignKey(Sample, on_delete=models.SET_NULL, null=True, blank=True, related_name='plate_wells')
+    label = models.CharField(max_length=150, blank=True)
+    notes = models.CharField(max_length=500, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=('plate', 'coordinate'), name='unique_plate_coordinate')]
+
+
+class BulkImportJob(models.Model):
+    STATUS_CHOICES = (('uploaded', 'Uploaded'), ('imported', 'Imported'), ('failed', 'Failed'))
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='bulk_imports')
+    uploaded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    filename = models.CharField(max_length=255)
+    row_count = models.PositiveIntegerField(default=0)
+    imported_count = models.PositiveIntegerField(default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='uploaded')
+    error_report = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)

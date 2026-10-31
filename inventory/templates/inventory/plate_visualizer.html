@@ -1,0 +1,61 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+{% block title %}Plate visualizer{% endblock %}
+{% block page_class %}workspace-utility-page plate-visualizer-page{% endblock %}
+{% block filters %}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/genomics.css' %}?v=3">
+
+<div class="plate-shell">
+    <header class="plate-hero">
+        <div class="plate-hero-copy">
+            <a class="plate-back-link" href="{% url 'genomics_hub' project_name=project.name %}">← Lab tools</a>
+            <p class="flux-eyebrow">SAMPLE STORAGE · PLATE MAP</p>
+            <div class="plate-title-line"><span class="plate-title-icon">▣</span><div><h1>{{ plate.name }}<span>.</span></h1><p>Assign DNA, RNA extracts and primers to exact physical coordinates.</p></div></div>
+        </div>
+        <div class="plate-hero-meta"><span class="plate-status-dot"></span><span>Live project map</span><strong>{{ project.name }}</strong></div>
+    </header>
+
+    <section class="plate-stat-row" aria-label="Plate summary">
+        <div class="plate-stat"><span class="plate-stat-label">PLATE FORMAT</span><strong>{{ plate.get_plate_type_display }}</strong><small>Standard sample layout</small></div>
+        <div class="plate-stat"><span class="plate-stat-label">MAPPED WELLS</span><strong>{{ plate.wells.count }}</strong><small>Coordinates assigned</small></div>
+        <div class="plate-stat"><span class="plate-stat-label">PLATE ID</span><strong class="plate-stat-code">{{ plate.barcode_value }}</strong><small>Scan-ready identifier</small></div>
+    </section>
+
+    <div class="plate-workspace">
+        <section class="plate-board-card">
+            <div class="plate-board-header"><div><span class="genomics-card-kicker">INTERACTIVE MAP</span><h2>Choose a well</h2><p>Click any coordinate to load it into the assignment form.</p></div><span class="plate-board-badge">{{ plate.get_plate_type_display }}</span></div>
+            <div class="plate-legend"><span><i class="plate-legend-swatch plate-legend-empty"></i>Available</span><span><i class="plate-legend-swatch plate-legend-filled"></i>Assigned</span><span><i class="plate-legend-swatch plate-legend-selected"></i>Selected</span></div>
+            <div class="plate-grid plate-grid-enhanced" style="--plate-cols: {{ columns|length }}"><div class="plate-corner"></div>{% for col in columns %}<strong class="plate-column-label">{{ col }}</strong>{% endfor %}{% for row_cells in cells %}<strong class="plate-row-label">{{ row_cells.0.0|slice:':1' }}</strong>{% for coordinate, well in row_cells %}<button class="plate-well {% if well %}plate-well-filled{% endif %}" type="button" data-plate-well="{{ coordinate }}" title="{% if well %}{{ well.label }}{% else %}Available well {{ coordinate }}{% endif %}">{% if well %}<span>{{ well.label|truncatechars:8 }}</span>{% else %}<span>{{ coordinate }}</span>{% endif %}</button>{% endfor %}{% endfor %}</div>
+            <div class="plate-board-foot"><span><strong>Tip:</strong> select a well, then add the sample label and notes on the right.</span><span>{{ plate.barcode_value }}</span></div>
+        </section>
+
+        <aside class="plate-side-column">
+            <form class="plate-assign-card" id="plateAssignForm" method="post">
+                {% csrf_token %}
+                <div class="plate-form-heading"><div><span class="genomics-card-kicker">WELL ASSIGNMENT</span><h2>Map a sample</h2><p>Keep the physical box and digital record in sync.</p></div><span class="plate-form-icon">＋</span></div>
+                <label>Coordinate<input id="plateCoordinate" name="coordinate" placeholder="A1" required></label>
+                <label>Extract or primer label<input name="label" placeholder="e.g. RNA-042 / Primer-F3" required></label>
+                <label>Notes<textarea name="notes" placeholder="Optional extraction batch, concentration or handling note"></textarea></label>
+                <button class="flux-button flux-button-primary plate-submit" type="submit">Assign well <span aria-hidden="true">→</span></button>
+                <p class="plate-form-note">Assignments are saved to {{ project.name }} and remain visible to your project team.</p>
+            </form>
+
+            <div class="plate-guide-card"><span class="genomics-card-kicker">WORKFLOW GUIDE</span><h2>Label → map → retrieve</h2><div class="plate-guide-step"><span>01</span><div><strong>Label the tube</strong><small>Use the sample or primer identifier.</small></div></div><div class="plate-guide-step"><span>02</span><div><strong>Choose the coordinate</strong><small>Click a free well on the plate.</small></div></div><div class="plate-guide-step"><span>03</span><div><strong>Assign and share</strong><small>Notes preserve context for the next researcher.</small></div></div></div>
+        </aside>
+    </div>
+</div>
+
+<script>
+    (() => {
+        const coordinateInput = document.getElementById('plateCoordinate');
+        const wells = document.querySelectorAll('[data-plate-well]');
+        wells.forEach((well) => well.addEventListener('click', () => {
+            wells.forEach((item) => item.classList.remove('plate-well-selected'));
+            well.classList.add('plate-well-selected');
+            if (coordinateInput) coordinateInput.value = well.dataset.plateWell;
+            document.getElementById('plateAssignForm')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }));
+    })();
+</script>
+{% endblock %}

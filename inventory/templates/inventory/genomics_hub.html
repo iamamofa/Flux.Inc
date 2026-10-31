@@ -1,0 +1,70 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+{% block title %}Genomics lab tools{% endblock %}
+{% block page_class %}workspace-utility-page{% endblock %}
+{% block filters %}{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/genomics.css' %}?v=2">
+
+<div class="genomics-shell">
+    <header class="genomics-hero">
+        <div class="genomics-hero-copy">
+            <p class="flux-eyebrow">GENOMICS OPERATIONS · LAB TOOLS</p>
+            <h1>Make every tube<br><span>count.</span></h1>
+            <p class="genomics-hero-lede">One calm control room for traceability, cold chain, plates, purchasing and shared equipment in <strong>{{ project.name }}</strong>.</p>
+            <div class="genomics-hero-actions">
+                <a class="flux-button flux-button-primary" href="{% url 'borrow_loan' project_name=project.name %}">Open borrow &amp; loan <span aria-hidden="true">↗</span></a>
+                <a class="genomics-text-link" href="{% url 'cold_chain_audit' project_name=project.name %}">Cold-chain audit <span aria-hidden="true">↗</span></a>
+                <a class="genomics-text-link" href="{% url 'reagents' project_name=project.name %}">View inventory <span aria-hidden="true">→</span></a>
+            </div>
+        </div>
+        <div class="genomics-hero-orbit" aria-hidden="true">
+            <span class="genomics-orbit-ring genomics-orbit-ring-one"></span>
+            <span class="genomics-orbit-ring genomics-orbit-ring-two"></span>
+            <span class="genomics-orbit-dot genomics-orbit-dot-one"></span>
+            <span class="genomics-orbit-dot genomics-orbit-dot-two"></span>
+            <span class="genomics-orbit-core">FLUX<br><small>LAB OS</small></span>
+        </div>
+    </header>
+
+    <section class="genomics-signal-row" aria-label="Lab signals">
+        <article class="genomics-signal-card genomics-signal-card-alert"><span class="genomics-signal-icon">◒</span><div><span class="genomics-signal-label">EXPIRING IN 30 DAYS</span><strong>{{ expiry.expiring_30|length }}</strong><small>Items needing a decision</small></div></article>
+        <article class="genomics-signal-card"><span class="genomics-signal-icon">◷</span><div><span class="genomics-signal-label">EXPIRING IN 90 DAYS</span><strong>{{ expiry.expiring_90|length }}</strong><small>Plan before waste</small></div></article>
+        <article class="genomics-signal-card"><span class="genomics-signal-icon">⌁</span><div><span class="genomics-signal-label">STOCK RUNWAY</span><strong>{{ runway|length }}</strong><small>Items at 30 days or less</small></div></article>
+        <article class="genomics-signal-card"><span class="genomics-signal-icon">◫</span><div><span class="genomics-signal-label">UPCOMING BOOKINGS</span><strong>{{ bookings|length }}</strong><small>Equipment reservations</small></div></article>
+    </section>
+
+    <div class="genomics-layout">
+        <main class="genomics-main-column">
+            <article class="genomics-card genomics-card-featured">
+                <div class="genomics-card-heading"><div><span class="genomics-card-kicker">ATTENTION QUEUE</span><h2>Expiry radar</h2><p>Keep your next experiment ahead of the waste line.</p></div><span class="genomics-card-icon genomics-icon-warm">⌛</span></div>
+                <div class="genomics-expiry-tabs" role="list" aria-label="Expiry windows"><span class="genomics-expiry-tab is-active"><strong>{{ expiry.expiring_30|length }}</strong><small>30 days</small></span><span class="genomics-expiry-tab"><strong>{{ expiry.expiring_60|length }}</strong><small>60 days</small></span><span class="genomics-expiry-tab"><strong>{{ expiry.expiring_90|length }}</strong><small>90 days</small></span></div>
+                <div class="genomics-list" role="list">
+                    {% for item in expiry.expiring_30|slice:':5' %}<div class="genomics-list-row" role="listitem"><span class="genomics-list-marker"></span><span class="genomics-list-name">{{ item.name }}<small>{% if item.lot_number %}Lot {{ item.lot_number }}{% else %}{{ item.product_code|default:'Inventory item' }}{% endif %}</small></span><time datetime="{{ item.expiry_date|date:'Y-m-d' }}">{{ item.expiry_date|date:'d M Y' }}</time></div>{% empty %}<div class="genomics-empty"><span>✓</span><div><strong>No near-term expiry</strong><p>Nothing in this project expires within 30 days.</p></div></div>{% endfor %}
+                </div>
+                <a class="genomics-card-link" href="{% url 'reagents' project_name=project.name %}">Review all inventory <span aria-hidden="true">→</span></a>
+            </article>
+
+            <article class="genomics-card">
+                <div class="genomics-card-heading"><div><span class="genomics-card-kicker">SUPPLY CHAIN</span><h2>Request to purchase</h2><p>Send a clear, grant-aware request to the admin or department head.</p></div><span class="genomics-card-icon genomics-icon-purple">✦</span></div>
+                <form class="genomics-form" method="post" action="{% url 'procurement_request' project_name=project.name %}">{% csrf_token %}<div class="genomics-form-grid"><label>Item name<input name="item_name" placeholder="e.g. PCR master mix" required></label><label>Product code<input name="product_code" placeholder="Optional SKU / catalogue no."></label><label>Quantity<input name="quantity" type="number" min="1" value="1"></label><label>Grant / funding code<input name="grant_code" placeholder="e.g. GRANT-24-017"></label></div><label>Why is it needed?<textarea name="justification" placeholder="Add experiment, urgency or replacement context…" required></textarea><div class="genomics-form-footer"><span>Requests stay attached to this project for reporting.</span><button class="flux-button flux-button-primary" type="submit">Send request <span aria-hidden="true">→</span></button></div></form>
+            </article>
+
+            <div class="genomics-split-row">
+                <article class="genomics-card genomics-card-compact"><div class="genomics-card-heading"><div><span class="genomics-card-kicker">MIGRATION</span><h2>Import history</h2></div><span class="genomics-card-icon genomics-icon-blue">▦</span></div><p>Use a ready-made template for one project or distribute reagent rows across several projects you manage.</p><div class="genomics-template-links"><span>Download template</span><a href="{% url 'bulk_import_template' project_name=project.name file_format='csv' %}">Single CSV</a><a href="{% url 'bulk_import_template' project_name=project.name file_format='xlsx' %}">Single XLSX</a><a href="{% url 'bulk_import_template_multi' project_name=project.name file_format='csv' %}">Multi-project CSV</a><a href="{% url 'bulk_import_template_multi' project_name=project.name file_format='xlsx' %}">Multi-project XLSX</a></div><form class="genomics-upload-form" method="post" enctype="multipart/form-data" action="{% url 'bulk_import_reagents' project_name=project.name %}">{% csrf_token %}<label class="genomics-dropzone"><input type="file" name="file" accept=".csv,.xlsx" required><span class="genomics-upload-mark">↑</span><strong>Drop single-project spreadsheet</strong><small>CSV or XLSX · manager only</small></label><button class="flux-button" type="submit">Import to {{ project.name }}</button></form><div class="genomics-import-divider"><span>Several projects</span></div><form class="genomics-upload-form" method="post" enctype="multipart/form-data" action="{% url 'bulk_import_reagents_multi' project_name=project.name %}">{% csrf_token %}<label class="genomics-dropzone genomics-dropzone-multi"><input type="file" name="file" accept=".csv,.xlsx" required><span class="genomics-upload-mark">↗</span><strong>Drop multi-project spreadsheet</strong><small>Requires a project_name column · your managed projects only</small></label><button class="flux-button" type="submit">Import across projects</button></form></article>
+                <article class="genomics-card genomics-card-compact"><div class="genomics-card-heading"><div><span class="genomics-card-kicker">SAMPLE MAP</span><h2>Plate visualizer</h2></div><span class="genomics-card-icon genomics-icon-green">▣</span></div><p>Assign extracts and primers to a clean, shareable 96-well map.</p><div class="genomics-mini-plate" aria-hidden="true">{% for i in '123456789012'|make_list %}<i></i>{% endfor %}</div><a class="flux-button" href="{% url 'plate_visualizer' project_name=project.name %}">Open 96-well grid <span aria-hidden="true">↗</span></a></article>
+            </div>
+        </main>
+
+        <aside class="genomics-side-column">
+            <article class="genomics-card genomics-card-dark"><div class="genomics-card-heading"><div><span class="genomics-card-kicker">TEMPERATURE LOG</span><h2>Cold chain check</h2></div><span class="genomics-card-icon">❄</span></div><p>Record a reading before a freezer excursion becomes a sample loss.</p><form class="genomics-form" method="post" action="{% url 'record_temperature' project_name=project.name %}">{% csrf_token %}<label>Storage ID<input name="item_id" placeholder="e.g. FZ-02 / LN2-01" required></label><label>Condition<select name="storage_condition"><option value="room">Room temperature</option><option value="4c">4°C</option><option value="minus20">-20°C</option><option value="minus80">-80°C</option><option value="ln2">Liquid nitrogen</option></select></label><label>Observed temperature<input name="temperature" type="number" step="0.1" placeholder="e.g. -79.4" required></label><button class="flux-button flux-button-light" type="submit">Record reading <span aria-hidden="true">→</span></button></form></article>
+
+            <article class="genomics-card"><div class="genomics-card-heading"><div><span class="genomics-card-kicker">SHARED EQUIPMENT</span><h2>Book a slot</h2></div><span class="genomics-card-icon genomics-icon-orange">◫</span></div><form class="genomics-form" method="post" action="{% url 'equipment_booking' project_name=project.name %}">{% csrf_token %}<label>Equipment<select name="equipment_id" required><option value="">Choose a machine…</option>{% for item in equipment %}<option value="{{ item.pk }}">{{ item.name }}</option>{% endfor %}</select></label><div class="genomics-form-grid"><label>Starts<input name="starts_at" type="datetime-local" required></label><label>Ends<input name="ends_at" type="datetime-local" required></label></div><label>Purpose<input name="purpose" placeholder="e.g. Library QC run"></label><button class="flux-button flux-button-primary" type="submit">Request booking</button></form><div class="genomics-subsection"><span class="genomics-card-kicker">UP NEXT</span>{% for booking in bookings|slice:':3' %}<div class="genomics-list-row"><span class="genomics-list-name">{{ booking.equipment.name }}<small>{{ booking.booked_by.get_full_name|default:booking.booked_by.username }}</small></span><time>{{ booking.starts_at|date:'d M · H:i' }}</time></div>{% empty %}<p class="genomics-muted">No upcoming bookings.</p>{% endfor %}</div></article>
+
+            <article class="genomics-card genomics-card-utility"><div class="genomics-card-heading"><div><span class="genomics-card-kicker">TRACEABILITY</span><h2>Labels &amp; scanning</h2></div><span class="genomics-card-icon genomics-icon-blue">⌗</span></div><p>Print a label or use a laptop camera to check packs in and out.</p><div class="genomics-utility-actions"><a class="flux-button" href="{% url 'reagents' project_name=project.name %}">Print labels</a><a class="flux-button" href="{% url 'barcode_scanner' project_name=project.name %}">Open scanner</a></div></article>
+
+            <article class="genomics-card genomics-card-runway"><div class="genomics-card-heading"><div><span class="genomics-card-kicker">PAR STOCK PREDICTOR</span><h2>Runway watch</h2></div><span class="genomics-card-icon genomics-icon-green">⌁</span></div><p>Fast-moving items with 30 days or less remaining.</p><div class="genomics-list">{% for item in runway|slice:':4' %}<div class="genomics-list-row"><span class="genomics-list-name">{{ item.name }}<small>{% if item.grant_code %}{{ item.grant_code }}{% else %}Average use tracked{% endif %}</small></span><strong class="genomics-days-warning">{{ item.days_of_stock_remaining }}d</strong></div>{% empty %}<div class="genomics-empty"><span>✓</span><div><strong>Healthy runway</strong><p>Add average daily use in item details for forecasting.</p></div></div>{% endfor %}</div></article>
+        </aside>
+    </div>
+</div>
+{% endblock %}

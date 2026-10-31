@@ -2,6 +2,7 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
 from . import borrow_views
+from . import genomics_views
 from .decorators import project_access_required, reagent_access_required
 
 
@@ -94,6 +95,21 @@ reagent_urlpatterns = [
 ]
 
 urlpatterns = [
+    path('product-tour/complete/', views.complete_product_tour, name='complete_product_tour'),
+    path('genomics/<str:project_name>/', genomics_views.genomics_hub, name='genomics_hub'),
+    path('genomics/<str:project_name>/cold-chain/', genomics_views.cold_chain_audit, name='cold_chain_audit'),
+    path('genomics/<str:project_name>/barcode/<str:item_type>/<str:item_id>/', genomics_views.barcode_label, name='barcode_label'),
+    path('genomics/<str:project_name>/scanner/', genomics_views.barcode_scanner, name='barcode_scanner'),
+    path('genomics/<str:project_name>/scanner/scan/', genomics_views.barcode_scan, name='barcode_scan'),
+    path('genomics/<str:project_name>/procurement/', genomics_views.procurement_request, name='procurement_request'),
+    path('genomics/<str:project_name>/temperature/', genomics_views.record_temperature, name='record_temperature'),
+    path('genomics/<str:project_name>/book-equipment/', genomics_views.equipment_booking, name='equipment_booking'),
+    path('genomics/<str:project_name>/plate/', genomics_views.plate_visualizer, name='plate_visualizer'),
+    path('genomics/<str:project_name>/plate/<int:plate_id>/', genomics_views.plate_visualizer, name='plate_visualizer_existing'),
+    path('genomics/<str:project_name>/bulk-import-template/<str:file_format>/', genomics_views.bulk_import_template, name='bulk_import_template'),
+    path('genomics/<str:project_name>/bulk-import-template/multi/<str:file_format>/', genomics_views.bulk_import_template_multi, name='bulk_import_template_multi'),
+    path('genomics/<str:project_name>/bulk-import/', genomics_views.bulk_import_reagents, name='bulk_import_reagents'),
+    path('genomics/<str:project_name>/bulk-import/multi/', genomics_views.bulk_import_reagents_multi, name='bulk_import_reagents_multi'),
     path('borrow-loan/<str:project_name>/', borrow_views.borrow_loan, name='borrow_loan'),
     path('borrow-loan/<str:project_name>/<int:loan_id>/receipt.pdf', borrow_views.borrow_loan_receipt, name='borrow_loan_receipt'),
     path('', views.home, name='home'),
@@ -148,6 +164,7 @@ urlpatterns = [
     path('team/<str:project_name>/', views.team, name ="team"),
     path('team/<str:project_name>/invite/', views.invite_project_user, name='invite_project_user'),
     path('team/invitation/<uuid:token>/accept/', views.accept_project_invitation, name='accept_project_invitation'),
+    path('log/<str:project_name>/export.csv', views.log_export, name='log_export'),
     path('log/<str:project_name>/', views.log, name ="log"),
     path('add_user_to_project/<str:project_name>', views.add_user_to_project, name='add_user_to_project'),
     path('edit_user_access/<str:project_name>/<int:user_id>/', views.edit_user_access, name='edit_user_access'),

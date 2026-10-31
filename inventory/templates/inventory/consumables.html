@@ -279,8 +279,9 @@
                         {% if consumable.is_expiring_in_7_days %}expiry-critical{% endif %}">
                 <td class="{% if consumable.is_low_stock %}low-stock-indicator{% endif %}" data-fulltext="{{ consumable.name }}">
                     <button type="button" class="inventory-item-action" data-stock-item data-id="{{ consumable.id }}" data-name="{{ consumable.name }}" aria-label="Update stock for {{ consumable.name }}">{{ consumable.name|truncatechars:15 }}</button>
+                    <a class="inventory-label-link" href="{% url 'barcode_label' project_name=project.name item_type='consumable' item_id=consumable.id %}" target="_blank" rel="noopener">⌗ label</a>
                 </td>
-                <td data-fulltext="{{ consumable.product_code }}">{{ consumable.product_code|truncatechars:15 }}</td>
+                <td data-fulltext="{{ consumable.product_code }}">{{ consumable.product_code|truncatechars:15 }}{% if consumable.lot_number %}<small class="inventory-trace-meta">Lot {{ consumable.lot_number }}</small>{% endif %}</td>
                 <td>{{ consumable.items_left_in_pack }}</td>
                 <td>{{ consumable.items_per_pack }}</td>
                 <td class="{% if consumable.is_low_stock %}low-stock-indicator{% endif %}">{{ consumable.pack_count }}</td>

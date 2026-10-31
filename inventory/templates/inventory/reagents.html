@@ -301,19 +301,20 @@
                         {% if reagent.is_expiring_in_7_days %}expiry-critical{% endif %}">
                 <td class="{% if reagent.is_low_stock %}low-stock-indicator{% endif %}">
                     <button type="button" class="inventory-item-action" data-stock-item data-id="{{ reagent.id }}" data-name="{{ reagent.name }}" aria-label="Update stock for {{ reagent.name }}">{{ reagent.name }}</button>
+                    <a class="inventory-label-link" href="{% url 'barcode_label' project_name=project.name item_type='reagent' item_id=reagent.id %}" target="_blank" rel="noopener">⌗ label</a>
                 </td>
-                <td>{{ reagent.product_code }}</td>
+                <td>{{ reagent.product_code }}{% if reagent.lot_number %}<small class="inventory-trace-meta">Lot {{ reagent.lot_number }}</small>{% endif %}{% if reagent.extraction_batch_number %}<small class="inventory-trace-meta">Batch {{ reagent.extraction_batch_number }}</small>{% endif %}</td>
                 <td>{{ reagent.items_left_in_pack }}</td>
                 <td>{{ reagent.items_per_pack }}</td>
                 <td class="{% if reagent.is_low_stock %}low-stock-indicator{% endif %}">{{ reagent.pack_count }}</td>
                 <td>{{ reagent.date_recorded|date:"Y-m-d" }}</td>
                 <td>{{ reagent.expiry_date|date:"Y-m-d" }}</td>
                 <td data-fulltext="{{ reagent.storage_location }}">{{ reagent.storage_location|truncatechars:20 }}</td>
-                <td>{{ reagent.cold_storage }}</td>
+                <td>{{ reagent.cold_storage }} · {{ reagent.get_storage_condition_display }}</td>
                 <td>{{ reagent.temperature_display }}</td>
                 <td>{{ reagent.vendor }}</td>
                 <td>{{ reagent.country_of_origin }}</td>
-                <td>{{ reagent.hazard_level }}</td>
+                <td><span class="hazard-flag hazard-flag-{{ reagent.hazard_level|default:0 }}" title="Hazard level {{ reagent.hazard_level|default:0 }}">{% if reagent.hazard_level >= 3 %}⚠{% elif reagent.hazard_level %}◈{% else %}—{% endif %}</span> {{ reagent.hazard_level|default:'None' }}</td>
                 <td>
                     {% if reagent.msds_files.exists %}
                         <button class="text-primary hover:underline" onclick="showMsdsPopup('{{ reagent.id }}')">

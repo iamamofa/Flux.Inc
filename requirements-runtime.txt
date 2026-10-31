@@ -6,6 +6,7 @@ asgiref==3.6.0
 sqlparse==0.4.3
 Pillow==10.4.0
 PyPDF2>=3.0,<4
+reportlab>=4.2,<5
 shortuuid>=1.0,<2
 bleach==6.2.0
 openpyxl==3.1.2

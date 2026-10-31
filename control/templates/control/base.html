@@ -52,6 +52,10 @@
 <svg class="nav-icon ui-icon" aria-hidden="true">
 <use href="#i-folder"/>
 </svg> Research projects</a>{% endif %}
+ {% if perms.inventory.view_project %}<a class="nav-link {% if section == 'cold_chain_audit' %}selected{% endif %}" href="{% url 'control:cold_chain_audit' %}">
+<svg class="nav-icon ui-icon" aria-hidden="true">
+<use href="#i-shield"/>
+</svg> Cold-chain audit</a>{% endif %}
  <span class="nav-label spaced">MONITOR & CONFIGURE</span>
  <a class="nav-link {% if section == 'notifications' %}selected{% endif %}" href="{% url 'control:notifications' %}">
 <svg class="nav-icon ui-icon" aria-hidden="true">

@@ -1,22 +1,23 @@
-<aside id="{{ sidebar_id|default:'inventorySidebar' }}" class="flux-sidebar flex flex-col lg:flex lg:flex-col justify-between lg:fixed min-h-screen top-0 z-20 w-60 bottom-0 px-4 pt-6 pb-0" :class="showMenu ? 'fixed' : 'hidden'" @click="if ($event.target.closest('a')) showMenu = false" x-transition.duration.200ms aria-label="Workspace navigation">
+<aside id="{{ sidebar_id|default:'inventorySidebar' }}" data-tour-target="workspace-navigation" class="flux-sidebar flex flex-col lg:flex lg:flex-col justify-between lg:fixed min-h-screen top-0 z-20 w-60 bottom-0 px-4 pt-6 pb-0" :class="showMenu ? 'fixed' : 'hidden'" @click="if ($event.target.closest('a')) showMenu = false" x-transition.duration.200ms aria-label="Workspace navigation">
     <div>
         <div class="flux-sidebar-brand"><a class="flux-wordmark" href="{% url 'home' %}" aria-label="Flux home">FLUX<span>.</span></a><button type="button" class="flux-sidebar-close" @click="showMenu = false" aria-label="Close navigation">×</button></div>
         <p class="flux-sidebar-label">RESEARCH WORKSPACE</p>
         <nav class="flux-sidebar-links" aria-label="Main navigation">
         {% with current=request.resolver_match.url_name %}
-            <a href="{{ dashboard_url }}" title="Dashboard" {% if 'dashboard_' in current %}aria-current="page"{% endif %}>{% include 'inventory/partials/settings_icon.html' with icon='appearance' %}<span class="flex-1 pl-2">Dashboard</span></a>
-            <a href="{{ inventory_url }}" title="Inventory" {% if current == 'consumables' or current == 'reagents' or current == 'samples' or current == 'equipment_' %}aria-current="page"{% endif %}>{% include 'inventory/partials/settings_icon.html' with icon='inventory' %}<span class="flex-1 pl-2">Inventory</span></a>
+            <a href="{{ dashboard_url }}" data-tour-target="dashboard" title="Dashboard" {% if 'dashboard_' in current %}aria-current="page"{% endif %}>{% include 'inventory/partials/settings_icon.html' with icon='appearance' %}<span class="flex-1 pl-2">Dashboard</span></a>
+            <a href="{{ inventory_url }}" data-tour-target="inventory" title="Inventory" {% if current == 'consumables' or current == 'reagents' or current == 'samples' or current == 'equipment_' %}aria-current="page"{% endif %}>{% include 'inventory/partials/settings_icon.html' with icon='inventory' %}<span class="flex-1 pl-2">Inventory</span></a>
+            {% if user == project.project_manager or user in project.project_editors.all or user in project.project_members.all %}<a href="{% url 'genomics_hub' project.name %}" data-tour-target="lab-tools" title="Genomics lab tools" {% if current == 'genomics_hub' or current == 'plate_visualizer' or current == 'plate_visualizer_existing' %}aria-current="page"{% endif %}>{% include 'inventory/partials/settings_icon.html' with icon='data' %}<span class="flex-1 pl-2">Lab tools</span></a>{% endif %}
         {% if user == project.project_manager or user in project.project_editors.all or user in project.project_members.all %}
-            <a href="{% url 'borrow_loan' project.name %}" title="Borrow &amp; Loan" {% if current == 'borrow_loan' %}aria-current="page"{% endif %}>{% include 'inventory/partials/settings_icon.html' with icon='borrow' %}<span class="flex-1 pl-2">Borrow &amp; Loan</span></a>
+            <a href="{% url 'borrow_loan' project.name %}" data-tour-target="borrow-loan" title="Borrow &amp; Loan" {% if current == 'borrow_loan' %}aria-current="page"{% endif %}>{% include 'inventory/partials/settings_icon.html' with icon='borrow' %}<span class="flex-1 pl-2">Borrow &amp; Loan</span></a>
         {% endif %}
-            <a href="{{ logs_url }}" title="Logs" {% if current == 'log' %}aria-current="page"{% endif %}>{% include 'inventory/partials/settings_icon.html' with icon='history' %}<span class="flex-1 pl-2">Logs</span></a>
+            <a href="{{ logs_url }}" data-tour-target="logs" title="Logs" {% if current == 'log' %}aria-current="page"{% endif %}>{% include 'inventory/partials/settings_icon.html' with icon='history' %}<span class="flex-1 pl-2">Logs</span></a>
         {% if user == project.project_manager or user in project.project_editors.all %}
             <a href="{{ trash_url }}" title="Trash" {% if 'trash_' in current %}aria-current="page"{% endif %}>{% include 'inventory/partials/settings_icon.html' with icon='data' %}<span class="flex-1 pl-2">Trash</span></a>
         {% endif %}
         {% if user == project.project_manager %}
             <a href="{{ team_url }}" title="Team" {% if current == 'team' %}aria-current="page"{% endif %}>{% include 'inventory/partials/settings_icon.html' with icon='profile' %}<span class="flex-1 pl-2">Team</span></a>
         {% endif %}
-            <a href="{{ settings_url }}" title="Settings" {% if current == 'project_settings' %}aria-current="page"{% endif %}>{% include 'inventory/partials/settings_icon.html' with icon='appearance' %}<span class="flex-1 pl-2">Settings</span></a>
+            <a href="{{ settings_url }}" data-tour-target="settings" title="Settings" {% if current == 'project_settings' %}aria-current="page"{% endif %}>{% include 'inventory/partials/settings_icon.html' with icon='appearance' %}<span class="flex-1 pl-2">Settings</span></a>
         {% endwith %}
         </nav>
     </div>

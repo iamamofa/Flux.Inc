@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError, available_timezones
 from PyPDF2 import PdfReader
 from PyPDF2.errors import PdfReadError
 from django.core import serializers
+from django.core.exceptions import PermissionDenied
 from django.core.files import File
 from django.core.files.uploadedfile import tempfile
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -40,6 +41,8 @@ from .models import (
     MSDSFile, MSDSSection, MSDSValidationResult, ProjectLoginEvent,
     TrashConsumable, TrashReagent, TrashEquipment, TrashSample,
     LowStockEmailDelivery, ProjectInvitation,
+    ProcurementRequest, EquipmentBooking, Plate, PlateWell, BulkImportJob,
+    StorageTemperatureEvent,
 )
 from .low_stock import get_low_stock_alerts
 from .email_utils import attach_inline_email_images
@@ -70,6 +73,7 @@ def get_sidebar_urls(project_name):
         'inventory_url': reverse('consumables',
                                  kwargs={'project_name': project_name}),
         'logs_url': reverse('log', kwargs={'project_name': project_name}),
+        'log_export_url': reverse('log_export', kwargs={'project_name': project_name}),
         'trash_url': reverse('trash_reagents',
                              kwargs={'project_name': project_name}),
         'team_url': reverse('team', kwargs={'project_name': project_name}),
@@ -206,6 +210,16 @@ def send_low_stock_notification(item, was_low=False):
 def home(request):
     """Home page view"""
     return render(request, 'inventory/home.html')
+
+
+@login_required
+@require_POST
+def complete_product_tour(request):
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    profile.has_seen_product_tour = True
+    profile.product_tour_completed_at = timezone.now()
+    profile.save(update_fields=['has_seen_product_tour', 'product_tour_completed_at'])
+    return JsonResponse({'success': True})
 
 
 def registration_page(request):
@@ -947,6 +961,25 @@ def log(request, project_name):
     except Exception as e:
         security_logger.error(f"Log view error: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def log_export(request, project_name):
+    """Download the complete activity log for a project manager's project."""
+    project = get_object_or_404(Project, name=project_name)
+    if project.project_manager_id != request.user.pk:
+        raise PermissionDenied('Only the project manager can download project logs.')
+    response = HttpResponse(content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = f'attachment; filename="flux-{slugify(project.name)[:60] or "project"}-activity-log.csv"'
+    response.write('\ufeff')
+    writer = csv.writer(response)
+    writer.writerow(['Project', 'Timestamp', 'Actor', 'Action', 'Details'])
+    for entry in Log.objects.filter(project=project).select_related('user').order_by('timestamp').iterator():
+        details = json.dumps(entry.details or {}, ensure_ascii=True, sort_keys=True)
+        cells = [project.name, entry.timestamp.isoformat(), entry.user.get_username() if entry.user else 'System', entry.action, details]
+        writer.writerow([("'" + str(cell)) if str(cell).lstrip().startswith(('=', '+', '-', '@', '\t', '\r')) else cell for cell in cells])
+    Log.objects.create(project=project, user=request.user, action='Downloaded project activity log')
+    return response
 
 
 # Base Inventory Views

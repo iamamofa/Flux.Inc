@@ -353,7 +353,7 @@
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="{% static 'js/flux_preferences.js' %}?v=2" defer></script>
     <title>Flux - {% block title %}{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'css/flux_pages.css' %}?v=1">
+    <link rel="stylesheet" href="{% static 'css/flux_pages.css' %}?v=2">
     <script src="{% static 'js/flux_pages.js' %}" defer></script>
 </head>
 <body class="flux-inventory-layout relative min-h-screen font-poppins antialiased text-sm bg-white flex text-gray-800 h-full 2xl:max-w-[1920px] 2xl:mx-auto 2xl:border-r-2 {% block page_class %}{% endblock %}"
@@ -518,5 +518,20 @@
 
     <!-- Notification Container -->
     <div id="notification-container" class="fixed bottom-4 right-4 z-50"></div>
+    {% if user.is_authenticated and user.profile and not user.profile.has_seen_product_tour %}
+    <div class="flux-tour-overlay" id="fluxProductTour" data-complete-url="{% url 'complete_product_tour' %}" role="dialog" aria-modal="true" aria-labelledby="fluxTourTitle" aria-describedby="fluxTourCopy">
+        <div class="flux-tour-spotlight" data-tour-spotlight aria-hidden="true"></div>
+        <div class="flux-tour-card" data-tour-card>
+            <span class="flux-tour-pointer" data-tour-pointer aria-hidden="true"></span>
+            <div class="flux-tour-progress"><span data-tour-progress></span></div>
+            <button class="flux-tour-skip" type="button" data-tour-skip>Skip tour</button>
+            <p class="flux-eyebrow">WELCOME TO FLUX</p>
+            <h2 id="fluxTourTitle" data-tour-title>Everything your lab needs, in one workspace.</h2>
+            <p id="fluxTourCopy" data-tour-copy>Track reagents, consumables, samples and equipment with a clear history for every project.</p>
+            <div class="flux-tour-actions"><button class="flux-button" type="button" data-tour-back hidden>Back</button><button class="flux-button flux-button-primary" type="button" data-tour-next>Show me around <span aria-hidden="true">→</span></button></div>
+        </div>
+    </div>
+    <script src="{% static 'js/product_tour.js' %}?v=2" defer></script>
+    {% endif %}
 </body>
 </html>
