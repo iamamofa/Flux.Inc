@@ -1,4 +1,5 @@
 from datetime import date, datetime, time, timedelta
+from decimal import Decimal, InvalidOperation
 import io
 import io
 import html
@@ -45,6 +46,12 @@ from .models import (
     StorageTemperatureEvent,
 )
 from .low_stock import get_low_stock_alerts
+from .sample_metadata import normalize_sample_metadata
+from .sample_inventory import (
+    SAMPLE_FIELDS, archive_sample, can_edit_samples, can_read_samples,
+    csv_literal, prepare_sample, resolve_sample_box, restore_archived_sample,
+    sample_export_rows, sample_queryset, save_sample_location, serialize_sample,
+)
 from .email_utils import attach_inline_email_images
 from .forms import (
     UserApplicationForm, ProjectManagerSignUpForm,
@@ -2877,46 +2884,26 @@ def get_storage_for_user(user, project):
 # Sample Views
 @login_required
 def samples(request, project_name):
-    """List samples view with shared storage options"""
-    try:
-        project = get_object_or_404(Project, name=project_name)
-
-        # Get samples with related storage data
-        samples = Sample.objects.filter(
-            project=project,
-            is_active=True
-        ).prefetch_related('sample_locations__box__rack__shelf')
-
-        # Get shared storage options for this user
-        storage_options = get_storage_for_user(request.user, project)
-
-        # Pagination
-        page = request.GET.get('page', 1)
-        paginator = Paginator(samples, 50)
-        try:
-            samples_page = paginator.page(page)
-        except PageNotAnInteger:
-            samples_page = paginator.page(1)
-        except EmptyPage:
-            samples_page = paginator.page(paginator.num_pages)
-
-        context = {
-            'project': project,
-            'projects': get_user_projects(request.user),
-            'samples': samples_page,
-            'shelves': storage_options['shelves'],
-            'racks': storage_options['racks'],
-            'boxes': storage_options['boxes'],
-            'user': request.user,
-            'page_obj': samples_page,
-            'low_stock_alerts': get_low_stock_alerts(project),
-            **get_sidebar_urls(project_name)
-        }
-        return render(request, 'inventory/samples.html', context)
-
-    except Exception as e:
-        security_logger.error(f"Samples view error: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
+    """List project samples together with reusable metadata field names."""
+    project = get_object_or_404(Project, name=project_name)
+    if not can_read_samples(request.user, project):
+        return JsonResponse({'error': 'You do not have access to this project.'}, status=403)
+    records = sample_queryset().filter(project=project, is_active=True)
+    canonical_keys = {}
+    for metadata in records.values_list('metadata', flat=True):
+        for key in metadata:
+            canonical_keys.setdefault(key.casefold(), key)
+    storage = get_storage_for_user(request.user, project)
+    page = Paginator(records, 50).get_page(request.GET.get('page'))
+    return render(request, 'inventory/samples.html', {
+        'project': project, 'projects': get_user_projects(request.user),
+        'samples': page, 'page_obj': page, 'user': request.user,
+        'shelves': storage['shelves'], 'racks': storage['racks'], 'boxes': storage['boxes'],
+        'metadata_keys': sorted(canonical_keys.values(), key=str.casefold),
+        'current_date': timezone.localdate(),
+        'low_stock_alerts': get_low_stock_alerts(project),
+        **get_sidebar_urls(project_name),
+    })
 
 
 @login_required
@@ -2927,67 +2914,70 @@ def dashboard_samples(request, project_name):
 
 
 @login_required
+@require_POST
 @ensure_csrf_cookie
 def edit_sample(request, sample_id):
-    """Edit sample"""
-    fields = {
-        'sample_id': 'text',
-        'sample_type': 'text',
-        'description': 'text',
-        'collection_date': 'date',
-        'country': 'text',
-        'volume': 'float',
-        'volume_unit': 'text',
-        'concentration': 'float',
-        'storage_location': 'text',
-        'cold_storage_id': 'text',
-        'well_id': 'text',
-        'date_recorded': 'date',
-        'storage_temperature': 'int',
-        'threshold_value': 'int',
-        'is_active': 'bool',
-        'created_at': 'date',
-        'updated_at': 'date',
-        'notes': 'text'
-    }
-    return InventoryItemViews.edit_item(request, sample_id, Sample, fields)
+    sample = get_object_or_404(sample_queryset(), pk=sample_id)
+    if not can_edit_samples(request.user, sample.project):
+        return JsonResponse({'error': 'Only the project manager or an editor can edit samples.'}, status=403)
+    try:
+        with transaction.atomic():
+            sample = sample_queryset().select_for_update().get(pk=sample.pk)
+            was_low = is_low_stock(sample)
+            prepare_sample(request.POST, sample.project, sample)
+            box = resolve_sample_box(request.POST, sample.project)
+            sample.save()
+            save_sample_location(sample, request.POST, box)
+            Log.objects.create(project=sample.project, user=request.user,
+                               action=f'Updated sample {sample.sample_id}')
+        send_low_stock_notification(sample, was_low=was_low)
+        return JsonResponse({'success': True, 'refresh': True,
+                             'low_stock_alert': is_low_stock(sample) and not was_low,
+                             **serialize_sample(sample)})
+    except ValidationError as exc:
+        return JsonResponse({'error': '; '.join(exc.messages), 'errors': handle_validation_error(exc)}, status=400)
+    except IntegrityError:
+        return JsonResponse({'error': 'A sample with this identifier or barcode already exists.'}, status=400)
 
 
 @login_required
+@require_POST
 def delete_sample(request, project_name, sample_id):
-    """Move sample to trash"""
-    return InventoryItemViews.delete_item(
-        request, project_name, sample_id, Sample, TrashSample
-    )
+    project = get_object_or_404(Project, name=project_name)
+    if not can_edit_samples(request.user, project):
+        return JsonResponse({'error': 'Only the project manager or an editor can archive samples.'}, status=403)
+    sample = get_object_or_404(sample_queryset(), pk=sample_id, project=project)
+    archive_sample(sample, request.user)
+    return JsonResponse({'success': True, 'refresh': True, 'message': 'Sample moved to trash.'})
 
 
 @login_required
 def trash_samples(request, project_name):
-    """View trashed samples"""
-    try:
-        project = get_object_or_404(Project, name=project_name)
-        trash_items = TrashSample.objects.filter(project=project)
-
-        context = {
-            'project': project,
-            'projects': get_user_projects(request.user),
-            'trash_items': trash_items,
-            'item_type': 'samples',
-            **get_sidebar_urls(project_name)
-        }
-        return render(request, 'inventory/trash_samples.html', context)
-
-    except Exception as e:
-        security_logger.error(f"Trash samples view error: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
+    project = get_object_or_404(Project, name=project_name)
+    if not can_read_samples(request.user, project):
+        return JsonResponse({'error': 'You do not have access to this project.'}, status=403)
+    return render(request, 'inventory/trash_samples.html', {
+        'project': project, 'trash_items': TrashSample.objects.filter(project=project),
+        'item_type': 'samples', 'projects': get_user_projects(request.user),
+        **get_sidebar_urls(project_name),
+    })
 
 
 @login_required
+@require_POST
 def restore_sample(request, project_name, trash_id):
-    """Restore sample from trash"""
-    return InventoryItemViews.restore_item(
-        request, project_name, trash_id, Sample, TrashSample
-    )
+    project = get_object_or_404(Project, name=project_name)
+    if not can_edit_samples(request.user, project):
+        return JsonResponse({'error': 'Only the project manager or an editor can restore samples.'}, status=403)
+    archived = get_object_or_404(TrashSample, pk=trash_id, project=project)
+    try:
+        sample = restore_archived_sample(archived, request.user)
+        return JsonResponse({'success': True, 'refresh': True, 'id': sample.pk,
+                             'message': 'Sample restored from trash.'})
+    except ValidationError as exc:
+        return JsonResponse({'error': '; '.join(exc.messages)}, status=400)
+    except IntegrityError:
+        return JsonResponse({'error': 'An active sample already uses this identifier or barcode.'}, status=400)
 
 
 @login_required
@@ -3003,349 +2993,126 @@ def empty_sample_trash(request, project_name):
 
 
 @login_required
+@require_POST
 @ensure_csrf_cookie
 def retrieve_sample(request, sample_id):
-    """Retrieve/use sample items"""
-    if request.method != 'POST':
-        return JsonResponse({'error': "Invalid request method"}, status=405)
-
-    try:
-        sample = get_object_or_404(Sample, id=sample_id)
-        was_low = is_low_stock(sample)
-        amount = int(request.POST.get('amount', 0))
-
-        if amount <= 0:
-            return JsonResponse({'error': 'Amount must be positive'}, status=400)
-        if amount > sample.volume:
-            return JsonResponse({'error': 'Not enough sample volume available'}, status=400)
-
-        sample.volume -= amount
-        sample.save()
-        low_stock = is_low_stock(sample)
-        low_stock_alert = low_stock and not was_low
-        send_low_stock_notification(sample, was_low=was_low)
-
-        log_msg = f"{amount} units of sample {sample.sample_id} withdrawn"
-        Log.objects.create(
-            project=sample.project,
-            user=request.user,
-            action=log_msg
-        )
-        return JsonResponse({
-            'success': True,
-            'refresh': True,
-            'message': log_msg,
-            'id': sample.id,
-            'sample_id': sample.sample_id,
-            'sample_type': sample.sample_type,
-            'collection_date': sample.collection_date,
-            'country': sample.country,
-            'volume': sample.volume,
-            'volume_unit': sample.volume_unit,
-            'concentration': sample.concentration,
-            'date_recorded': sample.date_recorded,
-            'threshold_value': sample.threshold_value,
-            'is_active': sample.is_active,
-            'notes': sample.notes,
-            'low_stock': low_stock,
-            'low_stock_alert': low_stock_alert
-        })
-
-    except Exception as e:
-        security_logger.error(f"Retrieve sample error: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
+    return _change_sample_volume(request, sample_id, withdraw=True)
 
 
 @login_required
+@require_POST
 @ensure_csrf_cookie
 def restock_sample(request, sample_id):
-    """Restock sample items to inventory"""
-    if request.method != 'POST':
-        return JsonResponse({'error': "Invalid request method"}, status=405)
+    return _change_sample_volume(request, sample_id, withdraw=False)
 
+
+def _change_sample_volume(request, sample_id, withdraw):
+    sample = get_object_or_404(sample_queryset(), pk=sample_id)
+    if not can_read_samples(request.user, sample.project):
+        return JsonResponse({'error': 'You do not have access to this project.'}, status=403)
     try:
-        sample = get_object_or_404(Sample, id=sample_id)
-        amount = int(request.POST.get('amount', 0))
-
-        if amount <= 0:
-            return JsonResponse({'error': 'Amount must be positive'}, status=400)
-
-        sample.volume += amount
-        sample.save()
-
-        log_msg = f"{amount} units added to sample {sample.sample_id}"
-        Log.objects.create(
-            project=sample.project,
-            user=request.user,
-            action=log_msg
-        )
-
-        return JsonResponse({
-            'success': True,
-            'refresh': True,
-            'message': log_msg,
-            'id': sample.id,
-            'sample_id': sample.sample_id,
-            'sample_type': sample.sample_type,
-            'description': sample.description,
-            'collection_date': sample.collection_date,
-            'country': sample.country,
-            'volume': sample.volume,
-            'volume_unit': sample.volume_unit,
-            'concentration': sample.concentration,
-            'date_recorded': sample.date_recorded,
-            'threshold_value': sample.threshold_value,
-            'is_active': sample.is_active,
-            'notes': sample.notes,
-            'low_stock': is_low_stock(sample)
-        })
-
-    except Exception as e:
-        security_logger.error(f"Restock sample error: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
+        amount = Decimal(request.POST.get('amount', '0'))
+        if not amount.is_finite() or amount <= 0:
+            raise ValidationError('Amount must be a positive number.')
+        with transaction.atomic():
+            sample = sample_queryset().select_for_update().get(pk=sample.pk)
+            was_low = is_low_stock(sample)
+            if withdraw and amount > sample.volume:
+                raise ValidationError('Not enough sample volume available.')
+            sample.volume += -amount if withdraw else amount
+            sample.save(update_fields=['volume'])
+            action = f'{amount} {sample.volume_unit} of sample {sample.sample_id} ' + ('withdrawn' if withdraw else 'returned')
+            Log.objects.create(project=sample.project, user=request.user, action=action)
+        send_low_stock_notification(sample, was_low=was_low)
+        return JsonResponse({'success': True, 'refresh': True, 'message': action,
+                             'low_stock_alert': is_low_stock(sample) and not was_low,
+                             **serialize_sample(sample)})
+    except (InvalidOperation, ValueError):
+        return JsonResponse({'error': 'Amount must be a positive number.'}, status=400)
+    except ValidationError as exc:
+        return JsonResponse({'error': '; '.join(exc.messages)}, status=400)
 
 
 @login_required
+@require_GET
 def export_sample_csv(request, project_name):
-    """Export samples to CSV"""
-    fields = {
-        'sample_id': 'Sample ID',
-        'sample_type': 'Sample Type',
-        'description': 'Description',
-        'collection_date': 'Collection Date',
-        'country': 'Country',
-        'volume': 'Volume',
-        'volume_unit': 'Volume Unit',
-        'concentration': 'Concentration',
-        'storage_location': 'Storage Location',
-        'cold_storage_id': 'Cold Storage ID',
-        'well_id': 'Well ID',
-        'date_recorded': 'Date Recorded',
-        'storage_temperature': 'Storage Temperature',
-        'threshold_value': 'Threshold Value',
-        'created_at': 'Created At',
-        'updated_at': 'Updated At',
-        'notes': 'Notes'
-    }
-    return InventoryItemViews.export_csv(
-        request, project_name, Sample, fields, 'samples'
-    )
+    return _export_samples(request, project_name, 'csv')
 
 
 @login_required
+@require_GET
 def export_sample_excel(request, project_name):
-    """Export samples to Excel"""
-    fields = {
-        'sample_id': 'Sample ID',
-        'sample_type': 'Sample Type',
-        'description': 'Description',
-        'collection_date': 'Collection Date',
-        'country': 'Country',
-        'volume': 'Volume',
-        'volume_unit': 'Volume Unit',
-        'concentration': 'Concentration',
-        'storage_location': 'Storage Location',
-        'cold_storage_id': 'Cold Storage ID',
-        'well_id': 'Well ID',
-        'date_recorded': 'Date Recorded',
-        'storage_temperature': 'Storage Temperature',
-        'threshold_value': 'Threshold Value',
-        'created_at': 'Created At',
-        'updated_at': 'Updated At',
-        'notes': 'Notes'
-    }
-    return InventoryItemViews.export_excel(
-        request, project_name, Sample, fields, 'samples'
-    )
+    return _export_samples(request, project_name, 'xlsx')
 
 
 @login_required
+@require_GET
 def export_sample_txt(request, project_name):
-    """Export samples to text"""
-    fields = {
-        'sample_id': 'Sample ID',
-        'sample_type': 'Sample Type',
-        'description': 'Description',
-        'collection_date': 'Collection Date',
-        'country': 'Country',
-        'volume': 'Volume',
-        'volume_unit': 'Volume Unit',
-        'concentration': 'Concentration',
-        'storage_location': 'Storage Location',
-        'cold_storage_id': 'Cold Storage ID',
-        'well_id': 'Well ID',
-        'date_recorded': 'Date Recorded',
-        'storage_temperature': 'Storage Temperature',
-        'threshold_value': 'Threshold Value',
-        'created_at': 'Created At',
-        'updated_at': 'Updated At',
-        'notes': 'Notes'
-    }
-    return InventoryItemViews.export_txt(
-        request, project_name, Sample, fields, 'samples'
-    )
+    return _export_samples(request, project_name, 'txt')
+
+
+def _export_samples(request, project_name, file_format):
+    project = get_object_or_404(Project, name=project_name)
+    if not can_edit_samples(request.user, project):
+        return JsonResponse({'error': 'Only the project manager or an editor can export samples.'}, status=403)
+    headers, rows = sample_export_rows(project)
+    if file_format == 'xlsx':
+        workbook = Workbook()
+        sheet = workbook.active
+        sheet.title = 'Samples'
+        sheet.append(headers)
+        for row in rows:
+            sheet.append(row)
+        for row in sheet:
+            for cell in row:
+                if isinstance(cell.value, str):
+                    cell.data_type = 's'
+        sheet.freeze_panes = 'A2'
+        sheet.auto_filter.ref = sheet.dimensions
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        workbook.save(response)
+    elif file_format == 'csv':
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        writer = csv.writer(response)
+        writer.writerow(headers)
+        writer.writerows([[csv_literal(value) for value in row] for row in rows])
+    else:
+        response = HttpResponse(content_type='text/plain; charset=utf-8')
+        lines = []
+        for row in rows:
+            lines.extend(f'{header}: {value if value is not None else ""}' for header, value in zip(headers, row))
+            lines.append('')
+        response.write('\n'.join(lines))
+    response['Content-Disposition'] = f'attachment; filename="samples.{file_format}"'
+    Log.objects.create(project=project, user=request.user,
+                       action=f'Exported sample inventory with metadata to {file_format.upper()}')
+    return response
 
 
 @login_required
+@require_POST
 @ensure_csrf_cookie
 def add_sample(request, project_name):
-    """Add a new sample with shared storage hierarchy support"""
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Invalid request method'}, status=405)
-
+    project = get_object_or_404(Project, name=project_name)
+    if not can_read_samples(request.user, project):
+        return JsonResponse({'error': 'You do not have access to this project.'}, status=403)
     try:
-        project = get_object_or_404(Project, name=project_name)
-
-        # Extract storage hierarchy data
-        shelf_id = request.POST.get('shelf')
-        shelf_name = clean_text_field(request.POST.get('new_shelf_name', ''))
-        shelf_code = clean_text_field(request.POST.get('new_shelf_code', ''))
-        shelf_capacity = clean_text_field(request.POST.get('new_shelf_capacity', ''))
-        shelf_notes = clean_text_field(request.POST.get('new_shelf_notes', ''))
-
-        rack_id = request.POST.get('rack')
-        rack_name = clean_text_field(request.POST.get('new_rack_name', ''))
-        rack_capacity = clean_text_field(request.POST.get('new_rack_capacity', ''))
-        rack_notes = clean_text_field(request.POST.get('new_rack_notes', ''))
-
-        box_id = request.POST.get('box')
-        box_name = clean_text_field(request.POST.get('new_box_name', ''))
-        box_row_count = clean_text_field(request.POST.get('new_box_row_count', ''))
-        box_column_count = clean_text_field(request.POST.get('new_box_column_count', ''))
-        box_notes = clean_text_field(request.POST.get('new_box_notes', ''))
-
-        # Handle storage hierarchy creation/selection
-        shelf = None
-        rack = None
-        box = None
-
-        # Get available storage for this user
-        storage_options = get_storage_for_user(request.user, project)
-
-        # Process Shelf
-        if shelf_id and shelf_id != 'new':
-            # Allow selection from any shelf belonging to the manager's projects
-            shelf = get_object_or_404(Shelf, id=shelf_id, project__in=storage_options['shelves'].values('project'))
-        elif shelf_name and shelf_code and shelf_capacity and shelf_notes:
-            # Create new shelf in the current project
-            shelf, created = Shelf.objects.get_or_create(
-                project=project,  # Create in current project
-                name=shelf_name,
-                location_code=shelf_code,
-                capacity=shelf_capacity,
-                notes=shelf_notes
-            )
-            if created:
-                Log.objects.create(
-                    project=project,
-                    user=request.user,
-                    action=f'Created new shelf: {shelf_name}'
-                )
-
-        # Process Rack
-        if rack_id and rack_id != 'new' and shelf:
-            # Allow selection from any rack belonging to the manager's projects
-            rack = get_object_or_404(Rack, id=rack_id, project__in=storage_options['racks'].values('project'))
-
-            # Validate that rack belongs to selected shelf if shelf is specified
-            if shelf and rack.shelf != shelf:
-                return JsonResponse({'error': 'Selected rack does not belong to the selected shelf'}, status=400)
-
-        elif rack_name and rack_capacity and rack_notes and shelf:
-            # Create new rack in the shelf's project
-            rack, created = Rack.objects.get_or_create(
-                project=shelf.project,  # Use the same project as the shelf
-                shelf=shelf,
-                name=rack_name,
-                capacity=rack_capacity,
-                notes=rack_notes,
-            )
-            if created:
-                Log.objects.create(
-                    project=project,
-                    user=request.user,
-                    action=f'Created new rack: {rack_name} in shelf {shelf.name}'
-                )
-
-        # Process Box
-        if box_id and box_id != 'new' and rack:
-            # Allow selection from any box belonging to the manager's projects
-            box = get_object_or_404(Box, id=box_id, project__in=storage_options['boxes'].values('project'))
-
-            # Validate that box belongs to selected rack if rack is specified
-            if rack and box.rack != rack:
-                return JsonResponse({'error': 'Selected box does not belong to the selected rack'}, status=400)
-
-        elif box_name and box_row_count and box_column_count and box_notes and rack:
-            # Create new box in the rack's project
-            box, created = Box.objects.get_or_create(
-                project=rack.project,  # Use the same project as the rack
-                rack=rack,
-                name=box_name,
-                row_count=box_row_count,
-                column_count=box_column_count,
-                notes=box_notes
-            )
-            if created:
-                Log.objects.create(
-                    project=project,
-                    user=request.user,
-                    action=f'Created new box: {box_name} in rack {rack.name}'
-                )
-
-        # Prepare sample data (same as before)
-        data = {
-            'sample_id': clean_text_field(request.POST.get('sample_id', '')),
-            'sample_type': clean_text_field(request.POST.get('sample_type', '')),
-            'collection_date': datetime.strptime(request.POST.get('collection_date', ''), '%Y-%m-%d').date() if request.POST.get('collection_date') else None,
-            'date_recorded': datetime.strptime(request.POST.get('date_recorded', ''), '%Y-%m-%d').date() if request.POST.get('date_recorded') else date.today(),
-            'country': clean_text_field(request.POST.get('country', '')),
-            'volume': float(request.POST.get('volume', 0)),
-            'volume_unit': clean_text_field(request.POST.get('volume_unit', 'mL')),
-            'concentration': float(request.POST.get('concentration', 0)) if request.POST.get('concentration') else None,
-            'storage_location': clean_text_field(request.POST.get('storage_location', '')),
-            'cold_storage_id': clean_text_field(request.POST.get('cold_storage_id', '')),
-            'storage_temperature': int(request.POST.get('storage_temperature', 0)) if request.POST.get('storage_temperature') else None,
-            'well_id': clean_text_field(request.POST.get('well_id', '')),
-            'threshold_value': int(request.POST.get('threshold_value', 0)) if request.POST.get('threshold_value') else None,
-            'notes': clean_text_field(request.POST.get('notes', '')),
-        }
-
-        # Create the sample with storage hierarchy
         with transaction.atomic():
-            sample = Sample.objects.create(
-                project=project,
-                shelf=shelf,
-                rack=rack,
-                box=box,
-                **data
-            )
+            sample = prepare_sample(request.POST, project)
+            box = resolve_sample_box(request.POST, project)
+            sample.save()
+            save_sample_location(sample, request.POST, box, creating=True)
+            Log.objects.create(project=project, user=request.user,
+                               action=f'Added sample {sample.sample_id}')
         send_low_stock_notification(sample)
-
-        Log.objects.create(
-            project=project,
-            user=request.user,
-            action=f'Added sample {sample.sample_id}'
-        )
-
-        return JsonResponse({
-            'success': True,
-            'refresh': True,
-            'id': sample.id,
-            'message': 'Sample added successfully',
-            'sample_id': sample.sample_id,
-            'low_stock': is_low_stock(sample),
-            'low_stock_alert': is_low_stock(sample)
-        })
-
-    except IntegrityError as e:
-        return JsonResponse({'error': 'A storage item with this name or code already exists'}, status=400)
-    except ValidationError as e:
-        errors = handle_validation_error(e)
-        return JsonResponse({'errors': errors}, status=400)
-    except Exception as e:
-        security_logger.error(f"Add sample error: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'success': True, 'refresh': True,
+                             'message': 'Sample added successfully.',
+                             'low_stock_alert': is_low_stock(sample),
+                             **serialize_sample(sample)})
+    except ValidationError as exc:
+        return JsonResponse({'error': '; '.join(exc.messages), 'errors': handle_validation_error(exc)}, status=400)
+    except IntegrityError:
+        return JsonResponse({'error': 'A sample with this identifier or barcode already exists.'}, status=400)
 
 
 @login_required
@@ -3472,29 +3239,40 @@ def create_box(request, rack_id):
 
 
 @login_required
-def get_sample_info(id):
-    try:
-        sample = Sample.objects.get(id=id)
+@require_GET
+def get_sample_info(request, id):
+    sample = get_object_or_404(sample_queryset(), pk=id)
+    if not can_read_samples(request.user, sample.project):
+        return JsonResponse({'error': 'You do not have access to this project.'}, status=403)
+    return JsonResponse(serialize_sample(sample))
 
-        # Prepare the data to be sent back as a JSON response
-        data = {
-            'sample_id': clean_text_field(sample.sample_id),
-            'sample_type': clean_text_field(sample.sample_type),
-            'description': clean_text_field(sample.description),
-            'country': clean_text_field(sample.country),
-            'volume': sample.volume,
-            'well_id': clean_text_field(sample.well_id),
-            'date_recorded': sample.date_recorded,
-            'storage_location': clean_text_field(sample.storage_location),
-            'threshold_value': sample.threshold_value,
-        }
 
-        return JsonResponse(data)
-
-    except Sample.DoesNotExist:
-        return JsonResponse({'error': 'Sample not found'}, status=404)
-    except Exeception as e:
-        return JsonResponse({'error': str(e)}, status=400)
+@login_required
+@ensure_csrf_cookie
+def sample_metadata(request, project_name, sample_id):
+    if request.method not in ('GET', 'POST'):
+        return JsonResponse({'error': 'Use GET to view metadata or POST to save it.'}, status=405)
+    project = get_object_or_404(Project, name=project_name)
+    if not can_read_samples(request.user, project):
+        return JsonResponse({'error': 'You do not have access to this project.'}, status=403)
+    sample = get_object_or_404(Sample, pk=sample_id, project=project)
+    if request.method == 'POST':
+        if not can_edit_samples(request.user, project):
+            return JsonResponse({'error': 'Only the project manager or an editor can edit sample metadata.'}, status=403)
+        try:
+            if 'metadata' not in request.POST:
+                raise ValidationError('Provide the metadata fields to save.')
+            metadata = normalize_sample_metadata(request.POST['metadata'])
+            with transaction.atomic():
+                sample = Sample.objects.select_for_update().get(pk=sample.pk)
+                sample.metadata = metadata
+                sample.save(update_fields=['metadata'])
+                Log.objects.create(project=project, user=request.user,
+                                   action=f'Updated metadata for sample {sample.sample_id}')
+        except ValidationError as exc:
+            return JsonResponse({'error': '; '.join(exc.messages)}, status=400)
+    return JsonResponse({'success': True, 'id': sample.pk, 'sample_id': sample.sample_id,
+                         'metadata': sample.metadata})
 
 
 # MSDS Views

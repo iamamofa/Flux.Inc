@@ -36,6 +36,9 @@ The application is designed for genomics and bioinformatics laboratories to orga
 - Review inventory dashboards and low-stock alerts.
 - Export selected inventory data and manage applicable trash/recovery workflows.
 - Upload and manage reagent safety data sheet files.
+- Add project-specific metadata to samples as named fields and values. View it
+  from the sample inventory, edit it with manager or editor access, and include
+  it as separate columns in sample exports.
 - Share unused, unopened consumable and reagent packs between project managers through **Borrow & Loan**.
 
 #### Borrow & Loan

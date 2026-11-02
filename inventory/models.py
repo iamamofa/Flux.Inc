@@ -4,6 +4,7 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.forms import ValidationError
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.signals import user_logged_in
@@ -19,6 +20,7 @@ from django.conf import settings
 from PyPDF2 import PdfReader
 from PyPDF2.errors import PdfReadError
 from .utils.msds_validation import validate_file_size
+from .sample_metadata import normalize_sample_metadata, validate_sample_metadata
 import shortuuid
 from django.core.exceptions import ObjectDoesNotExist
 import logging
@@ -1182,6 +1184,7 @@ class Sample(models.Model):
     barcode_value = models.CharField(max_length=120, blank=True, unique=True, null=True)
     is_active = models.BooleanField(default=True)
     notes = models.TextField()
+    metadata = models.JSONField(default=dict, blank=True, validators=[validate_sample_metadata])
 
     class Meta:
         ordering = ['sample_id']
@@ -1201,6 +1204,7 @@ class Sample(models.Model):
     def clean(self):
         """Validate sample data"""
         super().clean()
+        self.metadata = normalize_sample_metadata(self.metadata)
 
         if self.collection_date and self.collection_date > timezone.now().date():
             raise ValidationError("Collection date cannot be in the future")
@@ -1216,9 +1220,53 @@ class Sample(models.Model):
 
     @property
     def concentration_display(self):
-        if not (self.concentration and self.concentration_display):
+        if self.concentration is None:
             return "N/A"
-        return f"{self.concentration}{self.concentration_display}"
+        return f'{self.concentration}{self.concentration_unit or ""}'
+
+    @cached_property
+    def current_location(self):
+        return max(
+            (location for location in self.sample_locations.all() if location.moved_out_at is None),
+            key=lambda location: (location.moved_in_at, location.pk),
+            default=None,
+        )
+
+    @property
+    def box(self):
+        return self.current_location.box if self.current_location else None
+
+    @property
+    def rack(self):
+        return self.box.rack if self.box else None
+
+    @property
+    def shelf(self):
+        return self.rack.shelf if self.rack else None
+
+    @property
+    def well_id(self):
+        return self.current_location.well_id if self.current_location else self._metadata_value('Well ID')
+
+    def _metadata_value(self, key, default=''):
+        return next((value for name, value in self.metadata.items() if name.casefold() == key.casefold()), default)
+
+    @property
+    def storage_location(self):
+        fallback = ' / '.join((self.shelf.shelf_label, self.rack.rack_label, self.box.box_label)) if self.box else ''
+        return self._metadata_value('Storage location', fallback)
+
+    @property
+    def cold_storage_id(self):
+        return self._metadata_value('Cold storage ID', self.shelf.storage_id if self.shelf else '')
+
+    @property
+    def storage_temperature(self):
+        return self._metadata_value('Storage temperature (°C)', self.shelf.storage.temperature if self.shelf else None)
+
+    @property
+    def description(self):
+        return self._metadata_value('Description')
 
 
 class Sample_Locations(models.Model):
@@ -1402,11 +1450,22 @@ class TrashSample(TrashBaseModel):
         blank=True
     )
     well_id = models.CharField(max_length=100, blank=True, null=True)
-    date_recorded = models.DateField()
+    date_recorded = models.DateTimeField()
     storage_location = models.CharField(max_length=100, blank=True, null=True)
     cold_storage_id = models.CharField(max_length=100, blank=True, null=True)
     storage_temperature = models.IntegerField(null=True, blank=True)
     threshold_value = models.PositiveIntegerField(null=True, blank=True)
+    collection_date = models.DateField(null=True, blank=True)
+    volume_unit = models.CharField(max_length=5, default='mL')
+    concentration = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    concentration_unit = models.CharField(max_length=10, null=True, blank=True)
+    extraction_batch_number = models.CharField(max_length=100, blank=True)
+    grant_code = models.CharField(max_length=100, blank=True)
+    barcode_value = models.CharField(max_length=120, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    notes = models.TextField(blank=True)
+    metadata = models.JSONField(default=dict, blank=True, validators=[validate_sample_metadata])
+    location_history = models.JSONField(default=list, blank=True)
 
     class Meta:
         verbose_name = 'Trash Sample'

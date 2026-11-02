@@ -200,6 +200,7 @@ urlpatterns = [
     path('trash/delete_trash_equipment/<int:trash_id>/', views.delete_trash_equipment, name = "delete_trash_equipment"),
     path('trash/empty_equipment_trash/<str:project_name>', views.empty_equipment_trash, name='delete_all_equipment__in_trash'),
     path('samples/<str:project_name>/', views.samples, name ="samples"),
+    path('samples/<str:project_name>/metadata/<str:sample_id>/', views.sample_metadata, name='sample_metadata'),
     path('dashboard/samples/<str:project_name>/', views.dashboard_samples, name ="dashboard_samples"),
     path('add_sample/<str:project_name>', views.add_sample, name='add_sample'),
     path('delete_sample/<str:project_name>/<str:sample_id>/', views.delete_sample, name = "delete_sample"),

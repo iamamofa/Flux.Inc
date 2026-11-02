@@ -87,7 +87,7 @@
     <select id="shelfFilterInput" class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
         <option value="All">All</option>
         {% for shelf in shelves %}
-        <option value="{{ shelf.name }}">{{ shelf.name }}</option>
+        <option value="{{ shelf.shelf_label }}">{{ shelf.shelf_label }}</option>
         {% endfor %}
     </select>
 </div>
@@ -99,7 +99,7 @@
     <select id="rackFilterInput" class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
         <option value="All">All</option>
         {% for rack in racks %}
-        <option value="{{ rack.name }}">{{ rack.name }}</option>
+        <option value="{{ rack.rack_label }}">{{ rack.rack_label }}</option>
         {% endfor %}
     </select>
 </div>
@@ -111,7 +111,7 @@
     <select id="boxFilterInput" class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded">
         <option value="All">All</option>
         {% for box in boxes %}
-        <option value="{{ box.name }}">{{ box.name }}</option>
+        <option value="{{ box.box_label }}">{{ box.box_label }}</option>
         {% endfor %}
     </select>
 </div>
@@ -157,16 +157,16 @@
         <option value="0">None</option>
         <option value="1">Sample ID</option>
         <option value="2">Type</option>
-        <option value="3">Country</option>
-        <option value="4">Volume</option>
+        <option value="6">Country</option>
+        <option value="7">Volume</option>
         <option value="5">Date Recorded</option>
-        <option value="6">Shelf</option>
-        <option value="7">Rack</option>
-        <option value="8">Box</option>
+        <option value="12">Shelf</option>
+        <option value="13">Rack</option>
+        <option value="14">Box</option>
         <option value="9">Storage Location</option>
-        <option value="10">Well ID</option>
+        <option value="15">Well ID</option>
         <option value="11">Storage Temperature</option>
-        <option value="12">Threshold Value</option>
+        <option value="16">Threshold Value</option>
     </select>
 </div>
 
@@ -175,6 +175,11 @@
 {% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="{% static 'css/sample_metadata.css' %}?v=1">
+<datalist id="sampleMetadataFieldNames">
+    {% for key in metadata_keys %}<option value="{{ key }}"></option>{% endfor %}
+    <option value="Study ID"></option><option value="Collection site"></option><option value="Sample source"></option>
+</datalist>
 <!-- Header -->
 <div class="flex items-center justify-between">
     <div>
@@ -215,7 +220,7 @@
 </div>
 
 <!-- Navigation View -->
-<header class="flux-page-heading"><div><p class="flux-eyebrow">PROJECT INVENTORY</p><h1>Samples</h1><p>Find samples, monitor volumes and keep storage details up to date.</p></div></header>
+<header class="flux-page-heading"><div><p class="flux-eyebrow">PROJECT INVENTORY</p><h1>Samples</h1><p>Find samples, monitor volumes and keep project metadata together.</p></div></header>
 <nav aria-label="Inventory categories" class="flex items-center mt-8 border-b space-x-10 text-gray-400 font-medium">
     <a href="{% url 'consumables' project_name=project.name %}" class="nav-link">Consumables</a>
     <a href="{% url 'reagents' project_name=project.name %}" class="nav-link">Reagents</a>
@@ -224,13 +229,14 @@
 </nav>
 
 <!-- Table -->
-<div class="flux-table-toolbar"><div><h2>All samples <span class="flux-search-result" data-table-search-status role="status"></span></h2><p>Search the records on this page, or use filters to narrow your view.</p></div><label class="flux-table-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search samples…" aria-label="Search samples on this page" data-table-search="table[aria-label='Samples inventory']"></label></div>
+<div class="flux-table-toolbar"><div><h2>All samples <span class="flux-search-result" data-table-search-status role="status"></span></h2><p>Search sample details and metadata on this page, or use filters to narrow your view.</p></div><label class="flux-table-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search samples…" aria-label="Search samples on this page" data-table-search="table[aria-label='Samples inventory']"></label></div>
 <div class="table-container mt-8">
     <table id="samplesTable" class="wide-inventory-table w-full table-auto" aria-label="Samples inventory">
         <thead>
             <tr>
                 <th scope="col">Sample ID</th>
                 <th scope="col">Sample Type</th>
+                <th scope="col">Metadata</th>
                 <th scope="col">Collection Date</th>
                 <th scope="col">Date Recorded</th>
                 <th scope="col">Country</th>
@@ -248,7 +254,7 @@
                 <th scope="col"></th>
             </tr>
         </thead>
-        <tbody id="samplesTable">
+        <tbody>
             {% for sample in samples %}
             <tr data-id="{{ sample.id }}" class="{% if sample.is_low_stock %}low-stock-row{% endif %}"
                 data-project="{{ project.name }}"
@@ -258,33 +264,38 @@
                 data-date-recorded="{{ sample.date_recorded|date:'Y-m-d' }}"
                 data-country="{{ sample.country }}"
                 data-volume="{{ sample.volume }}"
+                data-volume-unit="{{ sample.volume_unit }}"
                 data-concentration="{{ sample.concentration }}"
                 data-storage-location="{{ sample.storage_location }}"
                 data-cold-storage-id="{{ sample.cold_storage_id }}"
                 data-storage-temperature="{{ sample.storage_temperature }}"
-                data-shelf="{{ sample.shelf.name|default:'' }}"
-                data-rack="{{ sample.rack.name|default:'' }}"
-                data-box="{{ sample.box.name|default:'' }}"
+                data-shelf="{{ sample.shelf.shelf_label|default:'' }}"
+                data-rack="{{ sample.rack.rack_label|default:'' }}"
+                data-box="{{ sample.box.box_label|default:'' }}"
                 data-well-id="{{ sample.well_id|default:'' }}"
                 data-threshold-value="{{ sample.threshold_value }}"
                 data-notes="{{ sample.notes }}">
-                <td class="{% if sample.is_low_stock %}low-stock-indicator{% endif %}">
+                <td data-sample-field="sample_id" class="{% if sample.is_low_stock %}low-stock-indicator{% endif %}">
                     <button type="button" class="inventory-item-action" data-stock-item data-id="{{ sample.id }}" data-name="{{ sample.sample_id }}" aria-label="Update stock for sample {{ sample.sample_id }}">{{ sample.sample_id }}</button>
                 </td>
-                <td>{{ sample.sample_type }}</td>
-                <td>{{ sample.collection_date|date:'Y-m-d' }}</td>
-                <td>{{ sample.date_recorded|date:'Y-m-d' }}</td>
-                <td>{{ sample.country }}</td>
-                <td class="{% if sample.is_low_stock %}low-stock-indicator{% endif %}">{{ sample.volume }} {{sample.volume_unit}}</td>
-                <td>{{ sample.concentration }}</td>
-                <td>{{ sample.storage_location }}</td>
-                <td>{{ sample.cold_storage_id }}</td>
-                <td>{{ sample.storage_temperature }}</td>
-                <td>{{ sample.shelf.name|default:"-" }}</td>
-                <td>{{ sample.rack.name|default:"-" }}</td>
-                <td>{{ sample.box.name|default:"-" }}</td>
-                <td>{{ sample.well_id|default:"-" }}</td>
-                <td>{{ sample.threshold_value }}</td>
+                <td data-sample-field="sample_type">{{ sample.sample_type }}</td>
+                <td>
+                    <button type="button" class="sample-metadata-link" data-sample-metadata-open data-metadata-url="{% url 'sample_metadata' project_name=project.name sample_id=sample.id %}" data-sample-name="{{ sample.sample_id }}" aria-label="Metadata for sample {{ sample.sample_id }}">{% if sample.metadata %}{{ sample.metadata|length }} field{{ sample.metadata|length|pluralize }}{% else %}{% if user == project.project_manager or user in project.project_editors.all %}Add metadata{% else %}View metadata{% endif %}{% endif %}</button>
+                    <span class="sr-only">{% for key, value in sample.metadata.items %}{{ key }} {{ value }} {% endfor %}</span>
+                </td>
+                <td data-sample-field="collection_date">{{ sample.collection_date|date:'Y-m-d' }}</td>
+                <td data-sample-field="date_recorded">{{ sample.date_recorded|date:'Y-m-d' }}</td>
+                <td data-sample-field="country">{{ sample.country }}</td>
+                <td data-sample-field="volume" class="{% if sample.is_low_stock %}low-stock-indicator{% endif %}">{{ sample.volume }} {{sample.volume_unit}}</td>
+                <td data-sample-field="concentration">{{ sample.concentration }}</td>
+                <td data-sample-field="storage_location">{{ sample.storage_location }}</td>
+                <td data-sample-field="cold_storage_id">{{ sample.cold_storage_id }}</td>
+                <td data-sample-field="storage_temperature">{{ sample.storage_temperature }}</td>
+                <td data-sample-field="shelf">{{ sample.shelf.shelf_label|default:"-" }}</td>
+                <td data-sample-field="rack">{{ sample.rack.rack_label|default:"-" }}</td>
+                <td data-sample-field="box">{{ sample.box.box_label|default:"-" }}</td>
+                <td data-sample-field="well_id">{{ sample.well_id|default:"-" }}</td>
+                <td data-sample-field="threshold_value">{{ sample.threshold_value }}</td>
                 <td>
                     {% if sample.notes %}
                         <button class="text-primary hover-underline" onclick="showSampleNotesPopup('{{ sample.id }}')">
@@ -307,21 +318,21 @@
 
                         <!-- Hidden action buttons -->
                         <div class="dropdown-actions">
-                            <button class="retrieve-action" onclick="showRetrievePopup()" data-id="{{ sample.id }}">Retrieve</button>
-                            <button class="return-action" onclick="showReturnPopup()" data-id="{{ sample.id }}">Return</button>
-                                            
+                            <button class="retrieve-action" onclick="showRetrievePopup(this.dataset.id)" data-id="{{ sample.id }}">Retrieve</button>
+                            <button class="return-action" onclick="showReturnPopup(this.dataset.id)" data-id="{{ sample.id }}">Return</button>
+
                             {% if user == project.project_manager or user in project.project_editors.all %}
-                                            
+
                             <hr role="separator">
-                            <button class="edit-action" onclick="showEditPopup()" data-id="{{ sample.id }}">Edit</button>
+                            <button class="edit-action" onclick="showEditPopup(this.dataset.id)" data-id="{{ sample.id }}">Edit</button>
                             <button type="button" class="delete-action" onclick="showDeletePopup(this.dataset.project, this.dataset.id); showInventoryPopup('deletePopup')" data-project="{{ project.name }}" data-id="{{ sample.id }}">Delete</button>
-                                
+
                             {% endif %}
                         </div>
                     </div>
                 </td>
             </tr>
-            {% empty %}<tr><td colspan="17" class="inventory-empty-state"><strong>No samples recorded yet</strong><span>Add a sample to keep its details, volume and storage location together.</span></td></tr>{% endfor %}
+            {% empty %}<tr><td colspan="18" class="inventory-empty-state"><strong>No samples recorded yet</strong><span>Add a sample to keep its details, volume and storage location together.</span></td></tr>{% endfor %}
         </tbody>
     </table>
 </div>
@@ -363,6 +374,29 @@
 {% endblock %}
 
 {% block popups_block %}
+<dialog id="sampleMetadataDialog" class="sample-metadata-dialog" aria-labelledby="sampleMetadataTitle" aria-describedby="sampleMetadataIntro">
+    <form method="post">
+        {% csrf_token %}
+        <header>
+            <div><h2 id="sampleMetadataTitle">Sample metadata</h2><p data-metadata-sample></p></div>
+            <button type="button" class="sample-metadata-close" data-metadata-close aria-label="Close sample metadata">×</button>
+        </header>
+        <p class="sample-metadata-dialog-intro" id="sampleMetadataIntro">Keep project-specific details with this sample. Metadata fields are included as columns in sample exports.</p>
+        <p data-metadata-status role="status" aria-live="polite"></p>
+        <div data-metadata-body hidden>
+            {% if user == project.project_manager or user in project.project_editors.all %}
+            {% include 'inventory/partials/sample_metadata_editor.html' %}
+            {% else %}
+            <div data-metadata-readonly></div>
+            {% endif %}
+        </div>
+        <footer>
+            <button type="button" class="flux-button" data-metadata-close>Close</button>
+            {% if user == project.project_manager or user in project.project_editors.all %}<button type="submit" class="flux-button flux-button-primary" data-metadata-save disabled>Save metadata</button>{% endif %}
+        </footer>
+    </form>
+</dialog>
+
 <!-- Add Sample Popup -->
 <div class="popup-container1" id="addPopup">
     <div class="popup-card">
@@ -398,19 +432,15 @@
                 <div class="form-row">
                     <label for="collection_date">Sample Collection Date</label>
                     <div class="inputBox">
-                        <input type="date" name="collection_date" id="collection_date" required
-                            min="{{ current_date|date:'Y-m-d' }}"
-                            onchange="validateExpiryDate(this)">
-                        <small class="text-red-500 hidden" id="date-error">Expiry date must be in the future</small>
+                        <input type="date" name="collection_date" id="collection_date" required max="{% now 'Y-m-d' %}">
+
                     </div>
                 </div>
                 <div class="form-row">
                     <label for="date_recorded">Date Recorded</label>
                     <div class="inputBox">
-                        <input type="date" name="date_recorded" id="date_recorded" required
-                            min="{{ current_date|date:'Y-m-d' }}"
-                            onchange="validateExpiryDate(this)">
-                        <small class="text-red-500 hidden" id="date-error">Expiry date must be in the future</small>
+                        <input type="date" name="date_recorded" id="date_recorded" required>
+
                     </div>
                 </div>
                 <div class="inputBox">
@@ -462,7 +492,7 @@
                             <option value="">Select Shelf</option>
                             <option value="new">+ Create New Shelf</option>
                             {% for shelf in shelves %}
-                            <option value="{{ shelf.id }}" data-project="{{ shelf.project.name }}">{{ shelf.name }} ({{ shelf.location_code }}) - {{ shelf.project_name }}</option>
+                            <option value="{{ shelf.id }}" data-project="{{ shelf.project.name }}">{{ shelf.shelf_label }} — {{ shelf.project.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -501,7 +531,7 @@
                             <option value="new">+ Create New Rack</option>
                             {% for rack in racks %}
                             <option value="{{ rack.id }}" data-shelf="{{ rack.shelf.id }}" data-project="{{ rack.project.name }}">
-                            {{ rack.name }} ({{ rack.location_code }}) - {{ rack.project.name }}
+                            {{ rack.rack_label }} — {{ rack.project.name }}
                             </option>
                             {% endfor %}
                         </select>
@@ -537,7 +567,7 @@
                             <option value="new">+ Create New Box</option>
                             {% for box in boxes %}
                             <option value="{{ box.id }}" data-rack="{{ box.rack.id }}" data-project="{{ box.project.name }}">
-                            {{ box.name }} ({{ box.location_code }}) - {{ box.project.name }}
+                            {{ box.box_label }} — {{ box.project.name }}
                             </option>
                             {% endfor %}
                         </select>
@@ -602,6 +632,7 @@
                     <input type="text" name="notes" id="notes" required
                         onkeyup="this.setAttribute('value', this.value);" value="{{ form.notes }}">
                 </div>
+                {% include 'inventory/partials/sample_metadata_editor.html' %}
                 <div class="inputBox button">
                     <button class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="submit">Add</button>
                 </div>
@@ -630,29 +661,25 @@
                     <div class="inputBox">
                         <select class="w-full bg-gray-200 py-1.5 px-2 outline-none text-gray-600 rounded mt-2" id="edit_sample_type" name="sample_type" required
                         onkeyup="this.setAttribute('value', this.value);">
-                            <option value="Bacteria">Bacteria</option>
-                            <option value="Fungi">Fungi</option>
-                            <option value="Parasite">Parasite</option>
-                            <option value="Virus">Virus</option>
+                            <option value="dna">DNA</option>
+                            <option value="rna">RNA</option>
+                            <option value="blood">Blood</option>
+                            <option value="other">Other</option>
                         </select>
                     </div>
                 </div>
                 <div class="form-row">
                     <label for="edit_collection_date">Sample Collection Date</label>
                     <div class="inputBox">
-                        <input type="date" name="collection_date" id="edit_collection_date" required
-                            min="{{ current_date|date:'Y-m-d' }}"
-                            onchange="validateExpiryDate(this)">
-                        <small class="text-red-500 hidden" id="date-error">Expiry date must be in the future</small>
+                        <input type="date" name="collection_date" id="edit_collection_date" required max="{% now 'Y-m-d' %}">
+
                     </div>
                 </div>
                 <div class="form-row">
                     <label for="edit_date_recorded">Date Recorded</label>
                     <div class="inputBox">
-                        <input type="date" name="date_recorded" id="edit_date_recorded" required
-                            min="{{ current_date|date:'Y-m-d' }}"
-                            onchange="validateExpiryDate(this)">
-                        <small class="text-red-500 hidden" id="date-error">Expiry date must be in the future</small>
+                        <input type="date" name="date_recorded" id="edit_date_recorded" required>
+
                     </div>
                 </div>
                 <div class="inputBox">
@@ -690,7 +717,7 @@
                             <option value="">Select Shelf</option>
                             <option value="new">+ Create New Shelf</option>
                             {% for shelf in shelves %}
-                            <option value="{{ shelf.id }}" data-project="{{ shelf.project.name }}">{{ shelf.name }} ({{ shelf.location_code }}) - {{ shelf.project_name }}</option>
+                            <option value="{{ shelf.id }}" data-project="{{ shelf.project.name }}">{{ shelf.shelf_label }} — {{ shelf.project.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -729,7 +756,7 @@
                             <option value="new">+ Create New Rack</option>
                             {% for rack in racks %}
                             <option value="{{ rack.id }}" data-shelf="{{ rack.shelf.id }}" data-project="{{ rack.project.name }}">
-                            {{ rack.name }} ({{ rack.location_code }}) - {{ rack.project.name }}
+                            {{ rack.rack_label }} — {{ rack.project.name }}
                             </option>
                             {% endfor %}
                         </select>
@@ -765,7 +792,7 @@
                             <option value="new">+ Create New Box</option>
                             {% for box in boxes %}
                             <option value="{{ box.id }}" data-rack="{{ box.rack.id }}" data-project="{{ box.project.name }}">
-                            {{ box.name }} ({{ box.location_code }}) - {{ box.project.name }}
+                            {{ box.box_label }} — {{ box.project.name }}
                             </option>
                             {% endfor %}
                         </select>
@@ -823,6 +850,7 @@
                     <input type="text" name="notes" id="edit_notes" required
                         onkeyup="this.setAttribute('value', this.value);">
                 </div>
+                {% include 'inventory/partials/sample_metadata_editor.html' %}
                 <div class="inputBox button">
                     <button class="bg-primary border border-primary font-medium text-sm w-2/3 text-white tracking-wide py-2 rounded-md hover:bg-primary/90" type="submit">Update</button>
                 </div>
@@ -886,5 +914,6 @@
 {% endblock %}
 
 {% block inventory_scripts %}
-<script src="{% static 'js/samples.js' %}?v=4"></script>
+<script src="{% static 'js/sample_metadata.js' %}?v=1" defer></script>
+<script src="{% static 'js/samples.js' %}?v=5" defer></script>
 {%endblock %}

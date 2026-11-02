@@ -234,6 +234,8 @@ function closeAddPopup() {
 
 function showEditPopup(id) {
   STATE.currentItemId = id;
+  DOM.forms.edit?.reset();
+  window.SampleMetadata?.populate(DOM.forms.edit, {});
   showModal(POPUP_IDS.EDIT);
   loadItemData();
 }
@@ -277,14 +279,19 @@ function closeDeletePopup() {
 // ==============================================
 async function loadItemData() {
   if (!STATE.currentItemId) return;
+  const itemId = STATE.currentItemId;
+  const submit = DOM.forms.edit?.querySelector('[type="submit"]');
+  if (submit) submit.disabled = true;
   
   showLoading(POPUP_IDS.EDIT);
   
   try {
-    const response = await fetch(`/get_sample_info/${STATE.currentItemId}`);
+    const response = await fetch(`/get_sample_info/${encodeURIComponent(itemId)}`);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
+    if (STATE.currentItemId !== itemId) return;
     populateEditForm(data);
+    if (submit) submit.disabled = false;
   } catch (error) {
     console.error('Error loading sample data:', error);
     showNotification('Failed to load sample data', 'error');
@@ -295,15 +302,26 @@ async function loadItemData() {
 
 function populateEditForm(data) {
   if (!DOM.forms.edit) return;
-  
-  const fields = ['sample_id', 'sample_type', 'description', 'country', 
-                 'volume', 'well_id', 'storage_location', 'threshold_value'];
-  
+  const fields = ['sample_id', 'sample_type', 'collection_date', 'date_recorded', 'country',
+                  'volume', 'volume_unit', 'concentration', 'concentration_unit', 'well_id',
+                  'storage_location', 'cold_storage_id', 'storage_temperature', 'threshold_value',
+                  'shelf', 'rack', 'box', 'notes'];
   fields.forEach(field => {
-    if (DOM.forms.edit.elements[field]) {
-      DOM.forms.edit.elements[field].value = data[field] || '';
+    const input = DOM.forms.edit.elements[field];
+    if (!input) return;
+    let value = data[field] ?? '';
+    if (input.type === 'date' && value) value = String(value).split('T')[0];
+    if (field === 'sample_type' && value && !Array.from(input.options).some(option => option.value === value)) {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = value;
+      input.appendChild(option);
     }
+    input.value = value;
+    if (field === 'rack') input.disabled = !data.shelf;
+    if (field === 'box') input.disabled = !data.rack;
   });
+  window.SampleMetadata?.populate(DOM.forms.edit, data.metadata || {});
 }
 
 // ==============================================
@@ -314,18 +332,19 @@ async function submitForm(formId, url, method, successCallback) {
   if (!form) return;
 
   try {
+    window.SampleMetadata?.serialize(form);
     const formData = new FormData(form);
     const response = await fetch(url, {
       method,
       headers: {
-        'X-CSRFToken': CSRF_TOKEN,
+        'X-CSRFToken': form.querySelector('[name="csrfmiddlewaretoken"]')?.value || CSRF_TOKEN,
       },
       body: formData,
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Network response was not ok');
+      throw new Error(errorData.error || Object.values(errorData.errors || {}).flat().join(' ') || 'Could not save the sample.');
     }
     
     const data = await response.json();
@@ -350,6 +369,7 @@ function handleEditSuccess(data) {
   showNotification('Sample updated successfully', 'success');
   showLowStockAlert(data);
   closeEditPopup();
+  window.location.reload();
 }
 
 function handleRetrieveSuccess(data) {
@@ -408,33 +428,40 @@ async function handleDeleteConfirm() {
 function updateTableRow(id, data) {
   const row = DOM.table?.querySelector(`tr[data-id="${id}"]`);
   if (!row) return;
-  setLowStockAppearance(row, data.low_stock);
-  
-  // Highlight update
+  if ('low_stock' in data) setLowStockAppearance(row, data.low_stock);
   row.classList.add('updated');
   setTimeout(() => row.classList.remove('updated'), 1000);
-  
-  // Update cells
-  const cells = row.querySelectorAll('td');
-  if (cells.length >= 8) {
-    cells[0].textContent = data.sample_id || '';
-    cells[1].setAttribute('data-fulltext', data.sample_type);
-    cells[1].textContent = truncateText(data.sample_type, 15);
-    cells[2].setAttribute('data-fulltext', data.description);
-    cells[2].textContent = truncateText(data.description, 20);
-    cells[3].textContent = data.country || '';
-    cells[4].textContent = data.volume || '';
-    cells[6].textContent = data.well_id || '';
-    cells[7].setAttribute('data-fulltext', data.storage_location);
-    cells[7].textContent = truncateText(data.storage_location, 15);
+  const fields = ['sample_type', 'collection_date', 'date_recorded', 'country', 'concentration',
+                  'storage_location', 'cold_storage_id', 'storage_temperature', 'well_id', 'threshold_value'];
+  fields.forEach(field => {
+    if (!(field in data)) return;
+    const cell = row.querySelector(`[data-sample-field="${field}"]`);
+    const value = data[field] ?? '';
+    if (cell) cell.textContent = value;
+    const datasetName = field.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    row.dataset[datasetName] = value;
+  });
+  if ('sample_id' in data) {
+    row.dataset.sampleId = data.sample_id;
+    const button = row.querySelector('[data-stock-item]');
+    if (button) {
+      button.textContent = data.sample_id;
+      button.dataset.name = data.sample_id;
+      button.setAttribute('aria-label', 'Update stock for sample ' + data.sample_id);
+    }
+  }
+  if ('volume' in data) {
+    row.dataset.volume = data.volume;
+    if (data.volume_unit) row.dataset.volumeUnit = data.volume_unit;
+    const cell = row.querySelector('[data-sample-field="volume"]');
+    if (cell) cell.textContent = data.volume + ' ' + (data.volume_unit || row.dataset.volumeUnit || 'mL');
   }
 }
 
 function setLowStockAppearance(row, isLowStock) {
   row.classList.toggle('low-stock-row', Boolean(isLowStock));
-  const cells = row.querySelectorAll('td');
-  cells[0]?.classList.toggle('low-stock-indicator', Boolean(isLowStock));
-  cells[5]?.classList.toggle('low-stock-indicator', Boolean(isLowStock));
+  row.querySelector('[data-sample-field="sample_id"]')?.classList.toggle('low-stock-indicator', Boolean(isLowStock));
+  row.querySelector('[data-sample-field="volume"]')?.classList.toggle('low-stock-indicator', Boolean(isLowStock));
 }
 
 function removeTableRow(id) {
@@ -468,7 +495,7 @@ function filterTable() {
       sampleType: (row.dataset.sampleType || '').toLowerCase(),
       country: (row.dataset.country || '').toLowerCase(),
       volume: parseFloat(row.dataset.volume) || 0,
-      dateCreated: row.dataset.dateCreated || '',
+      dateCreated: row.dataset.dateRecorded || '',
       storageLocation: (row.dataset.storageLocation || '').toLowerCase()
     };
     
@@ -527,13 +554,13 @@ function sortTableByColumn() {
     const aValue = getColumnValue(a, columnNum);
     const bValue = getColumnValue(b, columnNum);
 
-    if (columnNum === '5') { // Volume column
+    if (columnNum === '7') { // Volume column
       return STATE.activeSort.direction === 'asc' 
         ? aValue - bValue 
         : bValue - aValue;
     }
     
-    if (columnNum === '6') { // Date column
+    if (columnNum === '5') { // Date column
       return STATE.activeSort.direction === 'asc' 
         ? new Date(aValue) - new Date(bValue)
         : new Date(bValue) - new Date(aValue);
@@ -553,8 +580,8 @@ function getColumnValue(row, columnNum) {
   if (!cell) return '';
   const value = cell.textContent.trim();
   
-  if (columnNum === '5') return parseFloat(value) || 0; // Volume
-  if (columnNum === '6') return value; // Date
+  if (columnNum === '7') return parseFloat(value) || 0; // Volume
+  if (columnNum === '5') return value; // Date
   
   return value.toLowerCase();
 }
@@ -592,6 +619,7 @@ function hideLoading() {
 }
 
 function showNotification(message, type = 'success') {
+  DOM.notificationContainer = document.getElementById('notification-container');
   if (!DOM.notificationContainer) return;
 
   const notification = document.createElement('div');
