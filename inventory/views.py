@@ -46,6 +46,7 @@ from .models import (
     StorageTemperatureEvent,
 )
 from .low_stock import get_low_stock_alerts
+from .errors import error_response
 from .sample_metadata import normalize_sample_metadata
 from .sample_inventory import (
     SAMPLE_FIELDS, archive_sample, can_edit_samples, can_read_samples,
@@ -695,28 +696,30 @@ def team(request, project_name):
 def invite_project_user(request, project_name):
     """Send a tracked invitation to a researcher or manager collaborator."""
     if request.method != 'POST':
-        return JsonResponse({'success': False, 'message': 'Use POST to send an invitation.'}, status=405)
+        response = error_response(request, 'Use POST to send an invitation.', status=405)
+        response['Allow'] = 'POST'
+        return response
     project = get_object_or_404(Project, name=project_name)
     if project.project_manager_id != request.user.pk:
-        return JsonResponse({'success': False, 'message': 'Only the project manager can invite people.'}, status=403)
+        return error_response(request, 'Only the project manager can invite people.', status=403)
     email = request.POST.get('email', '').strip().lower()
     role = request.POST.get('role', 'researcher')
     if not email or '@' not in email or role not in {'researcher', 'project_manager'}:
-        return JsonResponse({'success': False, 'message': 'Enter a valid email and invitation role.'}, status=400)
+        return error_response(request, 'Enter a valid email and invitation role.', status=400)
     invitee = User.objects.filter(email__iexact=email, is_active=True).first()
     if invitee and (
         project.project_editors.filter(pk=invitee.pk).exists()
         or project.project_members.filter(pk=invitee.pk).exists()
         or invitee.pk == project.project_manager_id
     ):
-        return JsonResponse({'success': False, 'message': 'This account already belongs to the project.'}, status=409)
+        return error_response(request, 'This account already belongs to the project.', status=409)
     try:
         invitation = ProjectInvitation.objects.create(
             project=project, invited_by=request.user, invitee=invitee,
             email=email, role=role,
         )
     except IntegrityError:
-        return JsonResponse({'success': False, 'message': 'A pending invitation already exists for this email.'}, status=409)
+        return error_response(request, 'A pending invitation already exists for this email.', status=409)
     accept_url = request.build_absolute_uri(reverse('accept_project_invitation', kwargs={'token': invitation.token}))
     body = render_to_string('inventory/project_invitation_email.txt', {
         'project': project, 'invitation': invitation, 'accept_url': accept_url,

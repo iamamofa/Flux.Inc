@@ -71,7 +71,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'inventory.middleware.FriendlyErrorMiddleware',
 ]
+
+CSRF_FAILURE_VIEW = 'inventory.errors.csrf_failure'
 
 CSRF_USE_SESSIONS = False  # Should be False to use cookies
 CSRF_COOKIE_HTTPONLY = False  # Should be False to allow JavaScript access

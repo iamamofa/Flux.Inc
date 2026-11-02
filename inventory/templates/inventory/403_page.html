@@ -1,12 +1,3 @@
-{% extends "inventory/base_auth.html" %}
-
-{% block title %}Access denied{% endblock %}
-
-{% block content %}
-<section class="box" aria-labelledby="accessDeniedTitle">
-    <p class="dashboard-eyebrow">FLUX · 403</p>
-    <h1 id="accessDeniedTitle">You don’t have access to this project</h1>
-    <p>Ask a project manager to grant access, or return to your workspace.</p>
-    <a href="{% url 'home' %}" class="flux-settings-reset">Return to Flux</a>
-</section>
-{% endblock %}
+{% with title=error_title|default:'You don’t have access to this project' message=error_message|default:'Your account does not have permission to open this area.' hint=error_hint|default:'Ask a project manager to review your access, or return to Flux to choose a workspace you can use.' %}
+{% include 'inventory/error_page.html' with status_code=403 error_eyebrow='ACCESS & PERMISSIONS' error_title=title error_message=message error_hint=hint %}
+{% endwith %}

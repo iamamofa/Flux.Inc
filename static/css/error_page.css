@@ -1,0 +1,57 @@
+:root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #242429; background: #f6f6f7; }
+* { box-sizing: border-box; }
+body.flux-error-page { min-height: 100vh; min-height: 100dvh; margin: 0; background: radial-gradient(ellipse at 95% 5%, #fff1e7 0, transparent 35%), #f6f6f7; }
+.error-shell { display: flex; flex-direction: column; justify-content: center; width: min(1120px, calc(100% - 4rem)); min-height: 100vh; min-height: 100dvh; margin: 0 auto; padding: 2.5rem 0; }
+.error-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 2.4rem; }
+.error-wordmark { color: #ed5700; font-size: 2.2rem; font-weight: 850; line-height: 1; letter-spacing: -.08em; text-decoration: none; }
+.error-wordmark span { color: #25252b; }
+.error-workspace-label { color: #929298; font-size: .64rem; font-weight: 650; letter-spacing: .13em; }
+.error-card { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(15rem, 1fr); align-items: center; overflow: hidden; padding: clamp(1.75rem, 5vw, 4rem); border: 1px solid #e4e4e7; border-radius: 1.5rem; background: #fff; box-shadow: 0 16px 60px rgb(36 25 17 / 4%); }
+.error-copy { position: relative; z-index: 1; }
+.error-eyebrow { margin: 0 0 1.2rem; color: #a94714; font-size: .67rem; font-weight: 750; letter-spacing: .12em; }
+.error-copy h1 { max-width: 15ch; margin: 0; font-size: clamp(2rem, 4.4vw, 3.25rem); line-height: 1.1; letter-spacing: -.055em; font-weight: 700; overflow-wrap: anywhere; }
+.error-message { max-width: 32rem; margin: 1.3rem 0 0; color: #73737b; font-size: .98rem; line-height: 1.75; overflow-wrap: anywhere; }
+.error-next-step { max-width: 31rem; margin-top: 1.65rem; padding: 1rem 1.1rem; border-left: 2px solid #e9ad8b; border-radius: 0 .5rem .5rem 0; background: #fcf8f5; }
+.error-next-step-label { display: block; color: #9c603e; font-size: .61rem; font-weight: 750; letter-spacing: .09em; }
+.error-next-step p { margin: .45rem 0 0; color: #74665d; font-size: .83rem; line-height: 1.65; overflow-wrap: anywhere; }
+.error-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; margin-top: 2rem; }
+.error-button { display: inline-flex; align-items: center; justify-content: center; gap: .8rem; min-height: 2.9rem; padding: .75rem 1.1rem; border: 1px solid transparent; border-radius: .65rem; font-size: .82rem; font-weight: 650; line-height: 1.25; text-decoration: none; transition: background 160ms ease, border-color 160ms ease; }
+.error-button-primary { border-color: #ba4206; color: #fff; background: #ba4206; }
+.error-button-primary:hover { border-color: #983505; background: #983505; }
+.error-button-secondary { border-color: #e4e4e7; color: #5f5f68; background: #fff; }
+.error-button-secondary:hover { border-color: #cfcfd5; background: #f7f7f8; }
+.error-button svg { flex: 0 0 auto; }
+.error-visual { position: relative; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1.15rem; align-self: stretch; min-height: 22rem; margin-left: 1.75rem; }
+.error-visual::before { position: absolute; width: 14rem; height: 14rem; border-radius: 50%; background: #fff9f5; content: ""; }
+.error-symbol { position: relative; z-index: 1; display: grid; place-items: center; width: 6.5rem; height: 6.5rem; border: 1px solid #efd4c3; border-radius: 1.5rem; background: #fff3ea; color: #b54c18; box-shadow: 0 8px 25px #a34c0f08; }
+.error-code { position: relative; z-index: 1; color: #d4bbaa; font-size: 3.4rem; font-weight: 650; letter-spacing: -.06em; line-height: 1; }
+.error-visual-label { position: relative; z-index: 1; color: #a99d94; font-size: .55rem; font-weight: 650; letter-spacing: .17em; }
+.error-orbit { position: absolute; width: 18rem; height: 18rem; border: 1px solid #f2e9e3; border-radius: 50%; }
+.error-orbit-two { width: 21rem; height: 21rem; border-style: dashed; border-color: #f4eeea; transform: rotate(15deg); }
+.error-orbit-dot { position: absolute; z-index: 1; top: calc(50% - 7.9rem); right: calc(50% - 4.1rem); width: .55rem; height: .55rem; border-radius: 50%; background: #e2a880; box-shadow: 0 0 0 .35rem #fbefe6; }
+.error-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem 1rem; padding: 1.4rem .1rem 0; color: #929298; font-size: .72rem; }
+.error-footer p { margin: 0; }
+.error-reference span { margin-left: .25rem; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.error-skip-link { position: fixed; z-index: 5; top: 1rem; left: 1rem; padding: .75rem 1rem; border-radius: .5rem; background: #fff; color: #913705; transform: translateY(-180%); }
+.error-skip-link:focus { transform: translateY(0); }
+.flux-error-page a:focus-visible { outline: 2px solid #a13700; outline-offset: 4px; }
+.error-card:focus { outline: none; }
+@media (max-width: 720px) {
+    .error-shell { width: min(34rem, calc(100% - 2rem)); padding: 1.5rem 0; }
+    .error-header { margin-bottom: 1.5rem; }
+    .error-workspace-label { font-size: .55rem; letter-spacing: .08em; }
+    .error-card { grid-template-columns: minmax(0, 1fr); padding: 1.75rem; }
+    .error-visual { order: -1; min-height: 9rem; margin: 0 0 1.5rem; flex-direction: row; gap: 1rem; justify-content: flex-start; }
+    .error-visual::before { left: -1rem; width: 10rem; height: 10rem; }
+    .error-symbol { width: 4.7rem; height: 4.7rem; border-radius: 1.1rem; }
+    .error-symbol svg { width: 2.7rem; height: 2.7rem; }
+    .error-code { font-size: 2.8rem; }
+    .error-visual-label, .error-orbit, .error-orbit-dot { display: none; }
+    .error-copy h1 { max-width: 18ch; font-size: clamp(1.85rem, 7vw, 2.5rem); }
+    .error-message { font-size: .9rem; }
+    .error-eyebrow { font-size: .61rem; }
+    .error-actions { align-items: stretch; flex-direction: column; }
+    .error-footer { align-items: flex-start; flex-direction: column; font-size: .67rem; line-height: 1.5; }
+}
+@media (max-width: 380px) { .error-workspace-label { display: none; } .error-card { padding: 1.35rem; } }
+@media (prefers-reduced-motion: reduce) { .error-button { transition: none; } }

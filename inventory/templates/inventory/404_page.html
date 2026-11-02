@@ -1,5 +1,5 @@
-{% extends 'inventory/base_auth.html' %}
-{% block title %}Let’s get you back{% endblock %}
-{% block content %}
-<div class="flux-outcome-icon flux-outcome-neutral" aria-hidden="true">↗</div><p class="flux-eyebrow">LET’S GET YOU BACK</p><h1>{{ message1|default:'This page isn’t available.' }}</h1><p class="flux-account-intro">{{ message2|default:'The page may have moved, or you may need to choose a different workspace.' }}</p><a class="flux-button flux-button-primary" href="{% url 'home' %}">Back to home <span aria-hidden="true">→</span></a>
-{% endblock %}
+{% with legacy_title=message1|default:'This page isn’t available.' legacy_message=message2|default:'The page may have moved, or the record may no longer be available.' %}
+{% with title=error_title|default:legacy_title message=error_message|default:legacy_message hint=error_hint|default:'Check the address, or return to Flux to find your project.' %}
+{% include 'inventory/error_page.html' with status_code=404 error_eyebrow='PAGE NOT FOUND' error_title=title error_message=message error_hint=hint %}
+{% endwith %}
+{% endwith %}

@@ -2,6 +2,7 @@ from functools import wraps
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from .models import Project, Reagent
+from .errors import render_error_page, wants_html_error
 
 
 def project_access_required(view_func):
@@ -18,12 +19,11 @@ def project_access_required(view_func):
                     request.user in project.project_editors.all() or
                     request.user in project.project_members.all()):
 
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                if (request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+                        or 'application/json' in request.headers.get('Accept', '').lower()):
                     return JsonResponse({'error': 'Unauthorized access'}, status=403)
                 else:
-                    # Redirect to appropriate error page
-                    from django.shortcuts import render
-                    return render(request, 'inventory/403_page.html', status=403)
+                    return render_error_page(request, status=403)
 
         return view_func(request, *args, **kwargs)
     return _wrapped_view
@@ -42,6 +42,8 @@ def reagent_access_required(view_func):
                     request.user in reagent.project.project_editors.all() or
                     request.user in reagent.project.project_members.all()):
 
+                if wants_html_error(request):
+                    return render_error_page(request, status=403)
                 return JsonResponse({'error': 'Unauthorized access'}, status=403)
 
         return view_func(request, *args, **kwargs)

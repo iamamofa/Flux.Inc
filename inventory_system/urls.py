@@ -24,3 +24,5 @@ urlpatterns = [
 
 handler403 = 'control.errors.permission_denied'
 handler404 = 'control.errors.not_found'
+handler400 = 'control.errors.bad_request'
+handler500 = 'control.errors.server_error'
