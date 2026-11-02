@@ -60,6 +60,46 @@
 @media (max-width: 850px) { .genomics-layout { grid-template-columns: 1fr; }.genomics-side-column { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }.genomics-card-dark { grid-row: span 2; }.genomics-card-runway { grid-column: span 2; } }
 @media (max-width: 680px) { .genomics-shell { padding-top: 0; }.genomics-hero { min-height: 0; padding: 1.5rem; }.genomics-hero-orbit { display: none; }.genomics-hero h1 { font-size: clamp(2.2rem, 13vw, 3.5rem); }.genomics-signal-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }.genomics-signal-card { padding: .75rem; }.genomics-signal-icon { width: 2rem; height: 2rem; }.genomics-signal-card strong { font-size: 1.2rem; }.genomics-signal-card small { white-space: normal; }.genomics-form-grid, .genomics-split-row, .genomics-side-column { grid-template-columns: 1fr; }.genomics-card-dark, .genomics-card-runway { grid-row: auto; grid-column: auto; }.genomics-form-footer { align-items: flex-start; flex-direction: column; }.genomics-form-footer .flux-button { width: 100%; }.genomics-expiry-tab { align-items: flex-start; flex-direction: column; gap: .15rem; } }
 
+/* Settings-style navigation keeps each lab tool in its own workspace. */
+.lab-tools-shell { padding: .25rem 0 2rem; }
+.lab-tools-shell .genomics-signal-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin: 1.5rem 0; }
+.lab-tools-shell .genomics-signal-card { padding: 1rem 1.15rem; box-shadow: none; }
+.lab-tools-shell .genomics-signal-label { font-size: .65rem; }
+.lab-tools-shell .genomics-signal-card small { font-size: .75rem; white-space: normal; }
+.lab-tools-subsection { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--flux-border); }
+.lab-tools-subsection h3 { display: flex; align-items: center; flex-wrap: wrap; gap: .65rem; margin: 0 0 .65rem; }
+.lab-tools-subsection .flux-settings-help { margin: 0 0 1rem; }
+.lab-tools-shell .genomics-form { gap: 1.15rem; margin-top: 1.5rem; }
+.lab-tools-shell .genomics-form label { gap: .5rem; color: var(--flux-text); font-size: .8rem; }
+.lab-tools-shell .genomics-form input,
+.lab-tools-shell .genomics-form select,
+.lab-tools-shell .genomics-form textarea { min-width: 0; min-height: 2.85rem; font-size: .85rem; }
+.lab-tools-shell .genomics-form textarea { min-height: 7rem; }
+.lab-tools-shell .genomics-form-grid { gap: 1.15rem; }
+.lab-tools-shell .genomics-form-footer { margin-top: .35rem; padding-top: 1.15rem; border-top: 1px solid var(--flux-border); }
+.lab-tools-shell .genomics-form-footer > span { color: var(--flux-muted); font-size: .75rem; }
+.lab-tools-shell .genomics-list-row { padding: .9rem 0; font-size: .82rem; }
+.lab-tools-shell .genomics-list-name small,
+.lab-tools-shell .genomics-list-row time { font-size: .73rem; }
+.lab-tools-shell .genomics-empty { padding: .5rem 0; }
+.lab-tools-shell .genomics-empty strong { font-size: .83rem; }
+.lab-tools-shell .genomics-empty p { font-size: .78rem; line-height: 1.55; }
+.lab-tools-shell .genomics-template-links { gap: .6rem; }
+.lab-tools-shell .genomics-template-links > span { font-size: .75rem; }
+.lab-tools-shell .genomics-template-links a { padding: .55rem .75rem; font-size: .76rem; }
+.lab-tools-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--flux-border); }
+.lab-tools-plate-preview { display: flex; align-items: center; flex-wrap: wrap; gap: 1.5rem; margin: 1.5rem 0 2rem; padding: 1.5rem; border: 1px solid var(--flux-border); border-radius: .8rem; background: var(--flux-surface-subtle); }
+.lab-tools-plate-preview .genomics-mini-plate { width: 12rem; max-width: 100%; margin: 0; }
+.lab-tools-plate-preview > span { color: var(--flux-muted); font-size: .85rem; }
+@media (max-width: 680px) {
+    .lab-tools-shell .genomics-form input,
+    .lab-tools-shell .genomics-form select,
+    .lab-tools-shell .genomics-form textarea { font-size: 1rem; }
+    .lab-tools-shell .genomics-form-grid { grid-template-columns: minmax(0, 1fr); }
+    .lab-tools-shell .genomics-form-footer { align-items: stretch; flex-direction: column; }
+    .lab-tools-shell .genomics-form-footer .flux-button { width: 100%; }
+}
+
 /* Sample plate mapping workspace. */
 .plate-visualizer-page #workspaceContent > section { background: #f7f7f8; }
 .plate-shell { max-width: 1180px; margin: 0 auto; padding: .25rem 0 2rem; color: #202126; }

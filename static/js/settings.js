@@ -4,8 +4,14 @@
     var content = document.querySelector("[data-settings-content]");
     if (!content) return;
 
+    var root = content.closest(".flux-settings");
+    if (!root) return;
+
     var sections = Array.from(content.querySelectorAll(".flux-settings-section"));
-    var links = Array.from(document.querySelectorAll(".flux-settings-overview a"));
+    if (!sections.length) return;
+
+    var links = Array.from(root.querySelectorAll(".flux-settings-overview a"));
+    var defaultSection = content.getAttribute("data-settings-default") || sections[0].id;
 
     function showSection(id, moveFocus) {
         var selected = sections.find(function (section) { return section.id === id; });
@@ -27,11 +33,13 @@
     }
 
     function readLocation() {
-        if (!showSection(window.location.hash.slice(1), false)) showSection("profile", false);
+        if (!showSection(window.location.hash.slice(1), false) && !showSection(defaultSection, false)) {
+            showSection(sections[0].id, false);
+        }
     }
 
     // Links still reach every section when JavaScript is unavailable.
-    document.querySelector(".flux-settings").addEventListener("click", function (event) {
+    root.addEventListener("click", function (event) {
         var link = event.target.closest('a[href^="#"]');
         if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0) return;
         if (showSection(link.hash.slice(1), true)) {
