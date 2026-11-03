@@ -265,7 +265,7 @@
                 data-product-code="{{ consumable.product_code }}"
                 data-items-left-in-pack="{{ consumable.items_left_in_pack }}"
                 data-items-per-pack="{{ consumable.items_per_pack }}"
-                data-pack_count="{{ consumable.pack_count }}"
+                data-pack-count="{{ consumable.pack_count }}"
                 data-date-created="{{ consumable.date_recorded|date:'Y-m-d' }}"
                 data-expiry-date="{{ consumable.expiry_date|date:'Y-m-d' }}"
                 data-storage-location="{{ consumable.storage_location }}"
@@ -296,7 +296,7 @@
                 <td class="actions">
                     <div class="dropdown">
                         <!-- Main trigger button -->
-                        <button class="dropdown-trigger" aria-label="Actions menu">
+                        <button type="button" class="dropdown-trigger" aria-expanded="false" aria-label="Actions for {{ consumable.name }}">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <circle cx="12" cy="12" r="1"></circle>
                                 <circle cx="12" cy="5" r="1"></circle>
@@ -566,6 +566,11 @@
         <h2 class="text-lg font-semibold mb-4">Retrieve Item</h2>
         <form id="retrieve-form" method="POST" class="space-y-4">
             {% csrf_token %}
+            <div class="inventory-stock-summary">
+                <strong id="retrieveItemName"></strong>
+                <p id="retrieveAvailability"></p>
+            </div>
+            <p class="inventory-form-error" data-form-error role="alert" hidden></p>
             <div class="flex flex-col space-y-2">
                 <label for="retrieve_by" class="text-sm font-medium text-gray-700">Retrieve By</label>
                 <select class="w-full bg-gray-100 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
@@ -583,6 +588,7 @@
                     type="number"
                     name="amount"
                     id="retrieveFilterInput"
+                    aria-describedby="retrieveAvailability"
                     required
                     min="1"
                     step="1"
@@ -663,5 +669,5 @@
 
 {% block inventory_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-<script src="{% static 'js/consumables.js' %}?v=4"></script>
+<script src="{% static 'js/consumables.js' %}?v=6"></script>
 {% endblock %}

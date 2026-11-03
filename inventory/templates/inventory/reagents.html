@@ -331,7 +331,7 @@
                 <td class="actions">
                     <div class="dropdown">
                         <!-- Main trigger button -->
-                        <button class="dropdown-trigger" aria-label="Actions menu">
+                        <button type="button" class="dropdown-trigger" aria-expanded="false" aria-label="Actions for {{ reagent.name }}">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <circle cx="12" cy="12" r="1"></circle>
                                 <circle cx="12" cy="5" r="1"></circle>
@@ -341,7 +341,7 @@
 
                         <!-- Hidden action buttons -->
                         <div class="dropdown-actions">
-                            <button class="retrieve-action" data-id="{{ reagent.id }}">Retrieve</a>
+                            <button class="retrieve-action" data-id="{{ reagent.id }}">Retrieve</button>
                             <button class="return-action" data-id="{{ reagent.id }}">Restock</button>
                                             
                             {% if user == project.project_manager or user in project.project_editors.all %}
@@ -692,5 +692,5 @@
 {% endblock %}
 
 {% block inventory_scripts %}
-<script src="{% static 'js/reagents.js' %}?v=4"></script>
+<script src="{% static 'js/reagents.js' %}?v=5"></script>
 {% endblock %}

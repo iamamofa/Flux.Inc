@@ -124,9 +124,6 @@ function setupEventListeners() {
   // Delete confirmation
   DOM.buttons.confirmDelete?.addEventListener('click', handleDeleteConfirm);
 
-  // Add dropdown toggle logic
-  setupDropdowns();
-
   // MSDS event listeners
   if (DOM.msds.uploadBtn) {
     DOM.msds.uploadBtn.addEventListener('click', showMsdsUploadForm);
@@ -144,25 +141,6 @@ function setupEventListeners() {
       }
     });
   }
-}
-
-function setupDropdowns() {
-  // Toggle dropdown on click
-  document.querySelectorAll('.dropdown-trigger').forEach(trigger => {
-    trigger.addEventListener('click', (e) => {
-      e.stopPropagation();
-      trigger.closest('.dropdown').classList.toggle('active');
-    });
-  });
-
-  // Close when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.dropdown')) {
-      document.querySelectorAll('.dropdown').forEach(dropdown => {
-        dropdown.classList.remove('active');
-      });
-    }
-  });
 }
 
 function setupPopups() {

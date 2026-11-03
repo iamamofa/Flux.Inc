@@ -108,28 +108,6 @@ function setupEventListeners() {
   
   // Form submissions
   setupFormSubmissions();
-
-  // Add dropdown toggle logic
-  setupDropdowns();
-}
-
-function setupDropdowns() {
-  // Toggle dropdown on click
-  document.querySelectorAll('.dropdown-trigger').forEach(trigger => {
-    trigger.addEventListener('click', (e) => {
-      e.stopPropagation();
-      trigger.closest('.dropdown').classList.toggle('active');
-    });
-  });
-
-  // Close when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.dropdown')) {
-      document.querySelectorAll('.dropdown').forEach(dropdown => {
-        dropdown.classList.remove('active');
-      });
-    }
-  });
 }
 
 // Setup form submissions

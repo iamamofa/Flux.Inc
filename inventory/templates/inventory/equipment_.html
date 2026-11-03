@@ -240,7 +240,7 @@
                 <td class="actions">
                     <div class="dropdown">
                         <!-- Main trigger button -->
-                        <button class="dropdown-trigger" aria-label="Actions menu">
+                        <button type="button" class="dropdown-trigger" aria-expanded="false" aria-label="Actions for {{ equipment.name }}">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <circle cx="12" cy="12" r="1"></circle>
                                 <circle cx="12" cy="5" r="1"></circle>
@@ -250,13 +250,13 @@
 
                         <!-- Hidden action buttons -->
                         <div class="dropdown-actions">
-                            <button class="retrieve-action" onclick="showRetrievePopup()" data-id="{{ equipment.id }}">Retrieve</button>
-                            <button class="return-action" onclick="showReturnPopup()" data-id="{{ equipment.id }}">Return</button>
+                            <button class="retrieve-action" onclick="showRetrievePopup(this.dataset.id)" data-id="{{ equipment.id }}">Retrieve</button>
+                            <button class="return-action" onclick="showReturnPopup(this.dataset.id)" data-id="{{ equipment.id }}">Return</button>
                                             
                             {% if user == project.project_manager or user in project.project_editors.all %}
                                             
                             <hr role="separator">
-                            <button class="edit-action" onclick="showEditPopup()" data-id="{{ equipment.id }}">Edit</button>
+                            <button class="edit-action" onclick="showEditPopup(this.dataset.id)" data-id="{{ equipment.id }}">Edit</button>
                             <button type="button" class="delete-action" onclick="showDeletePopup(this.dataset.project, this.dataset.id); showInventoryPopup('deletePopup')" data-project="{{ project.name }}" data-id="{{ equipment.id }}">Delete</button>
                                 
                             {% endif %}
@@ -459,5 +459,5 @@
 {% endblock %}
 
 {% block inventory_scripts %}
-<script src="{% static 'js/equipment_.js' %}?v=6"></script>
+<script src="{% static 'js/equipment_.js' %}?v=7"></script>
 {% endblock %}

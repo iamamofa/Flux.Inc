@@ -308,7 +308,7 @@
                 <td class="actions">
                     <div class="dropdown">
                         <!-- Main trigger button -->
-                        <button class="dropdown-trigger" aria-label="Actions menu">
+                        <button type="button" class="dropdown-trigger" aria-expanded="false" aria-label="Actions for {{ sample.sample_id }}">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                                 <circle cx="12" cy="12" r="1"></circle>
                                 <circle cx="12" cy="5" r="1"></circle>
@@ -915,5 +915,5 @@
 
 {% block inventory_scripts %}
 <script src="{% static 'js/sample_metadata.js' %}?v=1" defer></script>
-<script src="{% static 'js/samples.js' %}?v=5" defer></script>
+<script src="{% static 'js/samples.js' %}?v=6" defer></script>
 {%endblock %}

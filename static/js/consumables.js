@@ -97,31 +97,11 @@ function setupEventListeners() {
   
   // Form submissions
   setupFormHandlers();
+  document.getElementById('retrieve_by')?.addEventListener('change', updateRetrieveAvailability);
+  document.getElementById('retrieveFilterInput')?.addEventListener('input', updateRetrieveAvailability);
   
   // Delete confirmation
   DOM.buttons.confirmDelete?.addEventListener('click', handleDeleteConfirm);
-
-  // Add dropdown toggle logic
-  setupDropdowns();
-}
-
-function setupDropdowns() {
-  // Toggle dropdown on click
-  document.querySelectorAll('.dropdown-trigger').forEach(trigger => {
-    trigger.addEventListener('click', (e) => {
-      e.stopPropagation();
-      trigger.closest('.dropdown').classList.toggle('active');
-    });
-  });
-
-  // Close when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.dropdown')) {
-      document.querySelectorAll('.dropdown').forEach(dropdown => {
-        dropdown.classList.remove('active');
-      });
-    }
-  });
 }
 
 function setupPopups() {
@@ -158,6 +138,7 @@ function setupFormHandlers() {
   // Retrieve form
   DOM.forms.retrieve?.addEventListener('submit', (e) => {
     e.preventDefault();
+    if (!validateRetrieveForm()) return;
     submitForm('retrieve-form', `/retrieve_consumable/${STATE.currentItemId}`, 'POST', handleRetrieveSuccess);
   });
   
@@ -346,7 +327,54 @@ function closeEditPopup() {
 
 function showRetrievePopup(id) {
   STATE.currentItemId = id;
+  DOM.forms.retrieve?.reset();
+  updateRetrieveAvailability();
   showModal(POPUP_IDS.RETRIEVE);
+}
+
+function getRetrieveStock() {
+  const row = DOM.table?.querySelector(`tr[data-id="${STATE.currentItemId}"]`);
+  if (!row) return null;
+  const packs = Math.max(0, Number(row.dataset.packCount) || 0);
+  const itemsPerPack = Math.max(0, Number(row.dataset.itemsPerPack) || 0);
+  const itemsLeft = Math.max(0, Number(row.dataset.itemsLeftInPack) || 0);
+  const items = packs > 0 ? (packs - 1) * itemsPerPack + itemsLeft : 0;
+  const byItems = document.getElementById('retrieve_by')?.value === 'Pack size';
+  return { name: row.dataset.name, packs, items, available: byItems ? items : packs, unit: byItems ? 'items' : 'packs' };
+}
+
+function updateRetrieveAvailability() {
+  const form = DOM.forms.retrieve;
+  if (!form) return;
+  const stock = getRetrieveStock();
+  const input = document.getElementById('retrieveFilterInput');
+  const name = document.getElementById('retrieveItemName');
+  const availability = document.getElementById('retrieveAvailability');
+  const confirm = form.querySelector('[type="submit"]');
+  if (name) name.textContent = stock?.name || 'Selected consumable';
+  if (availability) availability.textContent = stock
+    ? `${stock.packs} ${stock.packs === 1 ? 'pack' : 'packs'} in stock · ${stock.items} individual ${stock.items === 1 ? 'item' : 'items'} available`
+    : 'Stock information is unavailable. Refresh the page and try again.';
+  if (input) input.max = String(stock?.available || 0);
+  if (confirm) confirm.disabled = form.dataset.submitting === 'true' || !stock?.available;
+
+  let error = '';
+  if (!stock) error = 'Refresh the page to load the current stock.';
+  else if (stock.available === 0) error = `No ${stock.unit} are available. Restock this consumable before retrieving.`;
+  else if (Number(input?.value) > stock.available) error = `Only ${stock.available} ${stock.unit} are available.`;
+  showFormError(form, error);
+}
+
+function validateRetrieveForm() {
+  updateRetrieveAvailability();
+  const stock = getRetrieveStock();
+  if (!stock || stock.available === 0) return false;
+  const amount = Number(document.getElementById('retrieveFilterInput')?.value);
+  if (!Number.isInteger(amount) || amount <= 0) {
+    showFormError(DOM.forms.retrieve, 'Enter a positive whole-number amount.');
+    return false;
+  }
+  return amount <= stock.available;
 }
 
 function closeRetrievePopup() {
@@ -414,18 +442,16 @@ function populateEditForm(data) {
 // ==============================================
 async function submitForm(formId, url, method, successCallback) {
   const form = document.getElementById(formId);
-  if (!form) return;
-
-    showLoading(POPUP_IDS.ADD);
+  if (!form || form.dataset.submitting === 'true') return;
+  form.dataset.submitting = 'true';
+  form.setAttribute('aria-busy', 'true');
+  showFormError(form, '');
+  const buttons = Array.from(form.querySelectorAll('[type="submit"]'));
+  const disabledStates = buttons.map(button => button.disabled);
+  buttons.forEach(button => { button.disabled = true; });
 
   try {
     const formData = new FormData(form);
-
-      // For debugging - log form data
-    for (let [key, value] of formData.entries()) {
-      console.log(`${key}: ${value}`);
-    }
-      console.log('Submitting:', Object.fromEntries(formData.entries()));
     const csrfToken = getCSRFToken();
     
     const response = await fetch(url, {
@@ -436,35 +462,39 @@ async function submitForm(formId, url, method, successCallback) {
         body: formData,
         credentials: 'include'
     });
-      console.log(method);
-
-      console.log(response)
-
-      // First get response as text to handle both HTML and JSON
-      const text = await response.text();
-
-    try{
-        // Try to parse as JSON
-        const data = JSON.parse(text);
-        console.log(data)
-    
-        if (!response.ok) {
-            throw new Error(data.error || `Server responded with status ${response.status}`);
-        }
-    
-        successCallback(data);
-    } catch (e) {
-        // If not JSON show error page content in console
-        console.error('Server returned:', text);
-        throw new Error('Server returned an unexpected response. Please check console for details.');
+    let data;
+    try {
+      data = JSON.parse(await response.text());
+    } catch {
+      throw new Error('The server returned an unexpected response. Refresh the page and try again.');
     }
-      
+    if (!response.ok) {
+      throw new Error(data.error || `Request failed (${response.status}).`);
+    }
+    successCallback(data);
   } catch (error) {
     console.error('Error:', error);
+    showFormError(form, error.message || 'An error occurred. Please try again.');
     showNotification(error.message || 'An error occurred. Please try again.', 'error');
   } finally {
-      hideLoading();
+    delete form.dataset.submitting;
+    form.removeAttribute('aria-busy');
+    buttons.forEach((button, index) => { button.disabled = disabledStates[index]; });
   }
+}
+
+function showFormError(form, message) {
+  if (!form) return;
+  let error = form.querySelector('[data-form-error]');
+  if (!error) {
+    error = document.createElement('p');
+    error.dataset.formError = '';
+    error.className = 'inventory-form-error';
+    error.setAttribute('role', 'alert');
+    form.prepend(error);
+  }
+  error.textContent = message;
+  error.hidden = !message;
 }
 
 // Helper function to get CSRF token

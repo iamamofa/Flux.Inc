@@ -829,6 +829,22 @@ class ImmediateLowStockEmailTests(TestCase):
         self.assertEqual(reagent.pack_count, 1)
         self.assertEqual(reagent.items_left_in_pack, 10)
 
+    def test_empty_consumable_rejects_retrieval_in_both_units(self):
+        consumable = Consumable.objects.create(
+            project=self.project, name='Empty consumable',
+            items_per_pack=0, items_left_in_pack=0, pack_count=0,
+            cold_storage='Room temperature',
+        )
+        url = reverse('retrieve_consumable', kwargs={'consumable_id': consumable.pk})
+        for option, unit in (('Pack size', 'items'), ('Quantity', 'packs')):
+            with self.subTest(option=option):
+                response = self.client.post(url, {'retrieve_by': option, 'amount': 1})
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(response.json()['error'], f'Only 0 {unit} are available')
+        consumable.refresh_from_db()
+        self.assertEqual((consumable.pack_count, consumable.items_left_in_pack), (0, 0))
+        self.assertFalse(Log.objects.filter(project=self.project).exists())
+
 
 @override_settings(
     EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
