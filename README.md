@@ -8,6 +8,9 @@
 <p align="center">
 <img src ="./static/images/Logo_Orange.png">
 </p>
+<p align="center">
+Facility Logistics Utilization Xpert
+</p>
 
 <p align="center">
   Research inventory management and an integrated administrator portal for laboratory operations.
