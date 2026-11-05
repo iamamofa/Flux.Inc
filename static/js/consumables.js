@@ -428,7 +428,7 @@ function populateEditForm(data) {
   
   const fields = ['name', 'product_code', 'pack_size', 'quantity', 
                  'expiry_date', 'storage_location', 'storage_condition',
-                 'oem_temperature', 'vendor', 'threshold_value', 'notes'];
+                 'oem_temperature', 'vendor', 'vendor_country', 'vendor_city', 'threshold_value', 'notes'];
   
   fields.forEach(field => {
     if (DOM.forms.edit.elements[field]) {

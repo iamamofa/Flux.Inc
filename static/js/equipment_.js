@@ -298,6 +298,9 @@ async function getItemInfo() {
     form.elements.service_contract_start.value = data.service_contract_start;
     form.elements.service_contract_end.value = data.service_contract_end;
     form.elements.donated_by.value = data.donated_by;
+    form.elements.source.value = data.source || '';
+    form.elements.vendor_country.value = data.vendor_country || '';
+    form.elements.vendor_city.value = data.vendor_city || '';
     form.elements.storage_location.value = data.storage_location;
   } catch (error) {
     console.error('Error retrieving equipment information:', error);

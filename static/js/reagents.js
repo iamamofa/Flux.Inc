@@ -454,7 +454,7 @@ function populateEditForm(data) {
   
   const fields = ['name', 'product_code', 'pack_size', 'quantity', 
                  'expiry_date', 'storage_location', 'storage_condition',
-                 'oem_temperature', 'vendor', 'country_of_origin',
+                 'oem_temperature', 'vendor', 'vendor_country', 'vendor_city', 'country_of_origin',
                  'hazard_level', 'threshold_value', 'notes'];
   
   fields.forEach(field => {

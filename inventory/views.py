@@ -48,6 +48,7 @@ from .models import (
 from .low_stock import get_low_stock_alerts
 from .errors import error_response
 from .sample_metadata import normalize_sample_metadata
+from .dashboard_geography import build_dashboard_geography
 from .sample_inventory import (
     SAMPLE_FIELDS, archive_sample, can_edit_samples, can_read_samples,
     csv_literal, prepare_sample, resolve_sample_box, restore_archived_sample,
@@ -1049,6 +1050,8 @@ class InventoryItemViews:
         """Generic dashboard view"""
         try:
             project = get_object_or_404(Project, name=project_name)
+            if not can_read_samples(request.user, project):
+                return JsonResponse({'error': 'You do not have access to this project.'}, status=403)
             items = list(model.objects.filter(project=project, is_active=True))
             today = timezone.localdate()
 
@@ -1257,8 +1260,15 @@ class InventoryItemViews:
                     'tertiary_values': [pair[1] for pair in source_items],
                 }
 
+            kind = {Consumable: 'consumables', Reagent: 'reagents', Equipment: 'equipment', Sample: 'samples'}[model]
+            geography_data = build_dashboard_geography(items, kind)
+            if model is Sample:
+                chart_data['tertiary_labels'] = [country['name'] for country in geography_data['countries'][:8]]
+                chart_data['tertiary_values'] = [country['count'] for country in geography_data['countries'][:8]]
+                chart_data['kpis'][3]['value'] = geography_data['summary']['countries']
             context = {
                 'chart_data': chart_data,
+                'geography_data': geography_data,
                 'project': project,
                 'projects': get_user_projects(request.user),
                 'items': items,
@@ -1651,6 +1661,8 @@ def add_consumable(request, project_name):
         'oem_temperature': 'int',
         'temperature_unit': 'text',
         'vendor': 'text',
+        'vendor_country': 'text',
+        'vendor_city': 'text',
         'threshold_value': 'int',
         'notes': 'text'
     }
@@ -1673,6 +1685,8 @@ def edit_consumable(request, consumable_id):
         'cold_storage': 'text',
         'oem_temperature': 'int',
         'vendor': 'text',
+        'vendor_country': 'text',
+        'vendor_city': 'text',
         'threshold_value': 'int',
         'notes': 'text'
     }
@@ -1824,6 +1838,8 @@ def retrieve_consumable(request, consumable_id):
             'threshold_value': consumable.threshold_value,
             'cold_storage': consumable.cold_storage,
             'vendor': consumable.vendor,
+            'vendor_country': consumable.vendor_country,
+            'vendor_city': consumable.vendor_city,
             'notes': consumable.notes,
             'is_active': consumable.is_active,
             'oem_temperature': consumable.oem_temperature,
@@ -1900,6 +1916,8 @@ def restock_consumable(request, consumable_id):
             'items_per_pack': consumable.items_per_pack,
             'cold_storage': consumable.cold_storage,
             'vendor': consumable.vendor,
+            'vendor_country': consumable.vendor_country,
+            'vendor_city': consumable.vendor_city,
             'notes': consumable.notes,
             'is_active': consumable.is_active,
             'oem_temperature': consumable.oem_temperature,
@@ -1924,6 +1942,8 @@ def export_consumable_csv(request, project_name):
         'storage_location': 'Storage Location',
         'threshold_value': 'Threshold Value',
         'vendor': 'Vendor',
+        'vendor_country': 'Vendor Delivery Country',
+        'vendor_city': 'Vendor Delivery City',
         'date_recorded': 'Date Recorded',
         'oem_temperature': 'Manufacturer Recommended Temperature',
         'cold_storage': 'Cold Storage',
@@ -1948,6 +1968,8 @@ def export_consumable_excel(request, project_name):
         'storage_location': 'Storage Location',
         'threshold_value': 'Threshold Value',
         'vendor': 'Vendor',
+        'vendor_country': 'Vendor Delivery Country',
+        'vendor_city': 'Vendor Delivery City',
         'date_recorded': 'Date Recorded',
         'oem_temperature': 'Manufacturer Recommended Temperature',
         'cold_storage': 'Cold Storage',
@@ -1972,6 +1994,8 @@ def export_consumable_txt(request, project_name):
         'storage_location': 'Storage Location',
         'threshold_value': 'Threshold Value',
         'vendor': 'Vendor',
+        'vendor_country': 'Vendor Delivery Country',
+        'vendor_city': 'Vendor Delivery City',
         'date_recorded': 'Date Recorded',
         'oem_temperature': 'Manufacturer Recommended Temperature',
         'cold_storage': 'Cold Storage',
@@ -2002,6 +2026,8 @@ def get_consumable_info(request, id):
             'storage_location': clean_text_field(consumable.storage_location),
             'threshold_value': consumable.threshold_value,
             'vendor': consumable.vendor,
+            'vendor_country': consumable.vendor_country,
+            'vendor_city': consumable.vendor_city,
             'notes': consumable.notes,
             'is_active': consumable.is_active,
             'oem_temperature': consumable.oem_temperature
@@ -2110,6 +2136,8 @@ def add_reagent(request, project_name):
             'oem_temperature': int(request.POST.get('oem_temperature', 0)),
             'temperature_unit': temperature_unit,
             'vendor': clean_text_field(request.POST.get('vendor', '')),
+            'vendor_country': clean_text_field(request.POST.get('vendor_country', '')),
+            'vendor_city': clean_text_field(request.POST.get('vendor_city', '')),
             'country_of_origin': clean_text_field(request.POST.get('country_of_origin', '')),
             'hazard_level': int(request.POST.get('hazard_level', 0)),
             'threshold_value': int(request.POST.get('threshold_value', 0)),
@@ -2169,6 +2197,8 @@ def edit_reagent(request, reagent_id):
         'cold_storage': 'text',
         'oem_temperature': 'int',
         'vendor': 'text',
+        'vendor_country': 'text',
+        'vendor_city': 'text',
         'country_of_origin': 'text',
         'hazard_level': 'int',
         'threshold_value': 'int',
@@ -2335,6 +2365,9 @@ def retrieve_reagent(request, reagent_id):
             'threshold_value': reagent.threshold_value,
             'oem_temperature': reagent.oem_temperature,
             'temperature_unit': reagent.temperature_unit,
+            'vendor': reagent.vendor,
+            'vendor_country': reagent.vendor_country,
+            'vendor_city': reagent.vendor_city,
             'country_of_origin': reagent.country_of_origin,
             'hazard_level': reagent.hazard_level,
             'low_stock': low_stock,
@@ -2410,6 +2443,9 @@ def restock_reagent(request, reagent_id):
             'threshold_value': reagent.threshold_value,
             'oem_temperature': reagent.oem_temperature,
             'temperature_unit': reagent.temperature_unit,
+            'vendor': reagent.vendor,
+            'vendor_country': reagent.vendor_country,
+            'vendor_city': reagent.vendor_city,
             'country_of_origin': reagent.country_of_origin,
             'hazard_level': reagent.hazard_level,
             'low_stock': is_low_stock(reagent)
@@ -2433,6 +2469,8 @@ def export_reagent_csv(request, project_name):
         'storage_location': 'Storage Location',
         'threshold_value': 'Threshold Value',
         'vendor': 'Vendor',
+        'vendor_country': 'Vendor Delivery Country',
+        'vendor_city': 'Vendor Delivery City',
         'date_recorded': 'Date Recorded',
         'oem_temperature': 'Manufacturer Recommended Temperature',
         'temperature_unit': 'Temperature Unit',
@@ -2457,6 +2495,8 @@ def export_reagent_excel(request, project_name):
         'storage_location': 'Storage Location',
         'threshold_value': 'Threshold Value',
         'vendor': 'Vendor',
+        'vendor_country': 'Vendor Delivery Country',
+        'vendor_city': 'Vendor Delivery City',
         'date_recorded': 'Date Recorded',
         'oem_temperature': 'Manufacturer Recommended Temperature',
         'temperature_unit': 'Temperature Unit',
@@ -2481,6 +2521,8 @@ def export_reagent_txt(request, project_name):
         'storage_location': 'Storage Location',
         'threshold_value': 'Threshold Value',
         'vendor': 'Vendor',
+        'vendor_country': 'Vendor Delivery Country',
+        'vendor_city': 'Vendor Delivery City',
         'date_recorded': 'Date Recorded',
         'oem_temperature': 'Manufacturer Recommended Temperature',
         'temperature_unit': 'Temperature Unit',
@@ -2531,6 +2573,9 @@ def get_reagent_info(request, id):
             'threshold_value': reagent.threshold_value,
             'oem_temperature': reagent.oem_temperature,
             'temperature_unit': reagent.temperature_unit,
+            'vendor': reagent.vendor,
+            'vendor_country': reagent.vendor_country,
+            'vendor_city': reagent.vendor_city,
             'country_of_origin': reagent.country_of_origin,
             'hazard_level': reagent.hazard_level,
             'has_msds': reagent.msds_files.exists(),
@@ -2612,6 +2657,9 @@ def edit_equipment_(request, equipment_id):
             'service_contract_start': equipment.service_contract_start,
             'service_contract_end': equipment.service_contract_end,
             'source': equipment.source,
+            'vendor_country': equipment.vendor_country,
+            'vendor_city': equipment.vendor_city,
+            'donated_by': equipment.donated_by,
             'storage_location': equipment.storage_location
         }
 
@@ -2732,8 +2780,10 @@ def export_equipment_csv(request, project_name):
         'service_contract_start': 'Service Contract Start',
         'service_contract_end': 'Service Contract End',
         'storage_location': 'Storage Location',
-        'vendor': 'Vendor',
-        'source': 'Source',
+        'vendor_country': 'Vendor Delivery Country',
+        'vendor_city': 'Vendor Delivery City',
+        'source': 'Vendor / Delivery Source',
+        'donated_by': 'Donated By',
         'operating_temperature': 'Operating Temperature',
         'last_calibration_date': 'Last Calibration Date',
         'next_calibration_date': 'Next Calibration Date',
@@ -2758,9 +2808,10 @@ def export_equipment_excel(request, project_name):
         'service_contract_start': 'Service Contract Start',
         'service_contract_end': 'Service Contract End',
         'storage_location': 'Storage Location',
-        'threshold_value': 'Threshold Value',
-        'vendor': 'Vendor',
-        'source': 'Source',
+        'vendor_country': 'Vendor Delivery Country',
+        'vendor_city': 'Vendor Delivery City',
+        'source': 'Vendor / Delivery Source',
+        'donated_by': 'Donated By',
         'operating_temperature': 'Operating Temperature',
         'last_calibration_date': 'Last Calibration Date',
         'next_calibration_date': 'Next Calibration Date',
@@ -2785,9 +2836,10 @@ def export_equipemt_txt(request, project_name):
         'service_contract_start': 'Service Contract Start',
         'service_contract_end': 'Service Contract End',
         'storage_location': 'Storage Location',
-        'threshold_value': 'Threshold Value',
-        'vendor': 'Vendor',
-        'source': 'Source',
+        'vendor_country': 'Vendor Delivery Country',
+        'vendor_city': 'Vendor Delivery City',
+        'source': 'Vendor / Delivery Source',
+        'donated_by': 'Donated By',
         'operating_temperature': 'Operating Temperature',
         'last_calibration_date': 'Last Calibration Date',
         'next_calibration_date': 'Next Calibration Date',
@@ -2802,15 +2854,21 @@ def export_equipemt_txt(request, project_name):
 
 
 @login_required
-def get_equipment_info(id):
+def get_equipment_info(request, id):
     try:
         equipment = Equipment.objects.get(id=id)
+        if not can_read_samples(request.user, equipment.project):
+            return JsonResponse({'error': 'You do not have access to this project.'}, status=403)
 
         # Prepare the data to be sent back as a JSON response
         data = {
             'name': clean_text_field(equipment.name),
             'equip_id': clean_text_field(equipment.equip_id),
             'serial_num': clean_text_field(equipment.serial_num),
+            'quantity': equipment.quantity,
+            'donated_by': equipment.donated_by,
+            'vendor_country': equipment.vendor_country,
+            'vendor_city': equipment.vendor_city,
             'status': clean_text_field(equipment.status),
             'service_contract_start': equipment.service_contract_start,
             'service_contract_end': equipment.service_contract_end,
@@ -3699,8 +3757,10 @@ def bulk_delete_reagents(request, project_name):
                 'cold_storage': reagent.cold_storage,
                 'oem_temperature': reagent.oem_temperature,
                 'temperature_unit': reagent.temperature_unit,
-                'country_of_origin': reagent.country_of_origin,
                 'vendor': reagent.vendor,
+                'vendor_country': reagent.vendor_country,
+                'vendor_city': reagent.vendor_city,
+                'country_of_origin': reagent.country_of_origin,
                 'threshold_value': reagent.threshold_value,
                 'storage_location': reagent.storage_location,
                 'deleted_by': request.user

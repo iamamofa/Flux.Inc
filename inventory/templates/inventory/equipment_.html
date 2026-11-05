@@ -327,6 +327,11 @@
                     <label>Donated By (optional)</label>
                 </div>
                 <div class="inputBox">
+                    <input type="text" name="source" id="addEquipmentSource" maxlength="100" value="">
+                    <label for="addEquipmentSource">Vendor / delivery source (optional)</label>
+                </div>
+                {% include "inventory/partials/vendor_location_fields.html" with location_prefix="add" %}
+                <div class="inputBox">
                     <input type="text" name="storage_location" id="storage_location" required=""
                         onkeyup="this.setAttribute('value', this.value);" value="{{ form.storage_location }}">
                     <label>Storage Location</label>
@@ -394,6 +399,11 @@
                         onkeyup="this.setAttribute('value', this.value);" value="{{ form.donated_by }}">
                     <label>Donated By</label>
                 </div>
+                <div class="inputBox">
+                    <input type="text" name="source" id="editEquipmentSource" maxlength="100" value="">
+                    <label for="editEquipmentSource">Vendor / delivery source (optional)</label>
+                </div>
+                {% include "inventory/partials/vendor_location_fields.html" with location_prefix="edit" %}
                 <div class="inputBox">
                     <input type="text" name="storage_location" id="storage_location" required=""
                         onkeyup="this.setAttribute('value', this.value);" value="{{ form.storage_location }}">

@@ -447,6 +447,7 @@
                         onkeyup="this.setAttribute('value', this.value);" value="{{ form.vendor }}">
                     <label>Vendor</label>
                 </div>
+                {% include "inventory/partials/vendor_location_fields.html" with location_prefix="add" %}
                 <div class="inputBox">
                     <input type="text" name="threshold_value" id="threshold_value" required=""
                         onkeyup="this.setAttribute('value', this.value);" value="{{ form.threshold_value }}">
@@ -542,6 +543,7 @@
                         onkeyup="this.setAttribute('value', this.value);" value="{{ form.vendor }}">
                     <label>Vendor</label>
                 </div>
+                {% include "inventory/partials/vendor_location_fields.html" with location_prefix="edit" %}
                 <div class="inputBox">
                     <input type="text" name="threshold_value" id="threshold_value" min="1" step="1" required=""
                         oninput="validatePositiveInteger(this)"

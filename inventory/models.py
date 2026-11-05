@@ -429,6 +429,8 @@ class BaseInventoryItem(models.Model):
             default='C'
     )
     vendor = models.CharField(max_length=100, blank=True)
+    vendor_country = models.CharField(max_length=100, blank=True)
+    vendor_city = models.CharField(max_length=100, blank=True)
     threshold_value = models.PositiveIntegerField(null=True, blank=True)
     notes = models.TextField(blank=True)
     is_active = models.BooleanField(default=True)
@@ -826,6 +828,8 @@ class Equipment(models.Model):
     service_contract_end = models.DateField(null=True, blank=True)
     date_installed = models.DateField(default=timezone.now)
     source = models.CharField(max_length=100, blank=True)
+    vendor_country = models.CharField(max_length=100, blank=True)
+    vendor_city = models.CharField(max_length=100, blank=True)
     operating_temperature = models.IntegerField(null=True, blank=True)
     storage_location = models.CharField(max_length=100, null=True)
     warranty_end_date = models.DateField(null=True, blank=True)
@@ -1341,6 +1345,8 @@ class TrashConsumable(TrashBaseModel):
     cold_storage = models.CharField(max_length=10)
     oem_temperature = models.IntegerField(null=True, blank=True)
     vendor = models.CharField(max_length=100, blank=True)
+    vendor_country = models.CharField(max_length=100, blank=True)
+    vendor_city = models.CharField(max_length=100, blank=True)
 
     class Meta:
         verbose_name = 'Trash Consumable'
@@ -1370,6 +1376,8 @@ class TrashReagent(TrashBaseModel):
     temperature_unit = models.CharField(max_length=1, default='C')
     country_of_origin = models.CharField(max_length=100, blank=True)
     vendor = models.CharField(max_length=100, blank=True)
+    vendor_country = models.CharField(max_length=100, blank=True)
+    vendor_city = models.CharField(max_length=100, blank=True)
     threshold_value = models.PositiveIntegerField(null=True, blank=True)
     storage_location = models.CharField(max_length=100, blank=True)
 
@@ -1399,6 +1407,8 @@ class TrashEquipment(TrashBaseModel):
     service_contract_end = models.DateField(null=True, blank=True)
     date_installed = models.DateField()
     source = models.CharField(max_length=100, blank=True, null=True)
+    vendor_country = models.CharField(max_length=100, blank=True)
+    vendor_city = models.CharField(max_length=100, blank=True)
     operating_temperature = models.IntegerField(null=True, blank=True)
     storage_location = models.CharField(max_length=100, blank=True, null=True)
 

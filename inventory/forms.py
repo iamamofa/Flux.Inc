@@ -40,7 +40,7 @@ def generate_unique_username(first_name, last_name):
 class ConsumableForm(forms.ModelForm):
     class Meta:
         model = Consumable
-        fields = ['name', 'product_code', 'pack_count', 'expiry_date', 'storage_location', 'threshold_value']
+        fields = ['name', 'product_code', 'pack_count', 'expiry_date', 'storage_location', 'threshold_value', 'vendor_country', 'vendor_city']
 
 class ReagentForm(forms.ModelForm):
     class Meta:
@@ -48,7 +48,7 @@ class ReagentForm(forms.ModelForm):
         fields = [
             'name', 'product_code', 'items_per_pack', 'pack_count',
             'expiry_date', 'storage_location', 'cold_storage',
-            'oem_temperature', 'temperature_unit', 'vendor',
+            'oem_temperature', 'temperature_unit', 'vendor', 'vendor_country', 'vendor_city',
             'country_of_origin', 'hazard_level', 'threshold_value', 'notes'
         ]
         widgets = {
@@ -96,6 +96,9 @@ class EquipmentForm(forms.ModelForm):
             'service_contract_start',
             'service_contract_end',
             'donated_by',
+            'source',
+            'vendor_country',
+            'vendor_city',
             'storage_location',
         )
 class UserApplicationForm(forms.ModelForm):

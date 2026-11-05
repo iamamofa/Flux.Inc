@@ -9,11 +9,13 @@
     <link rel="icon" type="image/png" href="{% static 'images/Icon.png' %}">
     <link rel="stylesheet" href="{% static 'css/inventory_style.css' %}">
     <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard_map.css' %}?v=4">
     <link rel="stylesheet" href="{% static 'css/flux_design_system.css' %}">
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="{% static 'js/flux_preferences.js' %}" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js" defer></script>
     <script src="{% static 'js/dashboard_charts.js' %}" defer></script>
+    <script src="{% static 'js/dashboard_map.js' %}?v=4" defer></script>
     <title>Flux - Reagents Dashboard</title>
     <link rel="stylesheet" href="{% static 'css/flux_pages.css' %}?v=1">
     <script src="{% static 'js/flux_pages.js' %}" defer></script>
@@ -71,7 +73,7 @@
             <header class="dashboard-page-heading">
                 <p class="dashboard-eyebrow">INVENTORY OVERVIEW</p>
                 <h1>Reagents</h1>
-                <p>Review reagent quantities and availability for {{ project.name }}.</p>
+                <p>Explore vendor delivery origins and inventory availability for {{ project.name }}.</p>
             </header>
 
             <!-- Navigation differences -->

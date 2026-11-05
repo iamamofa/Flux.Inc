@@ -34,6 +34,9 @@ The application is designed for genomics and bioinformatics laboratories to orga
 - Manage reagents, consumables, equipment, and samples by project.
 - Track project teams and access.
 - Review inventory dashboards and low-stock alerts.
+- Explore sample origins and vendor delivery countries on an interactive Africa
+  map, focused on Ghana and West Africa, with supporting charts below. See the
+  [dashboard map guide](docs/dashboard-map.md) for recognized metadata and vendor fields.
 - Export selected inventory data and manage applicable trash/recovery workflows.
 - Upload and manage reagent safety data sheet files.
 - Add project-specific metadata to samples as named fields and values. View it

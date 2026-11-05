@@ -1,0 +1,105 @@
+{% load static %}
+{{ geography_data|json_script:"dashboard-geography-data" }}
+<section class="dashboard-map-card" id="dashboardGeography" aria-labelledby="dashboardMapTitle"
+    data-shape-url="{% static 'data/africa.geojson' %}" data-world-shape-url="{% static 'data/world.geojson' %}" data-country-reference-url="{% static 'data/countries.json' %}">
+<header class="dashboard-map-heading">
+    <div class="dashboard-map-heading-copy">
+        <p class="dashboard-map-eyebrow"><span class="dashboard-map-atlas-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 5 6-2 6 2 6-2v16l-6 2-6-2-6 2Zm6-2v16m6-14v16"/><path d="m5.5 11 4 2 5-5 3 2"/></svg></span> ORIGIN ATLAS</p>
+        <h2 id="dashboardMapTitle">{{ geography_data.title }}</h2>
+        <p class="dashboard-map-description">{{ geography_data.description }}</p>
+    </div>
+<div class="dashboard-map-views" role="group" aria-label="Map view">
+            <button type="button" data-map-view="ghana" aria-pressed="false">Ghana</button>
+            <button type="button" data-map-view="west-africa" aria-pressed="true">West Africa</button>
+            <button type="button" data-map-view="africa" aria-pressed="false">Africa</button>
+            <button type="button" data-map-view="world" aria-pressed="false"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M3 10h14M10 3c4 4 4 10 0 14-4-4-4-10 0-14Z"/></svg>World</button>
+        </div>
+</header>
+<div class="dashboard-map-explore-controls">
+<div class="dashboard-map-search">
+            <div class="dashboard-map-search-field"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="m13 13 4 4"/></svg><input type="search" data-map-search placeholder="Search a country" aria-label="Search a country" role="combobox" aria-autocomplete="list" aria-controls="dashboardMapSearchResults" aria-expanded="false" autocomplete="off"></div>
+            <ul id="dashboardMapSearchResults" data-map-search-results role="listbox" aria-label="Matching countries" hidden></ul>
+            <p data-map-search-status role="status" class="dashboard-map-search-status"></p>
+        </div>
+    <div class="dashboard-map-metric-controls" role="group" aria-label="Country shading metric">
+        <button type="button" data-map-metric="count" aria-pressed="true">Records</button>
+        <button type="button" data-map-metric="percentage" aria-pressed="false">% Share</button>
+    </div>
+</div>
+<div class="dashboard-map-metrics" aria-label="Origin coverage">
+    <div class="dashboard-map-metric dashboard-map-metric-coverage">
+        <div class="dashboard-map-metric-heading"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m3 10 4 4 10-10"/><path d="M17 10v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7"/></svg><span>Mapped records</span></div>
+        <strong>{{ geography_data.summary.mapped }}<small> / {{ geography_data.summary.total }}</small></strong>
+        <div class="dashboard-map-coverage" data-map-coverage><span data-map-coverage-label>—</span><span>location coverage</span><i aria-hidden="true"></i></div>
+    </div>
+    <div class="dashboard-map-metric"><div class="dashboard-map-metric-heading"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 17s5-4.6 5-9A5 5 0 0 0 5 8c0 4.4 5 9 5 9Z"/><circle cx="10" cy="8" r="1.6"/></svg><span>Ghana</span></div><strong>{{ geography_data.summary.ghana }}</strong><span class="dashboard-map-metric-note"><i class="dashboard-map-gold-dot"></i>Country in focus</span></div>
+    <div class="dashboard-map-metric"><div class="dashboard-map-metric-heading"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="5" cy="5" r="2"/><circle cx="15" cy="5" r="2"/><circle cx="10" cy="15" r="2"/><path d="m6 7 3 6m5-6-3 6M7 5h6"/></svg><span>West Africa</span></div><strong>{{ geography_data.summary.west_africa }}</strong><span class="dashboard-map-metric-note">Regional origins</span></div>
+    <div class="dashboard-map-metric"><div class="dashboard-map-metric-heading"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M3 10h14M10 3c4 4 4 10 0 14-4-4-4-10 0-14Z"/></svg><span>Origin countries</span></div><strong>{{ geography_data.summary.countries }}</strong><span class="dashboard-map-metric-note">Across your inventory</span></div>
+</div>
+<div class="dashboard-map-layout">
+<div class="dashboard-map-main">
+<div class="dashboard-map-stage">
+            <svg class="dashboard-map-svg" viewBox="0 0 800 500" role="group" aria-labelledby="dashboardMapSvgTitle dashboardMapSvgDescription">
+                <title id="dashboardMapSvgTitle">Sample and vendor origins</title>
+                <desc id="dashboardMapSvgDescription">Countries are shaded by recorded origins. Select a country to explore its locations, or search for a country. Ghana uses the system accent outline. Colour represents recorded origin volume.</desc>
+            </svg>
+            <p class="dashboard-map-status" data-map-status role="status">Loading country boundaries…</p>
+            <div class="dashboard-map-tooltip" data-map-tooltip hidden></div>
+            <div class="dashboard-map-view-label" aria-hidden="true"><span class="dashboard-map-live-dot"></span><span data-map-view-label>WEST AFRICA</span></div>
+            <div class="dashboard-map-compass" aria-hidden="true"><span>N</span><svg viewBox="0 0 20 28"><path d="M10 2 17 23 10 19 3 23Z"/></svg></div>
+            <span class="dashboard-map-instruction" aria-hidden="true">Select an origin to explore</span>
+        <div class="dashboard-map-context" aria-hidden="true"><svg data-map-inset viewBox="0 0 120 120"></svg><span>AFRICA</span></div>
+<div class="dashboard-map-toolbar" role="group" aria-label="Map controls">
+            <span class="dashboard-map-zoom-level" data-map-zoom-label>1×</span>
+            <button type="button" data-map-zoom="in" aria-label="Zoom in" title="Zoom in"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12M10 4v12"/></svg></button>
+            <button type="button" data-map-zoom="out" aria-label="Zoom out" title="Zoom out"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12"/></svg></button>
+            <button type="button" data-map-zoom="reset" aria-label="Reset map zoom" title="Reset view"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 7V3h4m4 0h4v4M4 13v4h4m4 0h4v-4"/></svg></button>
+            <span class="dashboard-map-toolbar-separator" aria-hidden="true"></span>
+            <button type="button" data-map-fullscreen aria-label="Enter fullscreen map" aria-pressed="false" title="Fullscreen map"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7 3H3v4m10-4h4v4M3 13v4h4m10-4v4h-4"/></svg></button>
+        </div>
+</div>
+<div class="dashboard-map-legend" aria-label="Map legend">
+    <span data-map-legend-title>ORIGIN COUNTS</span>
+    <span><i class="dashboard-map-swatch dashboard-map-swatch-empty"></i>No records</span>
+    <div class="dashboard-map-legend-bins" data-map-legend-bins></div>
+    <span><i class="dashboard-map-marker-key"></i>Origin location</span>
+    <span><i class="dashboard-map-ghana-key"></i>Ghana</span>
+</div>
+<p class="dashboard-map-source">Boundaries: <a href="https://www.naturalearthdata.com/about/terms-of-use/" target="_blank" rel="noopener noreferrer">Natural Earth</a>. Counts represent inventory records. Locations use supplied coordinates or approximate place centres.</p>
+</div>
+<div class="dashboard-map-rail">
+<section class="dashboard-map-selection" aria-live="polite" aria-atomic="true" aria-label="Selected origin">
+            <div class="dashboard-map-selection-heading"><span data-map-selection-region>WEST AFRICA</span><span class="dashboard-map-selection-code" data-map-selection-code>GH</span></div>
+            <h3 data-map-selection-title>Ghana</h3>
+            <p class="dashboard-map-selection-count"><strong data-map-selection-count>{{ geography_data.summary.ghana }}</strong><span data-map-selection-unit>{% if geography_data.kind == 'samples' %}sample records{% else %}inventory records{% endif %}</span></p>
+            <p class="dashboard-map-selection-share" data-map-selection-share></p>
+            <p class="dashboard-map-selection-hint" data-map-selection-hint>Select a country to explore its recorded origins.</p>
+            <ul class="dashboard-map-location-list" data-map-location-list></ul>
+        </section>
+<section class="dashboard-map-origins" aria-labelledby="dashboardMapOriginsTitle">
+                <div class="dashboard-map-origins-heading"><h3 id="dashboardMapOriginsTitle">Origin countries</h3><span>{{ geography_data.summary.countries }}</span></div>
+                {% if geography_data.countries %}
+                <ol class="dashboard-map-country-list">
+                    {% for country in geography_data.countries %}
+                    <li><button type="button" data-map-country="{{ country.code }}" aria-pressed="false"><span class="dashboard-map-country-rank" aria-hidden="true">{{ forloop.counter|stringformat:"02d" }}</span><span class="dashboard-map-country-text">{{ country.name }}{% if country.region != 'Africa' and country.region != 'West Africa' %}<small>{{ country.region }}</small>{% endif %}<i data-map-share aria-hidden="true"></i></span><strong>{{ country.count }}</strong></button></li>
+                    {% endfor %}
+                </ol>
+                {% else %}
+                <p class="dashboard-map-no-origins">No origins mapped yet. Add location details to see where your inventory comes from.</p>
+                {% endif %}
+            </section>
+</div>
+</div>
+    <footer class="dashboard-map-footer">
+        <p><span class="dashboard-map-coverage-dot"></span><strong>{{ geography_data.summary.mapped }}</strong> of <strong>{{ geography_data.summary.total }}</strong> records have a recognised origin.</p>
+        {% if geography_data.summary.outside_africa %}<p>{{ geography_data.summary.outside_africa }} record{{ geography_data.summary.outside_africa|pluralize }} originate{{ geography_data.summary.outside_africa|pluralize:"s," }} outside Africa; explore the World view.</p>{% endif %}
+        {% if geography_data.summary.unmapped %}<p class="dashboard-map-missing">{{ geography_data.summary.unmapped }} record{{ geography_data.summary.unmapped|pluralize }} need{{ geography_data.summary.unmapped|pluralize:"s," }} location details.</p>{% endif %}
+    </footer>
+    {% if geography_data.unmapped_locations %}
+    <details class="dashboard-map-unmapped"><summary>Review locations that could not be mapped</summary><ul>{% for location in geography_data.unmapped_locations %}<li><strong>{{ location.label }}</strong> · {{ location.count }} record{{ location.count|pluralize }} — {{ location.reason }}</li>{% endfor %}</ul></details>
+    {% endif %}
+    {% if geography_data.location_warnings %}
+    <details class="dashboard-map-unmapped"><summary>Review {{ geography_data.summary.coordinate_conflicts }} record{{ geography_data.summary.coordinate_conflicts|pluralize }} with conflicting coordinates</summary><ul>{% for location in geography_data.location_warnings %}<li><strong>{{ location.label }}</strong> · {{ location.count }} record{{ location.count|pluralize }} — {{ location.reason }}</li>{% endfor %}</ul></details>
+    {% endif %}
+    <noscript><p class="dashboard-map-noscript">Enable JavaScript to explore the map. Origin counts remain available in the country list.</p></noscript>
+</section>

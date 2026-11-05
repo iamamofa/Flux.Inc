@@ -469,6 +469,7 @@
                     <input type="text" name="vendor" id="vendor" required="" onkeyup="this.setAttribute('value', this.value);" value="{{ form.vendor }}">
                     <label>Vendor</label>
                 </div>
+                {% include "inventory/partials/vendor_location_fields.html" with location_prefix="add" %}
                 <div class="inputBox">
                     <input type="text" name="country_of_origin" id="country_of_origin" required="" onkeyup="this.setAttribute('value', this.value);" value="{{ form.country_of_origin }}">
                     <label>Country of Origin</label>
@@ -566,6 +567,7 @@
                     <input type="text" name="vendor" id="vendor" required="" onkeyup="this.setAttribute('value', this.value);" value="{{ form.vendor }}">
                     <label>Vendor</label>
                 </div>
+                {% include "inventory/partials/vendor_location_fields.html" with location_prefix="edit" %}
                 <div class="inputBox">
                     <input type="text" name="country_of_origin" id="country_of_origin" required="" onkeyup="this.setAttribute('value', this.value);" value="{{ form.country_of_origin }}">
                     <label>Country of Origin</label>

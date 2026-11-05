@@ -1,4 +1,12 @@
 {{ chart_data|json_script:"dashboardChartData" }}
+{% include "inventory/partials/dashboard_map.html" %}
+
+<div class="dashboard-chart-heading">
+    <div>
+        <h2>Inventory insights</h2>
+        <p>Stock, availability and inventory trends supporting the geographic overview.</p>
+    </div>
+</div>
 <section class="dashboard-kpis" aria-label="Inventory summary">
     {% for kpi in chart_data.kpis %}
     <article class="dashboard-kpi dashboard-kpi-{{ kpi.tone }}">
@@ -9,7 +17,7 @@
 </section>
 
 <section class="dashboard-chart-grid" aria-label="Inventory charts">
-    <article class="dashboard-visual-card dashboard-chart-primary">
+    <article class="dashboard-visual-card">
         <div class="dashboard-visual-heading">
             <div>
                 <h2>{{ chart_data.primary_title }}</h2>
@@ -24,7 +32,7 @@
                 </p>
             </div>
         </div>
-        <div class="dashboard-chart-canvas">
+        <div class="dashboard-chart-canvas dashboard-chart-canvas-compact">
             <canvas id="dashboardPrimaryChart" role="img" aria-label="{{ chart_data.primary_title }}"></canvas>
         </div>
     </article>
